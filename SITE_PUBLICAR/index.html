@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Inventário | Controle de equipamentos</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+</head>
+<body>
+  <div id="loginView" class="login-wrap">
+    <form id="loginForm" class="login-card">
+      <div class="brand-mark">IN</div><h1>Inventário</h1><p class="muted">Controle compartilhado de equipamentos</p>
+      <label>E-mail<input id="email" type="email" required autocomplete="username" placeholder="voce@empresa.com"></label>
+      <label>Senha<input id="password" type="password" required autocomplete="current-password" placeholder="Sua senha"></label>
+      <button class="primary full" type="submit">Entrar</button>
+      <p id="loginMessage" class="message" aria-live="polite"></p>
+      <small>O administrador deve criar os usuários no painel do Supabase.</small>
+    </form>
+  </div>
+
+  <div id="appView" class="app hidden">
+    <aside class="sidebar">
+      <div class="brand"><div class="brand-mark">IN</div><div><strong>Inventário</strong><small>Gestão de equipamentos</small></div></div>
+      <nav>
+        <button class="nav-item active" data-page="dashboard">▦ <span>Painel geral</span></button>
+        <button class="nav-item" data-page="equipment">▣ <span>Equipamentos</span></button>
+        <button class="nav-item" data-page="movements">⇄ <span>Retiradas e devoluções</span></button>
+        <button class="nav-item" data-page="reports">▤ <span>Relatórios</span></button>
+        <button class="nav-item" data-page="users">♙ <span>Usuários</span></button>
+      </nav>
+      <div class="sidebar-bottom"><span id="userEmail" class="user-email"></span><small id="userProfile" class="user-email"></small><button id="logoutBtn" class="nav-item">↪ <span>Sair</span></button></div>
+    </aside>
+    <main class="main">
+      <header class="topbar"><div><p class="eyebrow">GESTÃO PATRIMONIAL</p><h1 id="pageTitle">Painel geral</h1></div><button id="refreshBtn" class="secondary">↻ Atualizar</button></header>
+      <p id="globalMessage" class="message" aria-live="polite"></p>
+      <section id="dashboardPage" class="page">
+        <div class="stats"><article class="stat-card"><span>Total de equipamentos</span><strong id="statTotal">—</strong><small>Itens cadastrados</small></article><article class="stat-card"><span>Disponíveis</span><strong id="statAvailable">—</strong><small>Prontos para uso</small></article><article class="stat-card"><span>Em uso</span><strong id="statInUse">—</strong><small>Retiradas em aberto</small></article><article class="stat-card"><span>Manutenção</span><strong id="statMaintenance">—</strong><small>Itens indisponíveis</small></article></div>
+        <div class="panel"><div class="panel-head"><div><h2>Movimentações recentes</h2><p class="muted">Últimas retiradas e devoluções registradas</p></div><button class="secondary" data-goto="movements">Ver todas</button></div><div class="table-wrap"><table><thead><tr><th>Data/hora</th><th>Equipamento</th><th>Tipo</th><th>Responsável</th><th>Observação</th></tr></thead><tbody id="recentBody"><tr><td colspan="5" class="empty">Carregando…</td></tr></tbody></table></div></div>
+      </section>
+      <section id="equipmentPage" class="page hidden">
+        <div class="panel"><div class="panel-head"><div><h2>Cadastro de equipamentos</h2><p class="muted">Cadastre, edite, consulte e exporte seu inventário.</p></div><div class="actions"><button id="exportBtn" class="secondary">⇩ Exportar CSV</button><button id="newEquipmentBtn" class="primary">＋ Novo equipamento</button></div></div>
+          <div class="filters"><input id="searchEquipment" placeholder="Pesquisar por descrição, TAG, patrimônio…"><select id="statusFilter"><option value="">Todas as situações</option><option>Disponível</option><option>Em uso</option><option>Manutenção</option><option>Baixado</option></select><select id="categoryFilter"><option value="">Todas as categorias</option></select></div>
+          <div class="table-wrap"><table><thead><tr><th>TAG / Patrimônio</th><th>Equipamento</th><th>Categoria</th><th>Localização</th><th>Estado</th><th>Situação</th><th>Ações</th></tr></thead><tbody id="equipmentBody"><tr><td colspan="7" class="empty">Carregando…</td></tr></tbody></table></div>
+        </div>
+      </section>
+      <section id="movementsPage" class="page hidden">
+        <div class="panel"><div class="panel-head"><div><h2>Retiradas e devoluções</h2><p class="muted">Registre cada retirada e finalize com a devolução do equipamento.</p></div><button id="newMovementBtn" class="primary">＋ Registrar retirada</button></div>
+          <div class="filters"><input id="searchMovement" placeholder="Pesquisar equipamento ou responsável…"><select id="movementFilter"><option value="">Todas as movimentações</option><option value="Retirada">Retiradas</option><option value="Devolução">Devoluções</option></select></div>
+          <div class="table-wrap"><table><thead><tr><th>Data/hora</th><th>Equipamento</th><th>Tipo</th><th>Responsável</th><th>Retirada</th><th>Devolução</th><th>Ação</th></tr></thead><tbody id="movementBody"><tr><td colspan="7" class="empty">Carregando…</td></tr></tbody></table></div>
+        </div>
+      </section>
+      <section id="reportsPage" class="page hidden">
+        <div class="panel report-panel">
+          <div class="panel-head"><div><h2>Relatórios do inventário</h2><p class="muted">Filtre os dados, confira a prévia e exporte para Excel ou impressão/PDF.</p></div><div class="actions"><button id="exportReportBtn" class="primary">⇩ Exportar CSV para Excel</button><button id="printReportBtn" class="secondary">Imprimir / Salvar PDF</button></div></div>
+          <div class="filters report-filters">
+            <select id="reportType"><option value="equipment">Inventário de equipamentos</option><option value="movements">Retiradas e devoluções</option></select>
+            <input id="reportStart" type="date" aria-label="Data inicial">
+            <input id="reportEnd" type="date" aria-label="Data final">
+            <select id="reportStatus"><option value="">Todas as situações/tipos</option></select>
+            <button id="applyReportBtn" class="secondary">Aplicar filtros</button>
+          </div>
+          <p id="reportSummary" class="muted report-summary">Carregando dados do relatório…</p>
+          <div class="table-wrap"><table><thead id="reportHead"></thead><tbody id="reportBody"><tr><td class="empty">Carregando…</td></tr></tbody></table></div>
+        </div>
+      </section>
+      <section id="usersPage" class="page hidden">
+        <div class="panel">
+          <div class="panel-head"><div><h2>Gerenciamento de usuários</h2><p class="muted">Crie contas, consulte os usuários cadastrados, altere senhas ou remova acessos.</p></div><button id="refreshUsersBtn" class="secondary">↻ Atualizar lista</button></div>
+          <div class="user-create-box">
+            <h3>Novo usuário</h3>
+            <p class="muted">O usuário poderá entrar com o e-mail e a senha definidos aqui.</p>
+            <form id="createUserForm" class="user-create-form">
+              <label>Nome (opcional)<input id="newUserName" maxlength="120" placeholder="Nome do usuário"></label>
+              <label>E-mail *<input id="newUserEmail" type="email" required autocomplete="off" placeholder="usuario@empresa.com"></label>
+              <label>Senha inicial *<input id="newUserPassword" type="password" required minlength="8" autocomplete="new-password" placeholder="Mínimo de 8 caracteres"></label>
+              <label>Perfil de acesso *<select id="newUserRole" required><option value="consulta">Consulta (somente leitura)</option><option value="operador">Operador (retiradas/devoluções)</option><option value="administrador">Administrador (acesso completo)</option></select></label>
+              <button class="primary" type="submit">＋ Criar usuário</button>
+            </form>
+            <p id="usersMessage" class="message" aria-live="polite"></p>
+          </div>
+          <div class="panel-head users-list-head"><div><h3>Usuários cadastrados</h3><p class="muted">A senha não é exibida pelo sistema; você pode definir uma nova.</p></div></div>
+          <div class="table-wrap"><table><thead><tr><th>E-mail</th><th>Nome</th><th>Acesso</th><th>Criado em</th><th>Último acesso</th><th>Ações</th></tr></thead><tbody id="usersBody"><tr><td colspan="6" class="empty">Clique em Atualizar lista para carregar os usuários.</td></tr></tbody></table></div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <dialog id="equipmentDialog"><form id="equipmentForm" class="dialog-form"><div class="dialog-head"><div><h2 id="equipmentDialogTitle">Novo equipamento</h2><p class="muted">Preencha os dados de identificação.</p></div><button type="button" class="icon-button" data-close="equipmentDialog">×</button></div>
+    <input id="equipmentId" type="hidden"><div class="form-grid">
+      <label>TAG<input id="tag" maxlength="80" placeholder="Ex.: EQ-0001"></label><label>Patrimônio<input id="patrimonio" maxlength="100"></label>
+      <label class="span-2">Descrição *<input id="descricao" required maxlength="200"></label><label>Categoria<input id="categoria" maxlength="100" placeholder="Informática, ferramentas…"></label><label>Marca<input id="marca" maxlength="100"></label>
+      <label>Modelo<input id="modelo" maxlength="100"></label><label>Número de série<input id="numeroSerie" maxlength="150"></label><label>Pertencimento / setor<input id="pertencimento" maxlength="120"></label><label>Responsável habitual<input id="responsavel" maxlength="150"></label>
+      <label>Localização<input id="localizacao" maxlength="150"></label><label>Estado de conservação<select id="estado"><option>Bom</option><option>Regular</option><option>Ruim</option><option>Inoperante</option></select></label>
+      <label>Situação<select id="situacao"><option>Disponível</option><option>Manutenção</option><option>Baixado</option></select></label><label>Valor (R$)<input id="valor" type="number" min="0" step="0.01"></label>
+      <label class="span-2">Observações<textarea id="observacoes" rows="3" maxlength="2000"></textarea></label>
+    </div><p id="equipmentMessage" class="message"></p><div class="dialog-actions"><button type="button" class="secondary" data-close="equipmentDialog">Cancelar</button><button class="primary" type="submit">Salvar equipamento</button></div>
+  </form></dialog>
+
+  <dialog id="movementDialog"><form id="movementForm" class="dialog-form"><div class="dialog-head"><div><h2>Registrar retirada</h2><p class="muted">Uma ficha para cada retirada.</p></div><button type="button" class="icon-button" data-close="movementDialog">×</button></div>
+    <div class="form-grid"><label class="span-2">Equipamento *<select id="movementEquipment" required></select></label><label>Responsável pela retirada *<input id="movementResponsible" required maxlength="150"></label><label>Setor / destino<input id="movementDestination" maxlength="150"></label><label>Data e hora da retirada *<input id="movementOutAt" type="datetime-local" required></label><label>Previsão de devolução<input id="movementDueAt" type="datetime-local"></label><label class="span-2">Estado na retirada<select id="movementCondition"><option>Bom</option><option>Regular</option><option>Ruim</option><option>Inoperante</option></select></label><label class="span-2">Observações<textarea id="movementNotes" rows="3" maxlength="2000"></textarea></label></div>
+    <p id="movementMessage" class="message"></p><div class="dialog-actions"><button type="button" class="secondary" data-close="movementDialog">Cancelar</button><button class="primary" type="submit">Confirmar retirada</button></div>
+  </form></dialog>
+
+  <dialog id="returnDialog"><form id="returnForm" class="dialog-form"><div class="dialog-head"><div><h2>Registrar devolução</h2><p class="muted" id="returnEquipmentName"></p></div><button type="button" class="icon-button" data-close="returnDialog">×</button></div><input id="returnMovementId" type="hidden"><div class="form-grid"><label>Data e hora da devolução *<input id="returnAt" type="datetime-local" required></label><label>Estado na devolução<select id="returnCondition"><option>Bom</option><option>Regular</option><option>Ruim</option><option>Inoperante</option></select></label><label class="span-2">Ocorrências / observações<textarea id="returnNotes" rows="3" maxlength="2000"></textarea></label></div><p id="returnMessage" class="message"></p><div class="dialog-actions"><button type="button" class="secondary" data-close="returnDialog">Cancelar</button><button class="primary" type="submit">Confirmar devolução</button></div></form></dialog>
+
+  <dialog id="qrDialog"><div class="dialog-form"><div class="dialog-head"><div><h2>QR Code do equipamento</h2><p id="qrLabel" class="muted"></p></div><button class="icon-button" data-close="qrDialog">×</button></div><div id="qrcode" class="qr-code"></div><div class="dialog-actions"><button id="printQrBtn" class="secondary">Imprimir</button><button class="primary" data-close="qrDialog">Concluir</button></div></div></dialog>
+  <script src="app.js"></script>
+</body></html>

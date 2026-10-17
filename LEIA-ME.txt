@@ -1,0 +1,70 @@
+INVENTÁRIO WEB — ATUALIZAÇÃO DE PERFIS
+====================================
+
+ESTA É UMA ATUALIZAÇÃO DO SEU SISTEMA JÁ EM USO.
+Não crie outro projeto Supabase, não apague tabelas e NÃO execute o SQL antigo.
+
+O QUE MUDA
+- Administrador: cadastra, edita e exclui equipamentos; registra retiradas/devoluções;
+  vê relatórios e gerencia usuários.
+- Operador: consulta os dados e registra retiradas/devoluções. Não edita cadastros.
+- Consulta: somente visualiza os dados e relatórios; não altera informações.
+- Usuários novos são criados com perfil escolhido pelo administrador.
+- Administrador pode mudar o perfil de usuários existentes na lista de usuários.
+- O Supabase verifica as permissões no banco (RLS e funções protegidas).
+
+ORDEM CORRETA PARA ATUALIZAR
+
+1) FAÇA BACKUP
+   No painel do Supabase, faça um backup/exportação dos dados de equipamentos e
+   movimentações antes de alterar as políticas. NÃO exclua dados.
+
+2) EXECUTE O SQL NOVO
+   Abra o arquivo ATUALIZACAO_PERFIS.sql em um editor de texto.
+   Localize a frase: SEU_EMAIL_ADMIN@EXEMPLO.COM
+   Substitua pelo e-mail EXATO com que você faz login como administrador.
+   (A frase aparece 3 vezes: no comentário e 2 vezes no código; altere no código.)
+   Entre no Supabase > SQL Editor > New query, cole o conteúdo e clique em Run.
+   O script mantém equipamentos e movimentações. Se o e-mail não existir em
+   Authentication > Users, ele mostra erro e desfaz a transação.
+   Usuários existentes, exceto o administrador indicado, iniciam em CONSULTA.
+   Depois você pode editar o perfil deles na página Usuários.
+
+3) REPUBLIQUE A EDGE FUNCTION
+   Substitua o arquivo supabase/functions/manage-users/index.ts da sua pasta
+   atual pelo arquivo fornecido aqui.
+   Abra o terminal na pasta inventario_web e execute:
+
+       npx supabase functions deploy manage-users
+
+   Sua pasta já deve estar vinculada ao projeto Supabase.
+   Não é preciso recriar o secret INVENTORY_ADMIN_EMAIL. Esta versão autoriza
+   administradores pelo perfil no banco, não mais pelo e-mail do secret.
+   IMPORTANTE: nunca coloque SUPABASE_SERVICE_ROLE_KEY no app.js ou no HTML.
+
+4) ATUALIZE A HOSPEDAGEM
+   Substitua os 3 arquivos públicos de sua hospedagem por estes do ZIP:
+       index.html
+       styles.css
+       app.js
+   A URL e a chave PÚBLICA do projeto existente já estão preservadas no app.js.
+   Se você usa deploy manual no Netlify, envie uma pasta contendo esses arquivos.
+
+5) TESTE
+   Entre como administrador > abra Usuários > confirme os perfis.
+   Faça os testes com uma conta Operador e outra Consulta, preferencialmente
+   com dados de teste. Atualize a página no navegador (Ctrl + F5) se necessário.
+
+ATENÇÃO
+- ATUALIZACAO_PERFIS.sql é o único SQL que deve ser executado neste upgrade.
+- Não execute um supabase_schema.sql antigo depois desta atualização: ele pode
+  voltar a liberar permissões de escrita para todos os usuários autenticados.
+- A função e o SQL devem ser atualizados ANTES da interface web para evitar erros.
+- Ao efetuar mudanças em login de usuários, saia e entre novamente para atualizar
+  o perfil carregado no navegador.
+- Os relatórios de movimentação exibem no máximo os 500 registros mais recentes
+  carregados, como na versão anterior.
+- A chave anon/publishable no frontend é pública; a service_role é privada.
+
+Se ocorrer erro em algum passo, copie a mensagem exibida e peça ajuda antes de
+executar outro SQL ou apagar qualquer informação.
