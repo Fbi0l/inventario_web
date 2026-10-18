@@ -10,3 +10,13 @@ select[data-role-user]{min-width:145px;margin-bottom:7px;padding:7px 9px}
 select[data-role-user]:disabled{opacity:.75;cursor:not-allowed}
 .sidebar-bottom #userProfile{padding-top:0;margin-top:-10px;font-weight:700;color:#dae5f6}
 @media(min-width:1101px){.user-create-form{grid-template-columns:1fr 1.3fr 1fr 1.2fr auto}}
+
+/* Rodapé do sistema: propriedade e versão */
+.site-footer{display:flex;justify-content:center;align-items:center;flex-wrap:wrap;gap:5px 12px;padding:20px 12px 4px;margin-top:auto;border-top:1px solid var(--line);color:var(--muted);font-size:12px;text-align:center;line-height:1.6}
+.site-footer strong{font-weight:750;color:#42526a}
+.site-footer-separator{color:#a2aebe}
+.login-wrap{grid-template-rows:minmax(0,1fr) auto;row-gap:16px}
+.login-wrap>.site-footer{width:100%;padding:10px 0 4px;border-top:0;margin-top:0}
+.main{min-height:100vh;display:flex;flex-direction:column}
+@media(max-width:480px){.site-footer-separator{display:none}.site-footer{flex-direction:column;gap:0}}
+@media print{.site-footer{display:none!important}}
