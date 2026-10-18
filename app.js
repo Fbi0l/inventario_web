@@ -84,7 +84,7 @@ function renderUsers(){
     const roleSelect=`<select data-role-user="${esc(u.id)}" aria-label="Perfil de ${esc(u.email||'usuário')}" ${u.id===state.user?.id?'disabled title="Você não pode retirar seu próprio perfil"':''}>
       ${['administrador','operador','consulta'].map(p=>`<option value="${p}" ${u.perfil===p?'selected':''}>${roleLabel(p)}</option>`).join('')}
     </select>`;
-    return `<tr><td><strong>${esc(u.email||'—')}</strong>${u.id===state.user?.id?'<br><small>Usuário atual</small>':''}</td><td>${esc(u.user_metadata?.full_name||u.user_metadata?.name||'—')}</td><td>${roleSelect}<br><span class="pill ${blocked?'retired':'available'}">${blocked?'Bloqueado':'Ativo'}</span></td><td>${esc(fmt(u.created_at))}</td><td>${esc(fmt(u.last_sign_in_at))}</td><td><div class="table-actions"><button class="secondary" data-user-action="password" data-user-id="${esc(u.id)}" data-user-email="${esc(u.email||'')}">Alterar senha</button>${u.id!==state.user?.id?`<button class="secondary" data-user-action="access" data-blocked="${blocked?'true':'false'}" data-user-id="${esc(u.id)}" data-user-email="${esc(u.email||'')}">${blocked?'Desbloquear':'Bloquear acesso'}</button>`:''}</div></td></tr>`;
+    return `<tr><td><strong>${esc(u.email||'—')}</strong>${u.id===state.user?.id?'<br><small>Usuário atual</small>':''}</td><td>${esc(u.user_metadata?.full_name||u.user_metadata?.name||'—')}</td><td>${roleSelect}<br><span class="pill ${blocked?'retired':'available'}">${blocked?'Bloqueado':'Ativo'}</span></td><td>${esc(fmt(u.created_at))}</td><td>${esc(fmt(u.last_sign_in_at))}</td><td><div class="table-actions"><button class="secondary" data-user-action="password" data-user-id="${esc(u.id)}" data-user-email="${esc(u.email||'')}">Alterar senha</button>${u.id!==state.user?.id?`<button class="secondary" data-user-action="access" data-blocked="${blocked?'true':'false'}" data-user-id="${esc(u.id)}" data-user-email="${esc(u.email||'')}">${blocked?'Desbloquear':'Bloquear acesso'}</button><button class="secondary" data-user-action="delete" data-user-id="${esc(u.id)}" data-user-email="${esc(u.email||'')}">Excluir usuário</button>`:''}</div></td></tr>`;
   }).join(''):'<tr><td colspan="6" class="empty">Nenhum usuário encontrado.</td></tr>';
 }
 async function loadUsers(){
@@ -101,6 +101,24 @@ async function createUser(e){
   catch(err){message('usersMessage',`Não foi possível criar o usuário: ${err.message}`);}
 }
 async function userAction(action,id,email,blockedFlag){if(!canManageUsers()){denyAction();return;}
+  if(action==='delete'){
+    const target=state.users.find(u=>u.id===id);
+    if(!target){message('usersMessage','Usuário não encontrado na lista. Atualize e tente novamente.');return;}
+    if(id===state.user?.id){message('usersMessage','Você não pode excluir sua própria conta.');return;}
+    if(!confirm(`Excluir definitivamente a conta de ${target.email}? Os equipamentos e movimentos serão mantidos, mas a conta e seu perfil serão excluídos.`))return;
+    const digitado=prompt(`Para confirmar a exclusão, digite o e-mail completo de ${target.email}:`);
+    if(digitado===null)return;
+    if(digitado.trim().toLowerCase()!==String(target.email||'').toLowerCase()){
+      message('usersMessage','Exclusão cancelada: o e-mail de confirmação não corresponde.');return;
+    }
+    message('usersMessage',`Excluindo a conta de ${target.email}…`,true);
+    try{
+      await callUserAdmin('delete',{userId:id});
+      await loadUsers();
+      message('usersMessage',`Conta de ${target.email} excluída com sucesso.`,true);
+    }catch(err){message('usersMessage',`Não foi possível excluir a conta: ${err.message}`);}
+    return;
+  }
   if(action==='access'){
     const blocked=blockedFlag==='true';
     if(!confirm(`${blocked?'Desbloquear':'Bloquear'} o acesso de ${email}?`))return;
