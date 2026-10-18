@@ -108,6 +108,20 @@ Deno.serve(async (req: Request) => {
       return response({ message: "Perfil alterado." });
     }
 
+    if (action === "delete") {
+      const userId = String(body.userId || "").trim();
+      if (!/^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$/i.test(userId)) {
+        return response({ error: "Identificador de usuário inválido." }, 400);
+      }
+      if (userId === authData.user.id) {
+        return response({ error: "Você não pode excluir sua própria conta." }, 400);
+      }
+      const { data: target, error: targetError } = await admin.auth.admin.getUserById(userId);
+      if (targetError || !target.user) return response({ error: "Usuário não encontrado." }, 404);
+      const { error } = await admin.auth.admin.deleteUser(userId);
+      if (error) return response({ error: error.message }, 400);
+      return response({ message: "Usuário excluído com sucesso." });
+    }
     if (action === "access") {
       const userId = String(body.userId || "");
       const blocked = body.blocked === true;
