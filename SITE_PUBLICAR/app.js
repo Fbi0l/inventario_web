@@ -4,7 +4,7 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 const configured = /^https:\/\/[^/]+\.supabase\.co$/.test(SUPABASE_URL) && SUPABASE_ANON_KEY.length > 20 && !SUPABASE_ANON_KEY.includes('COLE_AQUI');
 const db = configured ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
 const $ = id => document.getElementById(id);
-const state = { equipment: [], movements: [], users: [], page: 'dashboard', user: null, perfil: null };
+const state = { equipment: [], movements: [], users: [], archives: [], archiveEquipment: [], archiveMovements: [], selectedArchive: null, page: 'dashboard', user: null, perfil: null };
 const fields = ['tag','patrimonio','descricao','categoria','marca','modelo','numeroSerie','pertencimento','responsavel','localizacao','estado','situacao','valor','observacoes'];
 const dbField = {tag:'tag',patrimonio:'patrimonio',descricao:'descricao',categoria:'categoria',marca:'marca',modelo:'modelo',numeroSerie:'numero_serie',pertencimento:'pertencimento',responsavel:'responsavel',localizacao:'localizacao',estado:'estado',situacao:'situacao',valor:'valor',observacoes:'observacoes'};
 const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -34,7 +34,7 @@ async function showApp(session){
 }
 async function login(e){e.preventDefault(); if(!db){message('loginMessage','Configure a URL e a chave do Supabase no arquivo app.js.');return;} message('loginMessage','Entrando…',true); const {error}=await db.auth.signInWithPassword({email:$('email').value.trim(),password:$('password').value}); if(error)message('loginMessage',error.message); else message('loginMessage','',true);}
 async function logout(){if(db)await db.auth.signOut();state.user=null;state.perfil=null;showLogin();}
-async function loadAll(){if(!db||!state.perfil)return; message('globalMessage','Carregando dados…',true); const [e,m]=await Promise.all([db.from('equipamentos').select('*').order('created_at',{ascending:false}),db.from('movimentacoes').select('*, equipamentos(tag, patrimonio, descricao)').order('created_at',{ascending:false}).limit(500)]); if(e.error||m.error){message('globalMessage',`Erro ao carregar: ${(e.error||m.error).message}`);return;} state.equipment=e.data||[];state.movements=m.data||[];renderAll();message('globalMessage','Dados atualizados.',true); }
+async function loadAll(){if(!db||!state.perfil)return; message('globalMessage','Carregando dados…',true); const [e,m]=await Promise.all([db.from('equipamentos').select('*').is('ciclo_arquivado_id',null).order('created_at',{ascending:false}),db.from('movimentacoes').select('*, equipamentos(tag, patrimonio, descricao)').is('ciclo_arquivado_id',null).order('created_at',{ascending:false}).limit(500)]); if(e.error||m.error){message('globalMessage',`Erro ao carregar: ${(e.error||m.error).message}`);return;} state.equipment=e.data||[];state.movements=m.data||[];renderAll();message('globalMessage','Dados atualizados.',true); }
 const roleLabel = perfil => ({administrador:'Administrador',operador:'Operador',consulta:'Consulta'})[perfil]||'Sem perfil';
 const canManageEquipment = () => state.perfil === 'administrador';
 const canMove = () => ['administrador','operador'].includes(state.perfil);
@@ -42,9 +42,10 @@ const canManageUsers = () => state.perfil === 'administrador';
 function denyAction(){message('globalMessage','Seu perfil não permite executar esta ação.');}
 function applyPermissions(){
   document.querySelector('[data-page="users"]').classList.toggle('hidden',!canManageUsers());
+  document.querySelector('[data-page="archives"]').classList.toggle('hidden',!canManageUsers());
   $('newEquipmentBtn').classList.toggle('hidden',!canManageEquipment());
   $('newMovementBtn').classList.toggle('hidden',!canMove());
-  if(!canManageUsers() && state.page==='users')goto('dashboard');
+  if(!canManageUsers() && ['users','archives'].includes(state.page))goto('dashboard');
   renderEquipment();renderMovements();
 }
 function renderAll(){renderStats();renderEquipment();renderMovements();renderRecent();populateCategories();populateMovementEquipment();if($('reportsPage'))renderReport();}
@@ -55,7 +56,7 @@ function renderMovements(){const q=$('searchMovement').value.toLowerCase(),type=
 function renderRecent(){const arr=state.movements.slice(0,8);$('recentBody').innerHTML=arr.length?arr.map(m=>`<tr><td>${fmt(m.created_at||m.retirada_em)}</td><td>${esc(movementName(m))}</td><td>${pill(m.tipo)}</td><td>${esc(m.responsavel||'—')}</td><td>${esc(m.observacoes||'—')}</td></tr>`).join(''):'<tr><td colspan="5" class="empty">Nenhuma movimentação registrada.</td></tr>';}
 function populateCategories(){const select=$('categoryFilter'),current=select.value,cats=[...new Set(state.equipment.map(x=>x.categoria).filter(Boolean))].sort();select.innerHTML='<option value="">Todas as categorias</option>'+cats.map(c=>`<option>${esc(c)}</option>`).join('');select.value=current;}
 function populateMovementEquipment(){const select=$('movementEquipment'),available=state.equipment.filter(x=>x.situacao==='Disponível');select.innerHTML='<option value="">Selecione…</option>'+available.map(x=>`<option value="${x.id}">${esc(x.tag||x.patrimonio||'Sem código')} — ${esc(x.descricao)}</option>`).join('');}
-function goto(page){if(page==='users'&&!canManageUsers()){denyAction();return;}state.page=page;document.querySelectorAll('.page').forEach(x=>x.classList.add('hidden'));$(`${page}Page`).classList.remove('hidden');document.querySelectorAll('.nav-item[data-page]').forEach(x=>x.classList.toggle('active',x.dataset.page===page));$('pageTitle').textContent=({dashboard:'Painel geral',equipment:'Equipamentos',movements:'Retiradas e devoluções',reports:'Relatórios',users:'Usuários'})[page];if(page==='reports')renderReport();if(page==='users')loadUsers();}
+function goto(page){if(['users','archives'].includes(page)&&!canManageUsers()){denyAction();return;}state.page=page;document.querySelectorAll('.page').forEach(x=>x.classList.add('hidden'));$(`${page}Page`).classList.remove('hidden');document.querySelectorAll('.nav-item[data-page]').forEach(x=>x.classList.toggle('active',x.dataset.page===page));$('pageTitle').textContent=({dashboard:'Painel geral',equipment:'Equipamentos',movements:'Retiradas e devoluções',reports:'Relatórios',users:'Usuários',archives:'Arquivos anteriores'})[page];if(page==='reports')renderReport();if(page==='users')loadUsers();if(page==='archives')loadArchives();}
 function openEquipment(item=null){if(!canManageEquipment()){denyAction();return;}$('equipmentForm').reset();$('equipmentId').value=item?.id||'';$('equipmentDialogTitle').textContent=item?'Editar equipamento':'Novo equipamento';fields.forEach(f=>{const el=$(f);if(el)el.value=item?.[dbField[f]]??'';});$('situacao').value=item?.situacao||'Disponível';$('estado').value=item?.estado||'Bom';$('equipmentDialog').showModal();}
 async function saveEquipment(e){e.preventDefault();if(!canManageEquipment()){denyAction();return;}const id=$('equipmentId').value;const payload={};fields.forEach(f=>{const el=$(f);let v=el.value.trim();payload[dbField[f]]=f==='valor'?(v===''?null:Number(v)):(v||null);});if(!payload.tag)payload.tag=`EQ-${Date.now().toString().slice(-8)}`;message('equipmentMessage','Salvando…',true);const res=id?await db.from('equipamentos').update(payload).eq('id',id).select().single():await db.from('equipamentos').insert({...payload,criado_por:state.user.id}).select().single();if(res.error){message('equipmentMessage',res.error.message);return;} $('equipmentDialog').close();await loadAll();}
 async function deleteEquipment(id){if(!canManageEquipment()){denyAction();return;}const item=state.equipment.find(x=>x.id===id);if(!item)return;if(!confirm(`Excluir “${item.descricao}”? Esta ação não pode ser desfeita.`))return;const {error}=await db.from('equipamentos').delete().eq('id',id);if(error){message('globalMessage',`Não foi possível excluir: ${error.message}`);return;}await loadAll();}
@@ -153,11 +154,96 @@ async function changeUserRole(select){
     message('usersMessage',`Erro ao alterar perfil: ${err.message}`);
   }
 }
+
+const archiveCanManage=()=>canManageUsers() && !!state.user;
+async function fetchAllArchived(table,id,columns='*'){
+  const all=[];
+  for(let offset=0;offset<100000;offset+=500){
+    const {data,error}=await db.from(table).select(columns).eq('ciclo_arquivado_id',id).order('created_at',{ascending:true}).range(offset,offset+499);
+    if(error)throw error;
+    all.push(...(data||[]));
+    if(!data||data.length<500)return all;
+  }
+  throw new Error('Arquivo muito grande para carregar por completo. Contate o administrador.');
+}
+async function loadArchives(){
+  if(!archiveCanManage())return;
+  message('archivesMessage','Carregando arquivos…',true);
+  const {data,error}=await db.from('ciclos_arquivados').select('*').order('criado_em',{ascending:false});
+  if(error){message('archivesMessage','Erro ao carregar: '+error.message);return;}
+  state.archives=data||[];
+  const body=$('archivesBody');
+  body.innerHTML=state.archives.length?state.archives.map(a=>`<tr>
+    <td><strong>${esc(a.nome)}</strong>${a.restaurado_em?'<br><small>Já restaurado</small>':''}</td>
+    <td>${esc(fmt(a.criado_em))}</td><td>${a.quantidade_equipamentos}</td><td>${a.quantidade_movimentacoes}</td>
+    <td><div class="table-actions"><button class="secondary" data-archive-action="view" data-archive-id="${esc(a.id)}">Consultar</button>
+    ${!a.restaurado_em?`<button class="secondary" data-archive-action="restore" data-archive-id="${esc(a.id)}">Restaurar</button>`:''}
+    </div></td></tr>`).join(''):'<tr><td colspan="5" class="empty">Nenhum arquivo anterior.</td></tr>';
+  message('archivesMessage',`${state.archives.length} arquivo(s) encontrado(s).`,true);
+}
+async function archiveInventory(){
+  if(!archiveCanManage()){denyAction();return;}
+  if(!confirm('Arquivar os equipamentos e TODAS as retiradas/devoluções do ciclo atual? As listas ficarão vazias, e o histórico será preservado para recuperação.'))return;
+  const verify=prompt('Para confirmar o início de um novo ciclo, digite ARQUIVAR:');
+  if(verify!== 'ARQUIVAR'){message('archivesMessage','Arquivamento cancelado.');return;}
+  const btn=$('archiveNowBtn');btn.disabled=true;
+  message('archivesMessage','Arquivando dados…',true);
+  try{
+    const {error}=await db.rpc('arquivar_inventario',{p_nome:$('archiveName').value.trim()||null});
+    if(error)throw error;
+    $('archiveName').value='';
+    state.selectedArchive=null;$('archiveDetails').classList.add('hidden');
+    await loadAll();await loadArchives();
+    message('archivesMessage','Ciclo arquivado com sucesso. As listas atuais estão vazias.',true);
+  }catch(err){message('archivesMessage','Não foi possível arquivar: '+err.message);}
+  finally{btn.disabled=false;}
+}
+async function viewArchivedCycle(id){
+  if(!archiveCanManage()){denyAction();return;}
+  const a=state.archives.find(x=>x.id===id);if(!a)return;
+  message('archivesMessage','Carregando histórico…',true);
+  try{
+    const [equipment,movements]=await Promise.all([
+      fetchAllArchived('equipamentos',id),
+      fetchAllArchived('movimentacoes',id)
+    ]);
+    state.selectedArchive=id;state.archiveEquipment=equipment;state.archiveMovements=movements;
+    $('archiveDetailsTitle').textContent='Histórico — '+a.nome;
+    $('archiveEquipmentBody').innerHTML=equipment.length?equipment.map(e=>`<tr><td>${esc(e.tag||'—')}</td><td>${esc(e.patrimonio||'—')}</td><td>${esc(e.descricao)}</td><td>${esc(e.situacao)}</td></tr>`).join(''):'<tr><td colspan="4">Nenhum equipamento</td></tr>';
+    const byId=new Map(equipment.map(e=>[e.id,e]));
+    $('archiveMovementsBody').innerHTML=movements.length?movements.map(m=>`<tr><td>${esc(fmt(m.created_at))}</td><td>${esc(byId.get(m.equipamento_id)?.descricao||'—')}</td><td>${esc(m.tipo)}</td><td>${esc(m.responsavel)}</td><td>${esc(fmt(m.devolucao_em))}</td></tr>`).join(''):'<tr><td colspan="5">Nenhuma movimentação</td></tr>';
+    $('archiveDetails').classList.remove('hidden');
+    message('archivesMessage','Arquivo carregado para consulta e exportação.',true);
+  }catch(err){message('archivesMessage','Não foi possível carregar arquivo: '+err.message);}
+}
+function exportArchivedData(type){
+  if(!archiveCanManage()||!state.selectedArchive)return;
+  const rows=type==='equipment'?state.archiveEquipment:state.archiveMovements;
+  if(!rows.length){message('archivesMessage','Este arquivo não contém registros desse tipo.');return;}
+  const headers=Object.keys(rows[0]);
+  csvDownload(headers,rows.map(x=>headers.map(h=>x[h]??'')),`arquivo_${type}_${state.selectedArchive.slice(0,8)}.csv`);
+}
+async function restoreArchivedCycle(id){
+  if(!archiveCanManage()){denyAction();return;}
+  const a=state.archives.find(x=>x.id===id);if(!a||a.restaurado_em)return;
+  if(state.equipment.length||state.movements.length){message('archivesMessage','Para restaurar, primeiro arquive o ciclo atual. As listas ativas precisam estar vazias.');return;}
+  if(!confirm(`Restaurar "${a.nome}"? Isso fará seus equipamentos e movimentações voltarem às listas ativas.`))return;
+  const verify=prompt('Digite RESTAURAR para confirmar:');
+  if(verify!=='RESTAURAR'){message('archivesMessage','Restauração cancelada.');return;}
+  message('archivesMessage','Restaurando arquivo…',true);
+  const {error}=await db.rpc('restaurar_inventario',{p_ciclo_id:id});
+  if(error){message('archivesMessage','Não foi possível restaurar: '+error.message);return;}
+  state.selectedArchive=null;$('archiveDetails').classList.add('hidden');
+  await loadAll();await loadArchives();
+  message('archivesMessage','Arquivo restaurado com sucesso.',true);
+}
+
 document.addEventListener('change',e=>{
   const select=e.target.closest('select[data-role-user]');
   if(select)changeUserRole(select);
 });
 function openQr(item){$('qrcode').innerHTML='';$('qrLabel').textContent=`${item.tag||item.patrimonio||''} — ${item.descricao}`;new QRCode($('qrcode'),{text:JSON.stringify({id:item.id,tag:item.tag,patrimonio:item.patrimonio,descricao:item.descricao}),width:220,height:220,correctLevel:QRCode.CorrectLevel.M});$('qrDialog').showModal();}
-document.addEventListener('click',e=>{const nav=e.target.closest('[data-page]');if(nav)goto(nav.dataset.page);const go=e.target.closest('[data-goto]');if(go)goto(go.dataset.goto);const close=e.target.closest('[data-close]');if(close)$(close.dataset.close).close();const action=e.target.closest('[data-action]');if(action){const item=state.equipment.find(x=>x.id===action.dataset.id);if(action.dataset.action==='edit')openEquipment(item);if(action.dataset.action==='delete')deleteEquipment(action.dataset.id);if(action.dataset.action==='qr')openQr(item);if(action.dataset.action==='return'){const m=state.movements.find(x=>x.id===action.dataset.id);if(m)openReturn(m);}}const userActionBtn=e.target.closest('[data-user-action]');if(userActionBtn)userAction(userActionBtn.dataset.userAction,userActionBtn.dataset.userId,userActionBtn.dataset.userEmail||'este usuário',userActionBtn.dataset.blocked);});
+document.addEventListener('click',e=>{const nav=e.target.closest('[data-page]');if(nav)goto(nav.dataset.page);const go=e.target.closest('[data-goto]');if(go)goto(go.dataset.goto);const close=e.target.closest('[data-close]');if(close)$(close.dataset.close).close();const action=e.target.closest('[data-action]');if(action){const item=state.equipment.find(x=>x.id===action.dataset.id);if(action.dataset.action==='edit')openEquipment(item);if(action.dataset.action==='delete')deleteEquipment(action.dataset.id);if(action.dataset.action==='qr')openQr(item);if(action.dataset.action==='return'){const m=state.movements.find(x=>x.id===action.dataset.id);if(m)openReturn(m);}}const archiveAction=e.target.closest('[data-archive-action]');if(archiveAction){const id=archiveAction.dataset.archiveId;if(archiveAction.dataset.archiveAction==='view')viewArchivedCycle(id);if(archiveAction.dataset.archiveAction==='restore')restoreArchivedCycle(id);}const userActionBtn=e.target.closest('[data-user-action]');if(userActionBtn)userAction(userActionBtn.dataset.userAction,userActionBtn.dataset.userId,userActionBtn.dataset.userEmail||'este usuário',userActionBtn.dataset.blocked);});
+$('archiveNowBtn').addEventListener('click',archiveInventory);$('refreshArchivesBtn').addEventListener('click',loadArchives);$('exportArchiveEquipmentBtn').addEventListener('click',()=>exportArchivedData('equipment'));$('exportArchiveMovementsBtn').addEventListener('click',()=>exportArchivedData('movements'));
 $('createUserForm').addEventListener('submit',createUser);$('refreshUsersBtn').addEventListener('click',loadUsers);$('loginForm').addEventListener('submit',login);$('logoutBtn').addEventListener('click',logout);$('refreshBtn').addEventListener('click',loadAll);$('newEquipmentBtn').addEventListener('click',()=>openEquipment());$('equipmentForm').addEventListener('submit',saveEquipment);$('newMovementBtn').addEventListener('click',openMovement);$('movementForm').addEventListener('submit',saveMovement);$('returnForm').addEventListener('submit',saveReturn);$('exportBtn').addEventListener('click',exportCsv);$('exportReportBtn').addEventListener('click',exportReport);$('printReportBtn').addEventListener('click',printReport);$('applyReportBtn').addEventListener('click',renderReport);['reportType','reportStatus','reportStart','reportEnd'].forEach(id=>$(id).addEventListener('change',renderReport));window.addEventListener('afterprint',()=>document.body.classList.remove('report-print'));$('printQrBtn').addEventListener('click',()=>window.print());['searchEquipment','statusFilter','categoryFilter'].forEach(id=>$(id).addEventListener('input',renderEquipment));['searchMovement','movementFilter'].forEach(id=>$(id).addEventListener('input',renderMovements));
 if(!configured){message('loginMessage','Antes de entrar, configure a URL e a chave pública do Supabase no arquivo app.js.');}else{db.auth.getSession().then(({data})=>data.session?showApp(data.session):showLogin());db.auth.onAuthStateChange((_event,session)=>{if(session&&!state.user)showApp(session);else if(!session){state.user=null;state.perfil=null;showLogin();}});}
