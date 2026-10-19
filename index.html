@@ -33,6 +33,7 @@
         <button class="nav-item" data-page="movements">⇄ <span>Retiradas e devoluções</span></button>
         <button class="nav-item" data-page="reports">▤ <span>Relatórios</span></button>
         <button class="nav-item" data-page="users">♙ <span>Usuários</span></button>
+        <button class="nav-item hidden" data-page="archives">▤ <span>Arquivos anteriores</span></button>
       </nav>
       <div class="sidebar-bottom"><span id="userEmail" class="user-email"></span><small id="userProfile" class="user-email"></small><button id="logoutBtn" class="nav-item">↪ <span>Sair</span></button></div>
     </aside>
@@ -93,6 +94,34 @@
         <span class="site-footer-separator" aria-hidden="true">•</span>
         <span>Versão 1.0.0</span>
       </footer>
+      <section id="archivesPage" class="page hidden">
+        <div class="panel archive-panel">
+          <div class="panel-head">
+            <div><h2>Arquivamento do inventário</h2><p class="muted">Crie um novo ciclo com listas vazias, mantendo o histórico guardado.</p></div>
+            <button id="refreshArchivesBtn" class="secondary" type="button">↻ Atualizar arquivos</button>
+          </div>
+          <p class="muted">O arquivamento inclui equipamentos e retiradas/devoluções juntos. Conclua as devoluções pendentes antes de arquivar. Somente administradores podem executar esta ação.</p>
+          <div class="archive-controls">
+            <label>Nome do arquivo (opcional)<input id="archiveName" maxlength="120" placeholder="Ex.: Inventário de outubro de 2026"></label>
+            <button id="archiveNowBtn" class="primary" type="button">Arquivar ciclo atual</button>
+          </div>
+          <p id="archivesMessage" class="message" aria-live="polite"></p>
+          <div class="panel-head"><div><h3>Arquivos anteriores</h3><p class="muted">Consulte, exporte ou restaure o histórico. A restauração exige listas atuais vazias.</p></div></div>
+          <div class="table-wrap"><table><thead><tr><th>Arquivo</th><th>Arquivado em</th><th>Equipamentos</th><th>Movimentações</th><th>Ações</th></tr></thead>
+          <tbody id="archivesBody"><tr><td colspan="5" class="empty">Nenhum arquivo carregado.</td></tr></tbody></table></div>
+          <div id="archiveDetails" class="archive-details hidden">
+            <h3 id="archiveDetailsTitle">Detalhes do arquivo</h3>
+            <div class="actions">
+              <button id="exportArchiveEquipmentBtn" type="button" class="secondary">Exportar equipamentos CSV</button>
+              <button id="exportArchiveMovementsBtn" type="button" class="secondary">Exportar movimentações CSV</button>
+            </div>
+            <h4>Equipamentos arquivados</h4>
+            <div class="table-wrap"><table><thead><tr><th>TAG</th><th>Patrimônio</th><th>Descrição</th><th>Situação</th></tr></thead><tbody id="archiveEquipmentBody"></tbody></table></div>
+            <h4>Retiradas e devoluções arquivadas</h4>
+            <div class="table-wrap"><table><thead><tr><th>Data</th><th>Equipamento</th><th>Tipo</th><th>Responsável</th><th>Devolução</th></tr></thead><tbody id="archiveMovementsBody"></tbody></table></div>
+          </div>
+        </div>
+      </section>
     </main>
   </div>
 
