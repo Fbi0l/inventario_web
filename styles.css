@@ -29,3 +29,10 @@ select[data-role-user]:disabled{opacity:.75;cursor:not-allowed}
 .archive-details h4{font-size:14px;margin:20px 0 8px}
 .archive-panel .table-actions{flex-wrap:wrap}
 @media(max-width:680px){.archive-controls button{width:100%}}
+
+/* Leitura QR por camera no celular */
+.qr-scanner-dialog{width:min(480px,calc(100vw - 24px));min-width:0}
+.qr-scanner-view{width:100%;min-height:240px;border:1px dashed #cad5e3;background:#f8fafd;border-radius:12px;overflow:hidden;display:flex;justify-content:center;align-items:center}
+.qr-scanner-view video{width:100%!important;max-height:65vh;object-fit:cover}
+.qr-scanner-help{font-size:13px;line-height:1.5;margin:8px 0}
+@media(max-width:680px){#movementsPage .panel-head .actions{display:flex;flex-direction:column;width:100%}#movementsPage .panel-head .actions button{width:100%}}
