@@ -45,6 +45,7 @@ function applyPermissions(){
   document.querySelector('[data-page="archives"]').classList.toggle('hidden',!canManageUsers());
   $('newEquipmentBtn').classList.toggle('hidden',!canManageEquipment());
   $('newMovementBtn').classList.toggle('hidden',!canMove());
+  $('scanMovementBtn').classList.toggle('hidden',!canMove());
   if(!canManageUsers() && ['users','archives'].includes(state.page))goto('dashboard');
   renderEquipment();renderMovements();
 }
