@@ -6,6 +6,7 @@
   <link rel="stylesheet" href="styles.css">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 </head>
 <body>
   <div id="loginView" class="login-wrap">
@@ -51,7 +52,7 @@
         </div>
       </section>
       <section id="movementsPage" class="page hidden">
-        <div class="panel"><div class="panel-head"><div><h2>Retiradas e devoluções</h2><p class="muted">Registre cada retirada e finalize com a devolução do equipamento.</p></div><button id="newMovementBtn" class="primary">＋ Registrar retirada</button></div>
+        <div class="panel"><div class="panel-head"><div><h2>Retiradas e devoluções</h2><p class="muted">Registre cada retirada e finalize com a devolução do equipamento.</p></div><div class="actions"><button id="scanMovementBtn" class="secondary" type="button">▣ Ler QR Code</button><button id="newMovementBtn" class="primary">＋ Registrar retirada</button></div></div>
           <div class="filters"><input id="searchMovement" placeholder="Pesquisar equipamento ou responsável…"><select id="movementFilter"><option value="">Todas as movimentações</option><option value="Retirada">Retiradas</option><option value="Devolução">Devoluções</option></select></div>
           <div class="table-wrap"><table><thead><tr><th>Data/hora</th><th>Equipamento</th><th>Tipo</th><th>Responsável</th><th>Retirada</th><th>Devolução</th><th>Ação</th></tr></thead><tbody id="movementBody"><tr><td colspan="7" class="empty">Carregando…</td></tr></tbody></table></div>
         </div>
@@ -142,6 +143,16 @@
   </form></dialog>
 
   <dialog id="returnDialog"><form id="returnForm" class="dialog-form"><div class="dialog-head"><div><h2>Registrar devolução</h2><p class="muted" id="returnEquipmentName"></p></div><button type="button" class="icon-button" data-close="returnDialog">×</button></div><input id="returnMovementId" type="hidden"><div class="form-grid"><label>Data e hora da devolução *<input id="returnAt" type="datetime-local" required></label><label>Estado na devolução<select id="returnCondition"><option>Bom</option><option>Regular</option><option>Ruim</option><option>Inoperante</option></select></label><label class="span-2">Ocorrências / observações<textarea id="returnNotes" rows="3" maxlength="2000"></textarea></label></div><p id="returnMessage" class="message"></p><div class="dialog-actions"><button type="button" class="secondary" data-close="returnDialog">Cancelar</button><button class="primary" type="submit">Confirmar devolução</button></div></form></dialog>
+
+  <dialog id="qrScanDialog" aria-labelledby="qrScanTitle">
+    <div class="dialog-form qr-scanner-dialog">
+      <div class="dialog-head"><div><h2 id="qrScanTitle">Ler QR Code</h2><p class="muted">Aponte a câmera para a etiqueta do equipamento.</p></div><button type="button" class="icon-button" data-close="qrScanDialog" aria-label="Fechar leitor">×</button></div>
+      <div id="qrScanner" class="qr-scanner-view"></div>
+      <p id="qrScanMessage" class="message" role="status" aria-live="polite"></p>
+      <p class="muted qr-scanner-help">Disponível: abre a retirada. Em uso: abre a devolução. Confira os dados e confirme a operação. É necessário permitir o acesso à câmera.</p>
+      <div class="dialog-actions"><button class="secondary" type="button" data-close="qrScanDialog">Cancelar leitura</button></div>
+    </div>
+  </dialog>
 
   <dialog id="qrDialog"><div class="dialog-form"><div class="dialog-head"><div><h2>QR Code do equipamento</h2><p id="qrLabel" class="muted"></p></div><button class="icon-button" data-close="qrDialog">×</button></div><div id="qrcode" class="qr-code"></div><div class="dialog-actions"><button id="printQrBtn" class="secondary">Imprimir</button><button class="primary" data-close="qrDialog">Concluir</button></div></div></dialog>
   <script src="app.js"></script>

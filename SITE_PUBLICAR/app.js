@@ -45,6 +45,7 @@ function applyPermissions(){
   document.querySelector('[data-page="archives"]').classList.toggle('hidden',!canManageUsers());
   $('newEquipmentBtn').classList.toggle('hidden',!canManageEquipment());
   $('newMovementBtn').classList.toggle('hidden',!canMove());
+  $('scanMovementBtn').classList.toggle('hidden',!canMove());
   if(!canManageUsers() && ['users','archives'].includes(state.page))goto('dashboard');
   renderEquipment();renderMovements();
 }
@@ -242,6 +243,81 @@ document.addEventListener('change',e=>{
   const select=e.target.closest('select[data-role-user]');
   if(select)changeUserRole(select);
 });
+
+/* Leitura QR: identifica o equipamento sem registrar movimentacao automaticamente. */
+let qrReader=null, qrReading=false, qrBusy=false;
+function equipmentFromQr(raw){
+  let value=String(raw||'').trim();
+  if(!value||value.length>4096)return null;
+  let data;
+  try{data=JSON.parse(value);}catch{data=value;}
+  if(typeof data==='object'&&data!==null&&!Array.isArray(data)){
+    // Os QR Codes existentes usam JSON com id, tag, patrimonio e descricao.
+    if(typeof data.id==='string')return state.equipment.find(x=>x.id===data.id)||null;
+    return null;
+  }
+  // Etiquetas simples podem conter somente ID, TAG ou patrimonio.
+  return state.equipment.find(x=>x.id===data||x.tag===data||x.patrimonio===data)||null;
+}
+async function stopQrReader(){
+  qrReading=false;
+  const reader=qrReader;qrReader=null;
+  if(reader){
+    try{if(reader.isScanning)await reader.stop();}catch(e){console.warn('Camera QR:',e);}
+    try{reader.clear();}catch(e){console.warn('Leitor QR:',e);}
+  }
+  const view=$('qrScanner');
+  if(view)view.innerHTML='';
+}
+async function openQrScanner(){
+  if(!canMove()){denyAction();return;}
+  if(typeof Html5Qrcode==='undefined'){message('globalMessage','Nao foi possivel carregar o leitor QR. Verifique a conexao e atualize a pagina.');return;}
+  if(!window.isSecureContext||!navigator.mediaDevices?.getUserMedia){message('globalMessage','A camera exige HTTPS e um navegador com suporte.');return;}
+  if(qrReader)return;
+  const dialog=$('qrScanDialog');
+  message('qrScanMessage','Abrindo câmera…',true);
+  dialog.showModal();
+  try{
+    const reader=new Html5Qrcode('qrScanner',{verbose:false});
+    qrReader=reader;qrReading=true;qrBusy=false;
+    await reader.start({facingMode:'environment'},{fps:10,qrbox:(w,h)=>{const n=Math.max(160,Math.min(w,h,260));return {width:n,height:n};}},async decoded=>{
+      if(!qrReading||qrBusy)return;
+      qrBusy=true;
+      const item=equipmentFromQr(decoded);
+      if(!item){
+        message('qrScanMessage','QR Code não corresponde a um equipamento ativo deste inventário.');qrBusy=false;return;
+      }
+      message('qrScanMessage','Código identificado. Conferindo disponibilidade…',true);
+      try{
+        await stopQrReader();
+        if(dialog.open)dialog.close();
+        // Reconsulta antes de abrir o formulário para evitar usar situação desatualizada.
+        await loadAll();
+        const current=state.equipment.find(x=>x.id===item.id);
+        if(!current){message('globalMessage','Equipamento não encontrado no inventário ativo.');return;}
+        if(current.situacao==='Disponível'){
+          openMovement();
+          $('movementEquipment').value=current.id;
+          message('movementMessage','QR Code identificado: '+current.descricao+'. Preencha os dados e confirme a retirada.',true);
+        }else if(current.situacao==='Em uso'){
+          const pendentes=state.movements.filter(m=>m.equipamento_id===current.id&&m.tipo==='Retirada'&&!m.devolucao_em);
+          if(pendentes.length!==1){message('globalMessage','Não foi possível identificar uma retirada única em aberto para este equipamento. Consulte o histórico manualmente.');return;}
+          openReturn(pendentes[0]);
+          message('returnMessage','QR Code identificado. Confira os dados e confirme a devolução.',true);
+        }else{
+          message('globalMessage','Equipamento '+current.descricao+' está '+current.situacao+' e não pode ser movimentado.');
+        }
+      }catch(e){console.error(e);message('globalMessage','Erro ao processar QR Code. Atualize a lista e tente novamente.');}
+    },()=>{});
+  }catch(e){
+    console.error('Leitor QR:',e);
+    await stopQrReader();
+    if(dialog.open)message('qrScanMessage','Não foi possível iniciar a câmera. Autorize a permissão no navegador ou use o preenchimento manual.');
+  }
+}
+$('scanMovementBtn').addEventListener('click',openQrScanner);
+$('qrScanDialog').addEventListener('close',()=>{stopQrReader();});
+
 function openQr(item){$('qrcode').innerHTML='';$('qrLabel').textContent=`${item.tag||item.patrimonio||''} — ${item.descricao}`;new QRCode($('qrcode'),{text:JSON.stringify({id:item.id,tag:item.tag,patrimonio:item.patrimonio,descricao:item.descricao}),width:220,height:220,correctLevel:QRCode.CorrectLevel.M});$('qrDialog').showModal();}
 document.addEventListener('click',e=>{const nav=e.target.closest('[data-page]');if(nav)goto(nav.dataset.page);const go=e.target.closest('[data-goto]');if(go)goto(go.dataset.goto);const close=e.target.closest('[data-close]');if(close)$(close.dataset.close).close();const action=e.target.closest('[data-action]');if(action){const item=state.equipment.find(x=>x.id===action.dataset.id);if(action.dataset.action==='edit')openEquipment(item);if(action.dataset.action==='delete')deleteEquipment(action.dataset.id);if(action.dataset.action==='qr')openQr(item);if(action.dataset.action==='return'){const m=state.movements.find(x=>x.id===action.dataset.id);if(m)openReturn(m);}}const archiveAction=e.target.closest('[data-archive-action]');if(archiveAction){const id=archiveAction.dataset.archiveId;if(archiveAction.dataset.archiveAction==='view')viewArchivedCycle(id);if(archiveAction.dataset.archiveAction==='restore')restoreArchivedCycle(id);}const userActionBtn=e.target.closest('[data-user-action]');if(userActionBtn)userAction(userActionBtn.dataset.userAction,userActionBtn.dataset.userId,userActionBtn.dataset.userEmail||'este usuário',userActionBtn.dataset.blocked);});
 $('archiveNowBtn').addEventListener('click',archiveInventory);$('refreshArchivesBtn').addEventListener('click',loadArchives);$('exportArchiveEquipmentBtn').addEventListener('click',()=>exportArchivedData('equipment'));$('exportArchiveMovementsBtn').addEventListener('click',()=>exportArchivedData('movements'));
