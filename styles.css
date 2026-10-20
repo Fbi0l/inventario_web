@@ -20,3 +20,12 @@ select[data-role-user]:disabled{opacity:.75;cursor:not-allowed}
 .main{min-height:100vh;display:flex;flex-direction:column}
 @media(max-width:480px){.site-footer-separator{display:none}.site-footer{flex-direction:column;gap:0}}
 @media print{.site-footer{display:none!important}}
+
+/* Ciclos arquivados — administração */
+.archive-controls{display:flex;flex-wrap:wrap;align-items:end;gap:14px;margin:18px 0 4px}
+.archive-controls label{flex:1 1 270px;display:flex;flex-direction:column;gap:7px;font-size:13px;font-weight:650;color:#344256}
+.archive-controls input{width:100%;padding:11px 12px;border:1px solid #d6deea;border-radius:8px;background:#fff;color:#1e293b}
+.archive-details{margin-top:25px;border-top:1px solid var(--line);padding-top:18px}
+.archive-details h4{font-size:14px;margin:20px 0 8px}
+.archive-panel .table-actions{flex-wrap:wrap}
+@media(max-width:680px){.archive-controls button{width:100%}}
