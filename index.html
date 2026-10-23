@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Inventário | Controle de equipamentos</title>
-  <link rel="icon" type="image/png" href="assets/logo-inventario.png?v=1.3.0">
-  <link rel="stylesheet" href="styles.css?v=1.3.0">
+  <link rel="icon" type="image/png" href="assets/logo-inventario.png?v=1.3.1">
+  <link rel="stylesheet" href="styles.css?v=1.3.1">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
@@ -12,7 +12,7 @@
 <body>
   <div id="loginView" class="login-wrap">
     <form id="loginForm" class="login-card">
-      <div class="brand-mark brand-mark-logo"><img class="app-logo" src="assets/logo-inventario.png?v=1.3.0" alt="" width="42" height="42"></div><h1>Inventário</h1><p class="muted">Controle compartilhado de equipamentos</p>
+      <div class="brand-mark brand-mark-logo"><img class="app-logo" src="assets/logo-inventario.png?v=1.3.1" alt="" width="42" height="42"></div><h1>Inventário</h1><p class="muted">Controle compartilhado de equipamentos</p>
       <label>E-mail<input id="email" type="email" required autocomplete="username" placeholder="voce@empresa.com"></label>
       <label>Senha<input id="password" type="password" required autocomplete="current-password" placeholder="Sua senha"></label>
       <button class="primary full" type="submit">Entrar</button>
@@ -22,13 +22,13 @@
       <footer class="site-footer" aria-label="Propriedade e versão do sistema">
         <span>&copy; 2026 <strong>Fbiol</strong> · Todos os direitos reservados</span>
         <span class="site-footer-separator" aria-hidden="true">•</span>
-        <span>Versão 1.3.0</span>
+        <span>Versão 1.3.1</span>
       </footer>
   </div>
 
   <div id="appView" class="app hidden">
     <aside class="sidebar">
-      <div class="brand"><div class="brand-mark brand-mark-logo"><img class="app-logo" src="assets/logo-inventario.png?v=1.3.0" alt="" width="42" height="42"></div><div><strong>Inventário</strong><small>Gestão de equipamentos</small></div></div>
+      <div class="brand"><div class="brand-mark brand-mark-logo"><img class="app-logo" src="assets/logo-inventario.png?v=1.3.1" alt="" width="42" height="42"></div><div><strong>Inventário</strong><small>Gestão de equipamentos</small></div></div>
       <nav>
         <button class="nav-item active" data-page="dashboard">▦ <span>Painel geral</span></button>
         <button class="nav-item" data-page="equipment">▣ <span>Equipamentos</span></button>
@@ -123,7 +123,7 @@
       <footer class="site-footer" aria-label="Propriedade e versão do sistema">
         <span>&copy; 2026 <strong>Fbiol</strong> · Todos os direitos reservados</span>
         <span class="site-footer-separator" aria-hidden="true">•</span>
-        <span>Versão 1.3.0</span>
+        <span>Versão 1.3.1</span>
       </footer>
     </main>
   </div>
@@ -174,7 +174,7 @@
   </div></dialog>
   <script src="https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@pdf-lib/fontkit@1.1.1/dist/fontkit.umd.min.js"></script>
-  <script src="termo-fontes.js?v=1.3.0"></script>
+  <script src="termo-fontes.js?v=1.3.1"></script>
   <dialog id="qrLabelsDialog" aria-labelledby="qrLabelsTitle"><div class="dialog-form">
     <div class="dialog-head"><div><h2 id="qrLabelsTitle">Etiquetas QR Code em A4</h2><p class="muted">Todos os equipamentos do ciclo atual, com 12 etiquetas por folha.</p></div><button type="button" class="icon-button" data-close="qrLabelsDialog" aria-label="Fechar etiquetas">×</button></div>
     <p id="qrLabelsMessage" class="message" role="status" aria-live="polite"></p>
@@ -185,15 +185,16 @@
     <div class="dialog-head"><div><h2 id="importTitle">Importar equipamentos</h2><p class="muted">Confira a prévia antes de cadastrar. Equipamentos existentes não serão alterados.</p></div><button type="button" class="icon-button" data-close="importDialog" aria-label="Fechar importação">×</button></div>
     <label>Planilha Excel ou CSV<input id="importFile" type="file" accept=".xlsx,.xlsm,.csv"></label>
     <label>Aba da planilha<select id="importSheet"><option value="">Selecione um arquivo…</option></select></label>
-    <label>Como tratar equipamentos marcados Em uso?<select id="importInUsePolicy"><option value="">Escolha se houver itens Em uso</option><option value="available">Importar como Disponível; registrar as retiradas depois</option><option value="skip">Não importar as linhas Em uso</option></select></label>
+    <label>Como tratar equipamentos marcados Em uso?<select id="importInUsePolicy"><option value="">Escolha se houver itens Em uso</option><option value="linked">Vincular ao retirante e registrar a retirada</option><option value="available">Importar como Disponível; registrar as retiradas depois</option><option value="skip">Não importar as linhas Em uso</option></select></label>
     <p class="muted">São aceitos até 2000 equipamentos e arquivos de até 10 MB. TAG e Descrição são obrigatórias. Patrimônio zero será tratado como não informado. Campos vazios de Estado e Situação serão Bom e Disponível. As macros do Excel não são executadas.</p>
+    <p class="muted">Ao vincular itens Em uso, confira o retirante sugerido, o estado da planilha e informe a data real da retirada, local e avarias. Cadastre antes em Usuários os retirantes que faltarem.</p>
     <p id="importPreviewSummary" class="muted" aria-live="polite"></p>
-    <div class="table-wrap import-preview"><table><thead><tr><th>Linha</th><th>TAG</th><th>Patrimônio</th><th>Descrição</th><th>Estado</th><th>Situação após importar</th><th>Conferência</th></tr></thead><tbody id="importPreviewBody"></tbody></table></div>
+    <div class="table-wrap import-preview"><table><thead><tr><th>Linha</th><th>TAG</th><th>Patrimônio</th><th>Descrição</th><th>Estado</th><th>Situação após importar</th><th>Responsável / retirada</th><th>Conferência</th></tr></thead><tbody id="importPreviewBody"></tbody></table></div>
     <p id="importMessage" class="message" role="status" aria-live="polite"></p>
     <div class="dialog-actions"><button type="button" class="secondary" data-close="importDialog">Fechar</button><button id="confirmImportBtn" type="button" class="primary" disabled>Importar equipamentos</button></div>
   </div></dialog>
-  <script src="importar-planilha.js?v=1.3.0"></script>
-  <script src="qr-etiquetas.js?v=1.3.0"></script>
-  <script src="termos.js?v=1.3.0"></script>
-  <script src="app.js?v=1.3.0"></script>
+  <script src="importar-planilha.js?v=1.3.1"></script>
+  <script src="qr-etiquetas.js?v=1.3.1"></script>
+  <script src="termos.js?v=1.3.1"></script>
+  <script src="app.js?v=1.3.1"></script>
 </body></html>

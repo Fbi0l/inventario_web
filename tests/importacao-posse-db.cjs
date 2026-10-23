@@ -1,0 +1,51 @@
+// Requer @electric-sql/pglite; usa somente dados ficticios.
+const {PGlite}=require('@electric-sql/pglite'),fs=require('node:fs'),assert=require('node:assert/strict');
+(async()=>{
+ const db=new PGlite();await db.exec(`CREATE ROLE anon;CREATE ROLE authenticated;CREATE ROLE service_role;
+ CREATE SCHEMA auth;CREATE TABLE auth.users(id uuid PRIMARY KEY,deleted_at timestamptz,banned_until timestamptz);
+ CREATE FUNCTION auth.uid()RETURNS uuid LANGUAGE sql AS $$SELECT nullif(current_setting('request.jwt.claim.sub',true),'')::uuid$$;
+ CREATE TABLE public.perfis_usuarios(usuario_id uuid PRIMARY KEY,perfil text);
+ CREATE FUNCTION public.meu_perfil()RETURNS text LANGUAGE sql SECURITY DEFINER AS $$SELECT perfil FROM public.perfis_usuarios WHERE usuario_id=auth.uid()$$;
+ GRANT USAGE ON SCHEMA auth,public TO authenticated;`);
+ await db.exec(fs.readFileSync('supabase_schema.sql','utf8').replace('create extension if not exists pgcrypto;',''));
+ await db.exec(fs.readFileSync('ATUALIZACAO_ARQUIVAMENTO_CICLOS.sql','utf8'));
+ await db.exec(fs.readFileSync('ATUALIZACAO_IMPORTACAO_PLANILHA.sql','utf8'));
+ await db.exec(fs.readFileSync('ATUALIZACAO_TERMOS_PDF.sql','utf8').split('-- Modelo enviado separadamente')[0]+'COMMIT;');
+ await db.exec(fs.readFileSync('ATUALIZACAO_IMPORTACAO_EM_USO.sql','utf8'));
+ await db.exec('GRANT SELECT ON public.equipamentos,public.movimentacoes TO authenticated');
+ const admin='10000000-0000-0000-0000-000000000001',op='10000000-0000-0000-0000-000000000002',consulta='10000000-0000-0000-0000-000000000003';
+ for(const [id,perfil]of [[admin,'administrador'],[op,'operador'],[consulta,'consulta']]){await db.query('INSERT INTO auth.users(id) VALUES($1)',[id]);await db.query('INSERT INTO perfis_usuarios VALUES($1,$2)',[id,perfil]);}
+ const as=async id=>{await db.exec('RESET ROLE');await db.query("SELECT set_config('request.jwt.claim.sub',$1,false)",[id]);await db.exec('SET ROLE authenticated');};
+ const uuid=()=>crypto.randomUUID(),record=(tag,pat,extra={})=>({linha:2,tag,patrimonio:pat,descricao:'Equipamento fictício',estado:'Bom',situacao:'Disponível',...extra});
+ const run=(items,lote=uuid())=>db.query('SELECT importar_equipamentos($1,$2::jsonb) AS r',[lote,JSON.stringify(items)]).then(r=>r.rows[0].r);
+ for(const id of [op,consulta]){await as(id);await assert.rejects(()=>run([record('TI-1','00123')]),/Somente administradores/);}
+ await as(admin);const lote=uuid(),items=[record('TI-1','00123',{codigo_origem:'INV-0001',data_aquisicao:'2026-10-07',valor:12.34,id:uuid(),ciclo_arquivado_id:uuid(),criado_por:op}),record('TI-2','0',{linha:3}),record('TI-3',null,{linha:4})];
+ let r=await run(items,lote);assert.equal(r.importados,3);assert.equal((await run(items,lote)).importados,3);assert.equal((await db.query('SELECT count(*)::int AS n FROM equipamentos')).rows[0].n,3);
+ await assert.rejects(()=>run([record('TI-9',null)],lote),/Lote alterado/);
+ let e=(await db.query("SELECT * FROM equipamentos WHERE tag='TI-1'")).rows[0];assert.equal(e.codigo_origem,'INV-0001');assert.equal(new Date(e.data_aquisicao).toISOString().slice(0,10),'2026-10-07');assert.equal(e.criado_por,admin);assert.equal(e.ciclo_arquivado_id,null);
+ assert.equal((await db.query("SELECT patrimonio FROM equipamentos WHERE tag='TI-2'")).rows[0].patrimonio,null);
+ r=await run([record(' ti-1 ','99999'),record('TI-NOVO','123',{linha:3})]);assert.equal(r.importados,0);assert.equal(r.ignorados.length,2);
+ assert.equal((await db.query("SELECT patrimonio FROM equipamentos WHERE tag='TI-1'")).rows[0].patrimonio,'00123');
+ await assert.rejects(()=>run([record('TI-VALIDO',null),record('TI-BAD',null,{linha:3,situacao:'Em uso'})]),/confira retirante/);
+ assert.equal((await db.query("SELECT count(*)::int AS n FROM equipamentos WHERE tag='TI-VALIDO'")).rows[0].n,0);
+ await assert.rejects(()=>run([record('TI-BAD',null,{valor:-1})]),/valor invalido/);
+ await assert.rejects(()=>run([record('TI-BAD',null,{data_aquisicao:'2026-02-30'})]),/out of range/);
+ await assert.rejects(()=>run([record('TI-BAD',null,{descricao:'x'.repeat(201)})]),/descricao/);
+ await assert.rejects(()=>run([record('TI-BAD',null,{valor:1.234})]),/valor invalido/);
+ await assert.rejects(()=>run([]),/entre 1 e 2000/);
+ r=await run([record('TI-4',null),record('ti-4',null,{linha:3})]);assert.equal(r.importados,1);assert.equal(r.ignorados.length,1);
+ await db.query("SELECT arquivar_inventario('Arquivo de teste')");r=await run([record('TI-1','123')]);assert.equal(r.importados,1);
+ await db.exec('RESET ROLE');
+ await db.query('INSERT INTO dados_retirantes(usuario_id,nome,cpf)VALUES($1,$2,$3)',[admin,'Pessoa Ficticia','52998224725']);
+ await as(admin);
+ const linked=[record('LINK-1',null,{situacao:'Em uso',retirante_id:admin,retirada_em:'2026-01-01T12:00:00Z',local_acao:'Local ficticio',avarias_retirada:false})];
+ const batch=uuid();assert.equal((await run(linked,batch)).importados,1);await run(linked,batch);
+ const movement=(await db.query("SELECT m.* FROM movimentacoes m JOIN equipamentos e ON e.id=m.equipamento_id WHERE e.tag='LINK-1'")).rows;
+ assert.equal(movement.length,1);assert.equal(movement[0].responsavel,'Pessoa Ficticia');assert.equal(movement[0].termo_versao,1);
+ assert.equal((await db.query("SELECT situacao FROM equipamentos WHERE tag='LINK-1'")).rows[0].situacao,'Em uso');
+ await db.query("SELECT registrar_devolucao_termo($1,now(),'Bom',NULL,'Sem alterações aparentes')",[movement[0].id]);
+ assert.equal((await db.query("SELECT situacao FROM equipamentos WHERE tag='LINK-1'")).rows[0].situacao,'Disponível');
+ await assert.rejects(()=>run([record('ROLLBACK-LINK',null),{...linked[0],tag:'BAD-LINK',retirante_id:op}]),/Retirante sem cadastro/);
+ assert.equal((await db.query("SELECT count(*)::int n FROM equipamentos WHERE tag='ROLLBACK-LINK'")).rows[0].n,0);
+ await db.close();console.log('Importacao SQL aprovada: perfil, validacao, rollback, duplicidades, idempotencia, preservacao e ciclo ativo.');
+})().catch(e=>{console.error(e);process.exit(1)});

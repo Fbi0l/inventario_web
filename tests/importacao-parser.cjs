@@ -17,3 +17,11 @@ const app=fs.readFileSync('app.js','utf8');const helper=app.slice(app.indexOf('a
 let batches=0;const equipment=Array.from({length:1001},(_,id)=>({id}));
 const db={from:()=>{const q={select:()=>q,is:()=>q,order:()=>q,range:async(a,b)=>{batches++;return{data:equipment.slice(a,b+1)}}};return q}};
 (async()=>{const fetchAll=new Function('db',helper+';return fetchActiveEquipment;')(db);const result=await fetchAll();assert.equal(result.data.length,1001);assert.equal(batches,3);console.log('Carregamento aprovado: inventario com mais de 1000 equipamentos.');})().catch(e=>{console.error(e);process.exit(1)});
+
+const held=[{item:{linha:2,tag:'H-1',descricao:'Teste',situacao:'Em uso',responsavel:'Pessoa Exemplo'},errors:[]}];
+const holders=[{usuario_id:'id1',nome:'Pessoa Exemplo'}];
+assert.equal(api.prepare(held,[],'linked',holders)[0].status,'pending');
+let out=api.prepare(held,[],'linked',holders,{2:{retirada_em:'2026-01-01T12:00:00Z',local_acao:'Local',avarias_retirada:false}})[0];
+assert.equal(out.status,'ready');assert.equal(out.item.retirante_id,'id1');assert.equal(out.item.situacao,'Em uso');
+assert.equal(api.prepare(held,[],'linked',[...holders,{usuario_id:'id2',nome:'Pessoa Exemplo'}])[0].item.retirante_id,'');
+assert.equal(api.prepare(held,[],'linked',holders,{2:{retirante_id:''}})[0].item.retirante_id,'');

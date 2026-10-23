@@ -6,7 +6,7 @@ const run=s=>new vm.Script(s).runInContext(ctx),$=id=>w.document.getElementById(
 w.HTMLDialogElement.prototype.showModal=function(){this.open=true};w.HTMLDialogElement.prototype.close=function(){this.open=false;this.dispatchEvent(new w.Event('close'))};
 w.TextDecoder=TextDecoder;w.confirm=()=>true;w.XLSX=X;let calls=[],fail=true;
 const user={id:'10000000-0000-0000-0000-000000000001',email:'teste@example.invalid'};
-const db={auth:{getSession:async()=>({data:{session:null}}),onAuthStateChange:()=>{}},from:table=>{const q={select:()=>q,is:()=>q,eq:()=>q,order:()=>q,limit:()=>q,range:async()=>({data:[{tag:'TI-DUP',patrimonio:'00123'}]}),maybeSingle:async()=>({data:{perfil:'administrador'}}),then:r=>Promise.resolve({data:[]}).then(r)};return q},rpc:async(name,args)=>{calls.push({name,args});if(fail)return{error:{message:'Erro de conexão simulado'}};return{data:{importados:1,ignorados:[]}}}};
+const db={auth:{getSession:async()=>({data:{session:null}}),onAuthStateChange:()=>{}},from:table=>{const q={select:()=>q,is:()=>q,eq:()=>q,order:()=>q,limit:()=>q,range:async()=>({data:[{tag:'TI-DUP',patrimonio:'00123'}]}),maybeSingle:async()=>({data:{perfil:'administrador'}}),then:r=>Promise.resolve({data:[]}).then(r)};return q},rpc:async(name,args)=>{if(name==='listar_retirantes')return{data:[{usuario_id:user.id,nome:'Pessoa Exemplo'}]};calls.push({name,args});if(fail)return{error:{message:'Erro de conexão simulado'}};return{data:{importados:1,ignorados:[]}}}};
 w.supabase={createClient:()=>db};w.user=user;
 for(const f of ['importar-planilha.js','app.js'])run(fs.readFileSync(f,'utf8'));
 (async()=>{
@@ -18,6 +18,14 @@ for(const f of ['importar-planilha.js','app.js'])run(fs.readFileSync(f,'utf8'));
  await run('confirmEquipmentImport()');assert.match($('importMessage').textContent,/Erro de conexão simulado/);assert.equal($('confirmImportBtn').disabled,false);
  fail=false;await run('confirmEquipmentImport()');assert.equal(calls.length,2);assert.equal(calls[0].args.p_lote,calls[1].args.p_lote);assert.equal(calls[1].args.p_itens.length,1);assert.equal($('confirmImportBtn').disabled,true);assert.match($('importMessage').textContent,/1 equipamento\(s\) importado/);assert.match($('importPreviewBody').textContent,/Importado/);
  $('importDialog').close();run('openImport()');assert.equal($('importFile').disabled,false);assert.equal($('confirmImportBtn').disabled,true);$('importDialog').close();
+ run('openImport()');await run('readImportFile()');
+ $('importInUsePolicy').value='linked';run('renderImportPreview()');
+ assert.equal($('confirmImportBtn').disabled,true);
+ const set=(field,value)=>{const el=w.document.querySelector('[data-import-field="'+field+'"]');assert.ok(el,field);el.value=value;el.dispatchEvent(new w.Event('change',{bubbles:true}));};
+ set('retirante_id',user.id);set('retirada_em','2026-01-01T09:00');set('local_acao','Local ficticio');set('avarias_retirada','false');
+ assert.equal($('confirmImportBtn').disabled,false);
+ await run('confirmEquipmentImport()');const linked=calls.at(-1).args.p_itens.find(i=>i.situacao==='Em uso');assert.ok(linked);assert.equal(linked.retirante_id,user.id);assert.equal(linked.avarias_retirada,false);assert.equal(linked.local_acao,'Local ficticio');
+ $('importDialog').close();
  run("state.perfil='consulta';applyPermissions()");assert.ok($('importEquipmentBtn').classList.contains('hidden'));run('openImport()');assert.equal($('importDialog').open,false);
  dom.window.close();console.log('Importacao DOM aprovada: previa, permissao, escolha Em uso, falha/repeticao idempotente e reabertura.');
 })().catch(e=>{console.error(e);dom.window.close();process.exit(1)});
