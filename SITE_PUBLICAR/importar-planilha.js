@@ -50,13 +50,24 @@ window.InventoryImport=(()=>{
   }
   if(rows.length>2000)throw Error('Importe até 2000 equipamentos por vez.');return rows;
  }
- function prepare(rows,existing,policy){
+ function prepare(rows,existing,policy,holders=[],assignments={}){
   const tags=new Set(existing.map(e=>String(e.tag||'').trim().toUpperCase()).filter(Boolean));
   const assets=new Set(existing.map(e=>pat(e.patrimonio)).filter(Boolean));
   return rows.map(row=>{
    const item={...row.item},errors=[...row.errors];let status='ready',reason='Pronto para importar';
    if(item.situacao==='Em uso'){
-    if(policy==='available'){
+    if(policy==='linked'){
+     const choice=assignments[item.linha]||{};
+     const matches=holders.filter(h=>normalize(h.nome)===normalize(item.responsavel)&&normalize(item.responsavel));
+     const holder=holders.find(h=>h.usuario_id===choice.retirante_id)||(choice.retirante_id===undefined&&matches.length===1?matches[0]:null);
+     item.retirante_id=holder?.usuario_id||'';item.retirada_em=choice.retirada_em||'';item.local_acao=choice.local_acao||'';
+     item.avarias_retirada=choice.avarias_retirada;
+     if(!holder||!item.retirada_em||!item.local_acao.trim()||typeof item.avarias_retirada!=='boolean'){
+      status='pending';reason='Confira retirante, data, local e avarias';
+     }else if(!Number.isFinite(Date.parse(item.retirada_em))||Date.parse(item.retirada_em)>Date.now()||item.local_acao.length>150){
+      errors.push('Data da retirada ou local inválido');
+     }else reason='Retirada vinculada a '+holder.nome;
+    }else if(policy==='available'){
      item.situacao='Disponível';item.observacoes=[item.observacoes,'[Importação: situação original Em uso. Registrar a retirada no sistema.]'].filter(Boolean).join('\n');
      if(item.observacoes.length>2000)errors.push('Observações excedem 2000 caracteres após registrar a situação original');
      reason='Será importado como Disponível; registre a retirada depois';
@@ -73,6 +84,7 @@ window.InventoryImport=(()=>{
  return {normalize,pat,parseDate,parseValue,parseWorkbook,prepare};
 })();
 let importBook=null,importRows=[],importPrepared=[],importExisting=[],importLot=null,importBusy=false,importReadId=0,importSuccess=false;
+let importHolders=[],importAssignments={};
 let sheetJsPromise;
 function loadSheetJs(){
  if(window.XLSX)return Promise.resolve(window.XLSX);
@@ -89,7 +101,7 @@ async function loadExistingForImport(){
  }throw Error('Quantidade de equipamentos excede o limite de conferência.');
 }
 function resetImport(){
- importReadId++;importBook=null;importRows=[];importPrepared=[];importExisting=[];importLot=null;importSuccess=false;
+ importReadId++;importHolders=[];importAssignments={};importBook=null;importRows=[];importPrepared=[];importExisting=[];importLot=null;importSuccess=false;
  for(const id of ['importFile','importSheet','importInUsePolicy'])$(id).disabled=false;
  $('importFile').value='';$('importSheet').innerHTML='<option value="">Selecione um arquivo…</option>';
  $('importInUsePolicy').value='';$('importPreviewBody').innerHTML='';$('confirmImportBtn').disabled=true;$('importPreviewSummary').textContent='';message('importMessage','');
@@ -111,7 +123,7 @@ async function readImportFile(){
    type='string';
   }
   const book=X.read(input,{type,raw:type==='string',cellNF:true,cellText:true,cellDates:false,bookVBA:false,sheetRows:2022});
-  const existing=await loadExistingForImport();if(request!==importReadId||!$('importDialog').open)return;
+  const existing=await loadExistingForImport();const holders=await db.rpc('listar_retirantes');if(holders.error)throw holders.error;if(request!==importReadId||!$('importDialog').open)return;importHolders=holders.data||[];importAssignments={};
   importBook=book;importExisting=existing;importLot=crypto.randomUUID();
   $('importSheet').innerHTML=book.SheetNames.map(name=>`<option value="${esc(name)}">${esc(name)}</option>`).join('');
   $('importSheet').value=book.SheetNames.find(n=>InventoryImport.normalize(n)==='cadastro')||book.SheetNames[0];
@@ -120,24 +132,24 @@ async function readImportFile(){
 }
 function chooseImportSheet(){
  if(importBusy||!importBook||importSuccess)return;
- try{importRows=InventoryImport.parseWorkbook(window.XLSX,importBook,$('importSheet').value);renderImportPreview();}
+ try{importAssignments={};importRows=InventoryImport.parseWorkbook(window.XLSX,importBook,$('importSheet').value);renderImportPreview();}
  catch(e){importRows=[];importPrepared=[];$('importPreviewBody').innerHTML='';$('confirmImportBtn').disabled=true;message('importMessage',e.message);}
 }
 function renderImportPreview(){
  if(importBusy||importSuccess)return;
- importPrepared=InventoryImport.prepare(importRows,importExisting,$('importInUsePolicy').value);
+ importPrepared=InventoryImport.prepare(importRows,importExisting,$('importInUsePolicy').value,importHolders,importAssignments);
  const counts={ready:0,duplicate:0,invalid:0,pending:0,ignored:0};importPrepared.forEach(r=>counts[r.status]++);
  $('importPreviewSummary').textContent=`${importRows.length} linha(s): ${counts.ready} pronta(s), ${counts.duplicate} duplicada(s), ${counts.invalid} inválida(s), ${counts.ignored} ignorada(s), ${counts.pending} aguardando escolha.`;
  renderImportRows();
  $('confirmImportBtn').textContent=`Importar ${counts.ready} equipamento(s)`;
  $('confirmImportBtn').disabled=!counts.ready||!!counts.pending;
- message('importMessage',counts.pending?'Escolha como tratar os itens Em uso antes de confirmar.':counts.invalid?'As linhas inválidas não serão enviadas. Confira a prévia.':importRows.length?'Prévia pronta. Confira antes de importar.':'A aba não contém equipamentos.',!counts.pending&&!counts.invalid);
+ message('importMessage',counts.pending?($('importInUsePolicy').value==='linked'?'Complete e confira os dados da retirada de cada item Em uso.':'Escolha como tratar os itens Em uso antes de confirmar.'):counts.invalid?'As linhas inválidas não serão enviadas. Confira a prévia.':importRows.length?'Prévia pronta. Confira antes de importar.':'A aba não contém equipamentos.',!counts.pending&&!counts.invalid);
 }
 function renderImportRows(){
- $('importPreviewBody').innerHTML=importPrepared.map(({item:r,status,reason})=>`<tr><td>${r.linha}</td><td>${esc(r.tag)}</td><td>${esc(r.patrimonio||'Não informado')}</td><td>${esc(r.descricao)}</td><td>${esc(r.estado)}</td><td>${esc(r.situacao)}</td><td class="${status==='ready'?'':'danger'}">${esc(reason)}</td></tr>`).join('');
+ $('importPreviewBody').innerHTML=importPrepared.map(({item:r,status,reason})=>`<tr><td>${r.linha}</td><td>${esc(r.tag)}</td><td>${esc(r.patrimonio||'Não informado')}</td><td>${esc(r.descricao)}</td><td>${esc(r.estado)}</td><td>${esc(r.situacao)}</td><td>${esc(r.responsavel||'Não informado')}${r.situacao==='Em uso'&&$('importInUsePolicy').value==='linked'&&!['duplicate','ignored'].includes(status)?`<label>Retirante<select data-import-line="${r.linha}" data-import-field="retirante_id"><option value="">Selecione…</option>${importHolders.map(h=>`<option value="${esc(h.usuario_id)}" ${h.usuario_id===r.retirante_id?'selected':''}>${esc(h.nome)} (${esc(h.usuario_id.slice(0,8))})</option>`).join('')}</select></label><label>Data e hora da retirada<input type="datetime-local" data-import-line="${r.linha}" data-import-field="retirada_em" value="${r.retirada_em?esc(localDateTime(new Date(r.retirada_em))):''}"></label><label>Local da ação<input maxlength="150" data-import-line="${r.linha}" data-import-field="local_acao" value="${esc(r.local_acao)}"></label><label>Avarias na retirada<select data-import-line="${r.linha}" data-import-field="avarias_retirada"><option value="">Confira…</option><option value="false" ${r.avarias_retirada===false?'selected':''}>Sem avarias</option><option value="true" ${r.avarias_retirada===true?'selected':''}>Com avarias</option></select></label>`:''}</td><td class="${status==='ready'?'':'danger'}">${esc(reason)}</td></tr>`).join('');
 }
 function setImportBusy(value){
- importBusy=value;for(const id of ['importFile','importSheet','importInUsePolicy','confirmImportBtn'])$(id).disabled=value;
+ importBusy=value;document.querySelectorAll('#importPreviewBody input,#importPreviewBody select').forEach(el=>el.disabled=value||importSuccess);for(const id of ['importFile','importSheet','importInUsePolicy','confirmImportBtn'])$(id).disabled=value;
  document.querySelectorAll('[data-close="importDialog"]').forEach(b=>b.disabled=value);
 }
 async function confirmEquipmentImport(){
@@ -168,6 +180,12 @@ async function confirmEquipmentImport(){
 document.addEventListener('DOMContentLoaded',()=>{
  $('importEquipmentBtn').addEventListener('click',openImport);$('importFile').addEventListener('change',readImportFile);
  $('importSheet').addEventListener('change',chooseImportSheet);$('importInUsePolicy').addEventListener('change',renderImportPreview);
+ $('importPreviewBody').addEventListener('change',e=>{
+  const el=e.target,line=el.dataset.importLine,field=el.dataset.importField;if(!line||!field||importBusy||importSuccess)return;
+  let value=el.value;if(field==='retirada_em')value=value?new Date(value).toISOString():'';
+  if(field==='avarias_retirada')value=value===''?undefined:value==='true';
+  (importAssignments[line]||={})[field]=value;renderImportPreview();
+ });
  $('confirmImportBtn').addEventListener('click',confirmEquipmentImport);
  $('importDialog').addEventListener('cancel',e=>{if(importBusy)e.preventDefault();});
  $('importDialog').addEventListener('close',()=>{importReadId++;if(!importBusy)resetImport();});
