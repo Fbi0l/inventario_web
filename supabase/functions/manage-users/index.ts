@@ -10,6 +10,21 @@ type Perfil = "administrador" | "operador" | "consulta";
 const validProfiles: Perfil[] = ["administrador", "operador", "consulta"];
 const isPerfil = (x: string): x is Perfil => validProfiles.includes(x as Perfil);
 
+function cpfValido(cpf: string): boolean {
+  if (!/^\d{11}$/.test(cpf) || /^(\d)\1{10}$/.test(cpf)) return false;
+  for (let j=9;j<11;j++) {
+    let sum=0;for(let i=0;i<j;i++)sum+=Number(cpf[i])*(j+1-i);
+    const digit=(sum*10)%11;
+    if ((digit===10?0:digit)!==Number(cpf[j])) return false;
+  }
+  return true;
+}
+function borrowerData(body: any) {
+  return { nome:String(body.name||'').trim(), cpf:String(body.cpf||'').replace(/[^0-9]/g,''), telefone:String(body.phone||'').trim() };
+}
+function validBorrower(d: ReturnType<typeof borrowerData>): boolean {
+  return d.nome.length>=3 && d.nome.length<=150 && cpfValido(d.cpf) && d.telefone.length<=30;
+}
 function response(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), {
     status,
@@ -56,6 +71,9 @@ Deno.serve(async (req: Request) => {
         users.push(...data.users);
         if (data.users.length < 100) break;
       }
+      const { data: personal, error: personalError } = await admin.from("dados_retirantes").select("usuario_id,nome,cpf,telefone");
+      if (personalError) return response({ error: personalError.message }, 400);
+      const personalMap = new Map((personal || []).map((r) => [r.usuario_id, r]));
       const { data: roles, error: rolesError } = await admin.from("perfis_usuarios")
         .select("usuario_id,perfil");
       if (rolesError) return response({ error: rolesError.message }, 400);
@@ -68,13 +86,16 @@ Deno.serve(async (req: Request) => {
         banned_until: u.banned_until,
         user_metadata: u.user_metadata || {},
         perfil: map.get(u.id) || null,
+        dados_retirante: personalMap.get(u.id) || null,
       })) });
     }
 
     if (action === "create") {
       const email = String(body.email || "").trim().toLowerCase();
       const password = String(body.password || "");
-      const name = String(body.name || "").trim();
+      const details = borrowerData(body);
+      if (!validBorrower(details)) return response({ error: "Informe nome completo, CPF válido e telefone com até 30 caracteres." },400);
+      const name = details.nome;
       const perfil = String(body.perfil || "consulta");
       if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return response({ error: "E-mail inválido." }, 400);
       if (password.length < 8) return response({ error: "Senha deve ter no mínimo 8 caracteres." }, 400);
@@ -91,9 +112,24 @@ Deno.serve(async (req: Request) => {
         await admin.auth.admin.deleteUser(data.user.id);
         return response({ error: `Não foi possível atribuir o perfil: ${assignError.message}` }, 500);
       }
+      const { error: detailsError } = await admin.from("dados_retirantes").upsert({usuario_id:data.user.id,...details});
+      if (detailsError) {
+        await admin.auth.admin.deleteUser(data.user.id);
+        return response({error:`Não foi possível salvar os dados: ${detailsError.message}`},500);
+      }
       return response({ user: { id: data.user.id, email: data.user.email, perfil }, message: "Usuário criado." }, 201);
     }
 
+    if (action === "details") {
+      const userId=String(body.userId||"");
+      const details=borrowerData(body);
+      if (!validBorrower(details)) return response({error:"Informe nome completo e CPF válido."},400);
+      const {data:target,error:targetError}=await admin.auth.admin.getUserById(userId);
+      if(targetError||!target.user)return response({error:"Usuário não encontrado."},404);
+      const {error}=await admin.from("dados_retirantes").upsert({usuario_id:userId,...details,atualizado_em:new Date().toISOString()});
+      if(error)return response({error:error.message},400);
+      return response({message:"Dados do retirante atualizados."});
+    }
     if (action === "role") {
       const userId = String(body.userId || "");
       const perfil = String(body.perfil || "");

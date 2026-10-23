@@ -1,0 +1,34 @@
+// Requer jsdom, pdf-lib e @pdf-lib/fontkit. Sem acesso a servicos externos.
+const {JSDOM}=require('jsdom'),fs=require('fs'),vm=require('vm'),assert=require('node:assert/strict');
+const html=fs.readFileSync('index.html','utf8');
+const dom=new JSDOM(html,{url:'https://example.invalid',runScripts:'outside-only'}),w=dom.window,ctx=dom.getInternalVMContext();
+const run=s=>new vm.Script(s).runInContext(ctx),tick=()=>new Promise(r=>setTimeout(r,10));
+w.HTMLDialogElement.prototype.showModal=function(){this.open=true};w.HTMLDialogElement.prototype.close=function(){this.open=false;this.dispatchEvent(new w.Event('close'))};
+w.URL.createObjectURL=()=> 'blob:test';w.URL.revokeObjectURL=()=>{};w.HTMLAnchorElement.prototype.click=function(){w.downloaded=this.download};
+w.PDFLib=require('pdf-lib');w.fontkit=require('@pdf-lib/fontkit');
+const testSource=fs.readFileSync('tests/termos-ui.cjs','utf8');run(testSource.slice(testSource.indexOf(' const stub=`')+13,testSource.indexOf('`;\n await page.route')).replace(/\$\{JSON.stringify\(Array.from\(template\)\)\}/g,'[]'));
+for(const file of ['termo-fontes.js','termos.js','app.js'])run(fs.readFileSync(file,'utf8'));
+const $=id=>w.document.getElementById(id),submit=id=>$(id).dispatchEvent(new w.Event('submit',{bubbles:true,cancelable:true}));
+(async()=>{
+ const pdf=await w.PDFLib.PDFDocument.create();pdf.addPage([612,792]);const template=await pdf.save();
+ const client=run('db');let templateDownloads=0;
+ client.storage={from:bucket=>{assert.equal(bucket,'modelos-termos');return{download:async name=>{assert.equal(name,'termo-v1.pdf');templateDownloads++;return{data:{size:template.byteLength,arrayBuffer:async()=>template.buffer.slice(template.byteOffset,template.byteOffset+template.byteLength)}}}}}};
+ await tick();await run('showApp({user:testUser})');run("goto('movements')");$('newMovementBtn').click();await tick();
+ assert.equal($('movementResponsible').tagName,'SELECT');assert.equal($('movementResponsible').value,w.testUser.id);
+ $('movementEquipment').value='30000000-0000-0000-0000-000000000001';$('movementLocation').value='Marituba';submit('movementForm');await tick();
+ const out=w.rpcCalls.find(x=>x.name==='registrar_retirada_termo');assert.equal(out.args.p_retirante_id,w.testUser.id);assert.equal(out.args.p_responsavel,undefined);
+ w.document.querySelector('[data-action=return]').click();$('returnAt').value='2026-10-23T13:00';submit('returnForm');
+ for(let i=0;i<500&&(!$('termDialog').open||$('downloadTermBtn').disabled);i++)await tick();
+ assert.equal($('termDialog').open,true);assert.equal($('downloadTermBtn').disabled,false,$('termMessage').textContent);$('downloadTermBtn').click();assert.match(w.downloaded,/^termo_.*\.pdf$/);
+ $('termDialog').close();w.document.querySelector('[data-term-id]').click();
+ for(let i=0;i<500&&$('downloadTermBtn').disabled;i++)await tick();assert.equal($('downloadTermBtn').disabled,false);
+ $('termDialog').close();assert.equal(templateDownloads,2);
+ client.storage.from=()=>({download:async()=>({error:new Error('Access denied')})});
+ w.document.querySelector('[data-term-id]').click();
+ for(let i=0;i<100&&!$('termMessage').textContent.includes('Modelo privado indisponível');i++)await tick();
+ assert.equal($('downloadTermBtn').disabled,true);assert.match($('termMessage').textContent,/Modelo privado indisponível/);assert.equal(w.testReturned,true);
+ $('termDialog').close();run("goto('users')");await tick();w.document.querySelector('[data-user-action=details]').click();assert.equal($('borrowerCpf').value,'52998224725');$('borrowerName').value='Nome Atualizado';submit('borrowerForm');await tick();assert.equal($('borrowerDialog').open,false);
+ run("state.perfil='consulta';applyPermissions()");assert.ok(w.document.querySelector('[data-page=users]').classList.contains('hidden'));
+ run('showLogin()');assert.equal($('borrowerCpf').value,'');assert.equal(run('state.users.length'),0);dom.window.close();
+ console.log('DOM aprovado: selecao de usuario, retirada, devolucao, PDF, reemissao, edicao e limpeza de dados pessoais.');
+})().catch(e=>{console.error(e);dom.window.close();process.exit(1)});

@@ -4,7 +4,7 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 const configured = /^https:\/\/[^/]+\.supabase\.co$/.test(SUPABASE_URL) && SUPABASE_ANON_KEY.length > 20 && !SUPABASE_ANON_KEY.includes('COLE_AQUI');
 const db = configured ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
 const $ = id => document.getElementById(id);
-const state = { equipment: [], movements: [], users: [], archives: [], archiveEquipment: [], archiveMovements: [], selectedArchive: null, page: 'dashboard', user: null, perfil: null };
+const state = { equipment: [], movements: [], users: [], retirantes: [], archives: [], archiveEquipment: [], archiveMovements: [], selectedArchive: null, page: 'dashboard', user: null, perfil: null };
 const fields = ['tag','patrimonio','descricao','categoria','marca','modelo','numeroSerie','pertencimento','responsavel','localizacao','estado','situacao','valor','observacoes'];
 const dbField = {tag:'tag',patrimonio:'patrimonio',descricao:'descricao',categoria:'categoria',marca:'marca',modelo:'modelo',numeroSerie:'numero_serie',pertencimento:'pertencimento',responsavel:'responsavel',localizacao:'localizacao',estado:'estado',situacao:'situacao',valor:'valor',observacoes:'observacoes'};
 const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -12,7 +12,7 @@ const localDateTime = d => { const x = new Date(d); return `${x.getFullYear()}-$
 const fmt = d => d ? new Date(d).toLocaleString('pt-BR',{dateStyle:'short',timeStyle:'short'}) : '—';
 const pill = s => `<span class="pill ${s==='Disponível'?'available':s==='Em uso'?'use':s==='Manutenção'?'maintenance':s==='Baixado'?'retired':''}">${esc(s||'—')}</span>`;
 function message(id, text='', good=false){ const el=$(id); el.textContent=text; el.style.color=good?'#18794e':'#b42318'; }
-function showLogin(){ $('loginView').classList.remove('hidden'); $('appView').classList.add('hidden'); }
+function showLogin(){ state.users=[];state.retirantes=[];$('borrowerForm').reset();$('createUserForm').reset();$('usersBody').innerHTML='';document.querySelectorAll('dialog[open]').forEach(d=>d.close());$('loginView').classList.remove('hidden'); $('appView').classList.add('hidden'); }
 async function showApp(session){
   state.user=session.user;
   state.perfil=null;
@@ -53,7 +53,7 @@ function renderAll(){renderStats();renderEquipment();renderMovements();renderRec
 function renderStats(){ $('statTotal').textContent=state.equipment.length; $('statAvailable').textContent=state.equipment.filter(x=>x.situacao==='Disponível').length; $('statInUse').textContent=state.equipment.filter(x=>x.situacao==='Em uso').length; $('statMaintenance').textContent=state.equipment.filter(x=>x.situacao==='Manutenção').length; }
 function renderEquipment(){const q=$('searchEquipment').value.toLowerCase(), status=$('statusFilter').value,cat=$('categoryFilter').value;const arr=state.equipment.filter(x=>(!q||[x.tag,x.patrimonio,x.descricao,x.marca,x.modelo,x.numero_serie].some(v=>String(v||'').toLowerCase().includes(q)))&&(!status||x.situacao===status)&&(!cat||x.categoria===cat));$('equipmentBody').innerHTML=arr.length?arr.map(x=>`<tr><td><strong>${esc(x.tag||'—')}</strong><br><small>${esc(x.patrimonio||'Sem patrimônio')}</small></td><td><strong>${esc(x.descricao)}</strong><br><small>${esc([x.marca,x.modelo].filter(Boolean).join(' ')||'')}</small></td><td>${esc(x.categoria||'—')}</td><td>${esc(x.localizacao||'—')}</td><td>${pill(x.estado)}</td><td>${pill(x.situacao)}</td><td><div class="table-actions">${canManageEquipment()?`<button class="secondary" data-action="edit" data-id="${x.id}">Editar</button>`:''}<button class="secondary" data-action="qr" data-id="${x.id}">QR</button>${canManageEquipment()?`<button class="secondary" data-action="delete" data-id="${x.id}">Excluir</button>`:''}</div></td></tr>`).join(''):'<tr><td colspan="7" class="empty">Nenhum equipamento encontrado.</td></tr>';}
 function movementName(m){return m.equipamentos?.descricao||state.equipment.find(e=>e.id===m.equipamento_id)?.descricao||'Equipamento removido';}
-function renderMovements(){const q=$('searchMovement').value.toLowerCase(),type=$('movementFilter').value;const arr=state.movements.filter(m=>(!q||[movementName(m),m.responsavel,m.destino].some(v=>String(v||'').toLowerCase().includes(q)))&&(!type||m.tipo===type));$('movementBody').innerHTML=arr.length?arr.map(m=>`<tr><td>${fmt(m.created_at||m.retirada_em)}</td><td><strong>${esc(movementName(m))}</strong><br><small>${esc(m.equipamentos?.tag||'')}</small></td><td>${pill(m.tipo)}</td><td>${esc(m.responsavel||'—')}</td><td>${fmt(m.retirada_em)}</td><td>${fmt(m.devolucao_em)}</td><td>${canMove()&&m.tipo==='Retirada'&&!m.devolucao_em?`<button class="primary" data-action="return" data-id="${m.id}">Devolver</button>`:'—'}</td></tr>`).join(''):'<tr><td colspan="7" class="empty">Nenhuma movimentação encontrada.</td></tr>';}
+function renderMovements(){const q=$('searchMovement').value.toLowerCase(),type=$('movementFilter').value;const arr=state.movements.filter(m=>(!q||[movementName(m),m.responsavel,m.destino].some(v=>String(v||'').toLowerCase().includes(q)))&&(!type||m.tipo===type));$('movementBody').innerHTML=arr.length?arr.map(m=>`<tr><td>${fmt(m.created_at||m.retirada_em)}</td><td><strong>${esc(movementName(m))}</strong><br><small>${esc(m.equipamentos?.tag||'')}</small></td><td>${pill(m.tipo)}</td><td>${esc(m.responsavel||'—')}</td><td>${fmt(m.retirada_em)}</td><td>${fmt(m.devolucao_em)}</td><td>${canMove()&&m.tipo==='Retirada'&&!m.devolucao_em?`<button class="primary" data-action="return" data-id="${m.id}">Devolver</button>`:canMove()&&m.tipo==='Retirada'&&m.devolucao_em&&m.termo_versao?`<button class="secondary" data-term-id="${esc(m.id)}">Termo PDF</button>`:'—'}</td></tr>`).join(''):'<tr><td colspan="7" class="empty">Nenhuma movimentação encontrada.</td></tr>';}
 function renderRecent(){const arr=state.movements.slice(0,8);$('recentBody').innerHTML=arr.length?arr.map(m=>`<tr><td>${fmt(m.created_at||m.retirada_em)}</td><td>${esc(movementName(m))}</td><td>${pill(m.tipo)}</td><td>${esc(m.responsavel||'—')}</td><td>${esc(m.observacoes||'—')}</td></tr>`).join(''):'<tr><td colspan="5" class="empty">Nenhuma movimentação registrada.</td></tr>';}
 function populateCategories(){const select=$('categoryFilter'),current=select.value,cats=[...new Set(state.equipment.map(x=>x.categoria).filter(Boolean))].sort();select.innerHTML='<option value="">Todas as categorias</option>'+cats.map(c=>`<option>${esc(c)}</option>`).join('');select.value=current;}
 function populateMovementEquipment(){const select=$('movementEquipment'),available=state.equipment.filter(x=>x.situacao==='Disponível');select.innerHTML='<option value="">Selecione…</option>'+available.map(x=>`<option value="${x.id}">${esc(x.tag||x.patrimonio||'Sem código')} — ${esc(x.descricao)}</option>`).join('');}
@@ -61,10 +61,54 @@ function goto(page){if(['users','archives'].includes(page)&&!canManageUsers()){d
 function openEquipment(item=null){if(!canManageEquipment()){denyAction();return;}$('equipmentForm').reset();$('equipmentId').value=item?.id||'';$('equipmentDialogTitle').textContent=item?'Editar equipamento':'Novo equipamento';fields.forEach(f=>{const el=$(f);if(el)el.value=item?.[dbField[f]]??'';});$('situacao').value=item?.situacao||'Disponível';$('estado').value=item?.estado||'Bom';$('equipmentDialog').showModal();}
 async function saveEquipment(e){e.preventDefault();if(!canManageEquipment()){denyAction();return;}const id=$('equipmentId').value;const payload={};fields.forEach(f=>{const el=$(f);let v=el.value.trim();payload[dbField[f]]=f==='valor'?(v===''?null:Number(v)):(v||null);});if(!payload.tag)payload.tag=`EQ-${Date.now().toString().slice(-8)}`;message('equipmentMessage','Salvando…',true);const res=id?await db.from('equipamentos').update(payload).eq('id',id).select().single():await db.from('equipamentos').insert({...payload,criado_por:state.user.id}).select().single();if(res.error){message('equipmentMessage',res.error.message);return;} $('equipmentDialog').close();await loadAll();}
 async function deleteEquipment(id){if(!canManageEquipment()){denyAction();return;}const item=state.equipment.find(x=>x.id===id);if(!item)return;if(!confirm(`Excluir “${item.descricao}”? Esta ação não pode ser desfeita.`))return;const {error}=await db.from('equipamentos').delete().eq('id',id);if(error){message('globalMessage',`Não foi possível excluir: ${error.message}`);return;}await loadAll();}
-function openMovement(){if(!canMove()){denyAction();return;} $('movementForm').reset();$('movementOutAt').value=localDateTime(new Date());$('movementDialog').showModal(); }
-async function saveMovement(e){e.preventDefault();if(!canMove()){denyAction();return;}const equipmentId=$('movementEquipment').value;if(!equipmentId){message('movementMessage','Selecione um equipamento.');return;}const item=state.equipment.find(x=>x.id===equipmentId);if(!item||item.situacao!=='Disponível'){message('movementMessage','Este equipamento não está disponível. Atualize a tela e tente novamente.');return;}const payload={equipamento_id:equipmentId,tipo:'Retirada',responsavel:$('movementResponsible').value.trim(),destino:$('movementDestination').value.trim()||null,retirada_em:new Date($('movementOutAt').value).toISOString(),previsao_devolucao:$('movementDueAt').value?new Date($('movementDueAt').value).toISOString():null,estado_retirada:$('movementCondition').value,observacoes:$('movementNotes').value.trim()||null,registrado_por:state.user.id};message('movementMessage','Registrando…',true);const {data,error}=await db.rpc('registrar_retirada',{p_equipamento_id:equipmentId,p_responsavel:payload.responsavel,p_destino:payload.destino,p_retirada_em:payload.retirada_em,p_previsao_devolucao:payload.previsao_devolucao,p_estado_retirada:payload.estado_retirada,p_observacoes:payload.observacoes});if(error){message('movementMessage',`Não foi possível registrar: ${error.message}. Verifique se executou supabase_schema.sql.`);return;} $('movementDialog').close();await loadAll();goto('movements');}
-function openReturn(m){if(!canMove()){denyAction();return;}$('returnForm').reset();$('returnMovementId').value=m.id;$('returnEquipmentName').textContent=movementName(m);$('returnAt').value=localDateTime(new Date());$('returnDialog').showModal();}
-async function saveReturn(e){e.preventDefault();if(!canMove()){denyAction();return;}const id=$('returnMovementId').value;const m=state.movements.find(x=>x.id===id);if(!m)return;message('returnMessage','Registrando devolução…',true);const {error}=await db.rpc('registrar_devolucao',{p_movimentacao_id:id,p_devolucao_em:new Date($('returnAt').value).toISOString(),p_estado_devolucao:$('returnCondition').value,p_observacoes_devolucao:$('returnNotes').value.trim()||null});if(error){message('returnMessage',`Não foi possível registrar: ${error.message}. Verifique se executou supabase_schema.sql.`);return;} $('returnDialog').close();await loadAll();}
+function openMovement(){if(!canMove()){denyAction();return;} $('movementForm').reset();message('movementMessage','');$('movementOutAt').value=localDateTime(new Date());$('movementDialog').showModal();loadRetirantes(); }
+async function loadRetirantes(){
+  const select=$('movementResponsible');select.disabled=true;
+  select.innerHTML='<option value="">Carregando…</option>';
+  try{
+    const {data,error}=await db.rpc('listar_retirantes');if(error)throw error;
+    state.retirantes=data||[];
+    select.innerHTML='<option value="">Selecione o retirante…</option>'+state.retirantes.map(r=>`<option value="${esc(r.usuario_id)}">${esc(r.nome)} (${esc(r.usuario_id.slice(0,8))})</option>`).join('');
+    if(state.retirantes.some(r=>r.usuario_id===state.user?.id))select.value=state.user.id;
+    if(!state.retirantes.length)message('movementMessage','Nenhum retirante com cadastro completo. Peça ao administrador para preencher os dados em Usuários.');
+  }catch(err){message('movementMessage','Não foi possível carregar retirantes: '+err.message);}
+  finally{select.disabled=false;}
+}
+let movementSaving=false;
+async function saveMovement(e){
+  e.preventDefault();if(!canMove()){denyAction();return;}if(movementSaving)return;
+  const equipmentId=$('movementEquipment').value,retiranteId=$('movementResponsible').value;
+  const item=state.equipment.find(x=>x.id===equipmentId);
+  if(!item||item.situacao!=='Disponível'){message('movementMessage','Equipamento indisponível. Atualize a lista.');return;}
+  if(!retiranteId){message('movementMessage','Selecione um retirante cadastrado.');return;}
+  const payload={p_equipamento_id:equipmentId,p_retirante_id:retiranteId,p_destino:$('movementDestination').value.trim()||null,
+    p_retirada_em:new Date($('movementOutAt').value).toISOString(),p_previsao_devolucao:$('movementDueAt').value?new Date($('movementDueAt').value).toISOString():null,
+    p_estado_retirada:$('movementCondition').value,p_observacoes:$('movementNotes').value.trim()||null,
+    p_local_acao:$('movementLocation').value.trim(),p_avarias_retirada:$('movementDamage').value==='true'};
+  movementSaving=true;const button=$('movementForm').querySelector('[type="submit"]');button.disabled=true;
+  message('movementMessage','Registrando…',true);
+  try{
+    const {error}=await db.rpc('registrar_retirada_termo',payload);if(error)throw error;
+    $('movementDialog').close();await loadAll();goto('movements');
+  }catch(err){message('movementMessage','Não foi possível registrar: '+err.message);}
+  finally{movementSaving=false;button.disabled=false;}
+}
+function openReturn(m){if(!canMove()){denyAction();return;}$('returnForm').reset();message('returnMessage','');$('returnMovementId').value=m.id;$('returnEquipmentName').textContent=movementName(m);$('returnAt').value=localDateTime(new Date());$('returnDialog').showModal();}
+let returnSaving=false;
+async function saveReturn(e){
+  e.preventDefault();if(!canMove()){denyAction();return;}if(returnSaving)return;
+  const id=$('returnMovementId').value,m=state.movements.find(x=>x.id===id);if(!m)return;
+  returnSaving=true;const button=$('returnForm').querySelector('[type="submit"]');button.disabled=true;
+  message('returnMessage','Registrando devolução…',true);
+  try{
+    const {error}=await db.rpc('registrar_devolucao_termo',{p_movimentacao_id:id,p_devolucao_em:new Date($('returnAt').value).toISOString(),p_estado_devolucao:$('returnCondition').value,p_observacoes_devolucao:$('returnNotes').value.trim()||null,p_ocorrencia:$('returnOccurrence').value});
+    if(error)throw error;
+    $('returnDialog').close();await loadAll();
+    if(m.termo_versao)await openEquipmentTerm(id);
+    else message('globalMessage','Devolução registrada. Esta retirada antiga não possui os dados necessários para gerar o termo automático.',true);
+  }catch(err){message('returnMessage','Não foi possível registrar: '+err.message);}
+  finally{returnSaving=false;button.disabled=false;}
+}
 function csvDownload(headers, rows, filename){const all=[headers,...rows];const csv='\ufeff'+all.map(r=>r.map(v=>`"${String(v??'').replace(/"/g,'""')}"`).join(';')).join('\r\n');const url=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8;'}));const a=document.createElement('a');a.href=url;a.download=filename;a.style.display='none';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);}
 function exportCsv(){const headers=['id','tag','patrimonio','descricao','categoria','marca','modelo','numero_serie','pertencimento','responsavel','localizacao','estado','situacao','valor','observacoes'];csvDownload(headers,state.equipment.map(x=>headers.map(h=>x[h]??'')),`inventario_${new Date().toISOString().slice(0,10)}.csv`);}
 function reportDateValue(value){if(!value)return '';const d=new Date(value);if(Number.isNaN(d.getTime()))return '';return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;}
@@ -86,7 +130,7 @@ function renderUsers(){
     const roleSelect=`<select data-role-user="${esc(u.id)}" aria-label="Perfil de ${esc(u.email||'usuário')}" ${u.id===state.user?.id?'disabled title="Você não pode retirar seu próprio perfil"':''}>
       ${['administrador','operador','consulta'].map(p=>`<option value="${p}" ${u.perfil===p?'selected':''}>${roleLabel(p)}</option>`).join('')}
     </select>`;
-    return `<tr><td><strong>${esc(u.email||'—')}</strong>${u.id===state.user?.id?'<br><small>Usuário atual</small>':''}</td><td>${esc(u.user_metadata?.full_name||u.user_metadata?.name||'—')}</td><td>${roleSelect}<br><span class="pill ${blocked?'retired':'available'}">${blocked?'Bloqueado':'Ativo'}</span></td><td>${esc(fmt(u.created_at))}</td><td>${esc(fmt(u.last_sign_in_at))}</td><td><div class="table-actions"><button class="secondary" data-user-action="password" data-user-id="${esc(u.id)}" data-user-email="${esc(u.email||'')}">Alterar senha</button>${u.id!==state.user?.id?`<button class="secondary" data-user-action="access" data-blocked="${blocked?'true':'false'}" data-user-id="${esc(u.id)}" data-user-email="${esc(u.email||'')}">${blocked?'Desbloquear':'Bloquear acesso'}</button><button class="secondary" data-user-action="delete" data-user-id="${esc(u.id)}" data-user-email="${esc(u.email||'')}">Excluir usuário</button>`:''}</div></td></tr>`;
+    return `<tr><td><strong>${esc(u.email||'—')}</strong>${u.id===state.user?.id?'<br><small>Usuário atual</small>':''}</td><td>${esc(u.dados_retirante?.nome||u.user_metadata?.full_name||u.user_metadata?.name||'—')}<br><small>${u.dados_retirante?'Cadastro para termo completo':'Dados para termo pendentes'}</small></td><td>${roleSelect}<br><span class="pill ${blocked?'retired':'available'}">${blocked?'Bloqueado':'Ativo'}</span></td><td>${esc(fmt(u.created_at))}</td><td>${esc(fmt(u.last_sign_in_at))}</td><td><div class="table-actions"><button class="secondary" data-user-action="details" data-user-id="${esc(u.id)}">Dados do retirante</button><button class="secondary" data-user-action="password" data-user-id="${esc(u.id)}" data-user-email="${esc(u.email||'')}">Alterar senha</button>${u.id!==state.user?.id?`<button class="secondary" data-user-action="access" data-blocked="${blocked?'true':'false'}" data-user-id="${esc(u.id)}" data-user-email="${esc(u.email||'')}">${blocked?'Desbloquear':'Bloquear acesso'}</button><button class="secondary" data-user-action="delete" data-user-id="${esc(u.id)}" data-user-email="${esc(u.email||'')}">Excluir usuário</button>`:''}</div></td></tr>`;
   }).join(''):'<tr><td colspan="6" class="empty">Nenhum usuário encontrado.</td></tr>';
 }
 async function loadUsers(){
@@ -99,10 +143,11 @@ async function createUser(e){
   e.preventDefault();if(!canManageUsers()){denyAction();return;}const email=$('newUserEmail').value.trim().toLowerCase(),password=$('newUserPassword').value,name=$('newUserName').value.trim(),perfil=$('newUserRole').value;
   if(password.length<8){message('usersMessage','A senha deve ter pelo menos 8 caracteres.');return;}
   message('usersMessage','Criando usuário…',true);
-  try{await callUserAdmin('create',{email,password,name,perfil});$('createUserForm').reset();message('usersMessage',`Usuário ${email} criado com sucesso.`,true);await loadUsers();}
+  try{await callUserAdmin('create',{email,password,name,perfil,cpf:$('newUserCpf').value,phone:$('newUserPhone').value});$('createUserForm').reset();message('usersMessage',`Usuário ${email} criado com sucesso.`,true);await loadUsers();}
   catch(err){message('usersMessage',`Não foi possível criar o usuário: ${err.message}`);}
 }
 async function userAction(action,id,email,blockedFlag){if(!canManageUsers()){denyAction();return;}
+  if(action==='details'){openBorrowerDetails(id);return;}
   if(action==='access'){
     const blocked=blockedFlag==='true';
     if(!confirm(`${blocked?'Desbloquear':'Bloquear'} o acesso de ${email}?`))return;
@@ -136,6 +181,22 @@ async function userAction(action,id,email,blockedFlag){if(!canManageUsers()){den
     try{await callUserAdmin('password',{userId:id,password});message('usersMessage',`Senha de ${email} alterada com sucesso.`,true);}
     catch(err){message('usersMessage',`Não foi possível alterar a senha: ${err.message}`);}
   }
+}
+function openBorrowerDetails(id){
+  if(!canManageUsers()){denyAction();return;}
+  const u=state.users.find(x=>x.id===id);if(!u)return;
+  $('borrowerUserId').value=id;$('borrowerName').value=u.dados_retirante?.nome||u.user_metadata?.full_name||'';
+  $('borrowerCpf').value=u.dados_retirante?.cpf||'';$('borrowerPhone').value=u.dados_retirante?.telefone||'';
+  message('borrowerMessage','');$('borrowerDialog').showModal();
+}
+async function saveBorrowerDetails(e){
+  e.preventDefault();if(!canManageUsers()){denyAction();return;}
+  const button=$('borrowerForm').querySelector('[type="submit"]');if(button.disabled)return;button.disabled=true;
+  try{
+    await callUserAdmin('details',{userId:$('borrowerUserId').value,name:$('borrowerName').value,cpf:$('borrowerCpf').value,phone:$('borrowerPhone').value});
+    $('borrowerDialog').close();await loadUsers();
+  }catch(err){message('borrowerMessage',err.message);}
+  finally{button.disabled=false;}
 }
 async function changeUserRole(select){
   if(!canManageUsers()){denyAction();return;}
@@ -213,7 +274,7 @@ async function viewArchivedCycle(id){
     $('archiveDetailsTitle').textContent='Histórico — '+a.nome;
     $('archiveEquipmentBody').innerHTML=equipment.length?equipment.map(e=>`<tr><td>${esc(e.tag||'—')}</td><td>${esc(e.patrimonio||'—')}</td><td>${esc(e.descricao)}</td><td>${esc(e.situacao)}</td></tr>`).join(''):'<tr><td colspan="4">Nenhum equipamento</td></tr>';
     const byId=new Map(equipment.map(e=>[e.id,e]));
-    $('archiveMovementsBody').innerHTML=movements.length?movements.map(m=>`<tr><td>${esc(fmt(m.created_at))}</td><td>${esc(byId.get(m.equipamento_id)?.descricao||'—')}</td><td>${esc(m.tipo)}</td><td>${esc(m.responsavel)}</td><td>${esc(fmt(m.devolucao_em))}</td></tr>`).join(''):'<tr><td colspan="5">Nenhuma movimentação</td></tr>';
+    $('archiveMovementsBody').innerHTML=movements.length?movements.map(m=>`<tr><td>${esc(fmt(m.created_at))}</td><td>${esc(byId.get(m.equipamento_id)?.descricao||'—')}</td><td>${esc(m.tipo)}</td><td>${esc(m.responsavel)}</td><td>${esc(fmt(m.devolucao_em))}${m.tipo==='Retirada'&&m.devolucao_em&&m.termo_versao?` <button class="secondary" data-term-id="${esc(m.id)}">Termo PDF</button>`:''}</td></tr>`).join(''):'<tr><td colspan="5">Nenhuma movimentação</td></tr>';
     $('archiveDetails').classList.remove('hidden');
     message('archivesMessage','Arquivo carregado para consulta e exportação.',true);
   }catch(err){message('archivesMessage','Não foi possível carregar arquivo: '+err.message);}
@@ -350,3 +411,6 @@ document.addEventListener('click',e=>{const nav=e.target.closest('[data-page]');
 $('archiveNowBtn').addEventListener('click',archiveInventory);$('refreshArchivesBtn').addEventListener('click',loadArchives);$('exportArchiveEquipmentBtn').addEventListener('click',()=>exportArchivedData('equipment'));$('exportArchiveMovementsBtn').addEventListener('click',()=>exportArchivedData('movements'));
 $('createUserForm').addEventListener('submit',createUser);$('refreshUsersBtn').addEventListener('click',loadUsers);$('loginForm').addEventListener('submit',login);$('logoutBtn').addEventListener('click',logout);$('refreshBtn').addEventListener('click',loadAll);$('newEquipmentBtn').addEventListener('click',()=>openEquipment());$('equipmentForm').addEventListener('submit',saveEquipment);$('newMovementBtn').addEventListener('click',openMovement);$('movementForm').addEventListener('submit',saveMovement);$('returnForm').addEventListener('submit',saveReturn);$('exportBtn').addEventListener('click',exportCsv);$('exportReportBtn').addEventListener('click',exportReport);$('printReportBtn').addEventListener('click',printReport);$('applyReportBtn').addEventListener('click',renderReport);['reportType','reportStatus','reportStart','reportEnd'].forEach(id=>$(id).addEventListener('change',renderReport));window.addEventListener('afterprint',()=>document.body.classList.remove('report-print'));$('printQrBtn').addEventListener('click',()=>window.print());['searchEquipment','statusFilter','categoryFilter'].forEach(id=>$(id).addEventListener('input',renderEquipment));['searchMovement','movementFilter'].forEach(id=>$(id).addEventListener('input',renderMovements));
 if(!configured){message('loginMessage','Antes de entrar, configure a URL e a chave pública do Supabase no arquivo app.js.');}else{db.auth.getSession().then(({data})=>data.session?showApp(data.session):showLogin());db.auth.onAuthStateChange((_event,session)=>{if(session&&!state.user)showApp(session);else if(!session){state.user=null;state.perfil=null;showLogin();}});}
+
+$('borrowerForm').addEventListener('submit',saveBorrowerDetails);
+document.addEventListener('click',e=>{const btn=e.target.closest('[data-term-id]');if(btn&&canMove())openEquipmentTerm(btn.dataset.termId);});
