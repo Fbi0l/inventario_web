@@ -57,11 +57,10 @@ async function buildEquipmentTermPdf(d,templateBytes){
   text('Descrição das ocorrências:',51,542,9,true);
   block('Observações na retirada', 'Retirada: '+(d.observacoes||'Sem observações.'),51,556,505,1,9);
   block('Observações na devolução','Devolução: '+(d.observacoes_devolucao||'Sem observações.'),51,571,505,2,9);
+  // Assinaturas permanecem em branco para preenchimento manual apos imprimir.
   text('5. ASSINATURAS',51,601,11,true);
-  block('Nome do retirante',d.retirante.nome,51,618,505,1,9);
   text('Assinatura do responsável pela retirada: ___________________________________',51,633,9);
   text('Retirada: '+date(d.retirada_em)+'   |   Devolução: '+date(d.devolucao_em),51,650,9);
-  block('Responsável pela conferência',d.conferente,51,669,505,1,9);
   text('Assinatura do responsável pela entrega/conferência: __________________________',51,684,9);
   block('Setor / destino','Setor/destino: '+(d.destino||'Não informado'),51,703,505,1,8);
   rect(50,744,512,30);
