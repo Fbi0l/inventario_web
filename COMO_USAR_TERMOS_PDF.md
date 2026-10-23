@@ -21,7 +21,7 @@
 - Na devolução, confira horário, conservação e ocorrência. O conferente é o usuário conectado, identificado pelo cadastro completo.
 - Ao confirmar a devolução, o sistema prepara o termo e apresenta **Baixar PDF**. Essa etapa de download depende do clique para funcionar também em navegadores de celular.
 - Para emitir novamente, use **Termo PDF** na linha da retirada já devolvida. Administradores também podem emitir em **Arquivos anteriores → Consultar**.
-- O sistema busca o PDF original no bucket privado para preservar seu formato. A quantidade é 1 por ficha, pois cada retirada corresponde a um equipamento. Os horários são exibidos em UTC-3. Textos longos seguem em anexo. As assinaturas são feitas no papel, após imprimir.
+- O sistema busca o PDF original no bucket privado para preservar seu formato. A quantidade é 1 por ficha, pois cada retirada corresponde a um equipamento. Os horários são exibidos em UTC-3. Textos longos seguem em anexo. A área de assinaturas não recebe nomes automaticamente: as linhas ficam em branco para assinatura manual após imprimir.
 
 ## Privacidade do modelo
 
