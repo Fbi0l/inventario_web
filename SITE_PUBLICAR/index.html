@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Inventário | Controle de equipamentos</title>
-  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="styles.css?v=1.2.1">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
@@ -21,7 +21,7 @@
       <footer class="site-footer" aria-label="Propriedade e versão do sistema">
         <span>&copy; 2026 <strong>Fbiol</strong> · Todos os direitos reservados</span>
         <span class="site-footer-separator" aria-hidden="true">•</span>
-        <span>Versão 1.1.0</span>
+        <span>Versão 1.2.1</span>
       </footer>
   </div>
 
@@ -122,7 +122,7 @@
       <footer class="site-footer" aria-label="Propriedade e versão do sistema">
         <span>&copy; 2026 <strong>Fbiol</strong> · Todos os direitos reservados</span>
         <span class="site-footer-separator" aria-hidden="true">•</span>
-        <span>Versão 1.1.0</span>
+        <span>Versão 1.2.1</span>
       </footer>
     </main>
   </div>
@@ -173,14 +173,14 @@
   </div></dialog>
   <script src="https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@pdf-lib/fontkit@1.1.1/dist/fontkit.umd.min.js"></script>
-  <script src="termo-fontes.js"></script>
+  <script src="termo-fontes.js?v=1.2.1"></script>
   <dialog id="qrLabelsDialog" aria-labelledby="qrLabelsTitle"><div class="dialog-form">
     <div class="dialog-head"><div><h2 id="qrLabelsTitle">Etiquetas QR Code em A4</h2><p class="muted">Todos os equipamentos do ciclo atual, com 12 etiquetas por folha.</p></div><button type="button" class="icon-button" data-close="qrLabelsDialog" aria-label="Fechar etiquetas">×</button></div>
     <p id="qrLabelsMessage" class="message" role="status" aria-live="polite"></p>
     <p class="muted">Etiquetas de 6 × 6,2 cm, com TAG, descrição e patrimônio. Imprima em papel A4, tamanho real (100%), e recorte nas linhas pontilhadas. Se houver mais de 12 equipamentos, serão geradas outras páginas.</p>
     <div class="dialog-actions"><a id="openQrLabelsPdf" class="primary qr-labels-link hidden" target="_blank" rel="noopener">Abrir PDF para imprimir</a><a id="downloadQrLabelsPdf" class="secondary qr-labels-link hidden">Baixar PDF</a><button type="button" class="secondary" data-close="qrLabelsDialog">Fechar</button></div>
   </div></dialog>
-  <script src="qr-etiquetas.js"></script>
-  <script src="termos.js"></script>
-  <script src="app.js"></script>
+  <script src="qr-etiquetas.js?v=1.2.1"></script>
+  <script src="termos.js?v=1.2.1"></script>
+  <script src="app.js?v=1.2.1"></script>
 </body></html>
