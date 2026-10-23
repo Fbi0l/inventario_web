@@ -179,6 +179,7 @@ async function loadArchives(){
     <td>${esc(fmt(a.criado_em))}</td><td>${a.quantidade_equipamentos}</td><td>${a.quantidade_movimentacoes}</td>
     <td><div class="table-actions"><button class="secondary" data-archive-action="view" data-archive-id="${esc(a.id)}">Consultar</button>
     ${!a.restaurado_em?`<button class="secondary" data-archive-action="restore" data-archive-id="${esc(a.id)}">Restaurar</button>`:''}
+    <button class="secondary" data-archive-action="delete" data-archive-id="${esc(a.id)}">Excluir período</button>
     </div></td></tr>`).join(''):'<tr><td colspan="5" class="empty">Nenhum arquivo anterior.</td></tr>';
   message('archivesMessage',`${state.archives.length} arquivo(s) encontrado(s).`,true);
 }
@@ -223,6 +224,32 @@ function exportArchivedData(type){
   if(!rows.length){message('archivesMessage','Este arquivo não contém registros desse tipo.');return;}
   const headers=Object.keys(rows[0]);
   csvDownload(headers,rows.map(x=>headers.map(h=>x[h]??'')),`arquivo_${type}_${state.selectedArchive.slice(0,8)}.csv`);
+}
+let archiveDeletionBusy=false;
+async function deleteArchivedCycle(id){
+  if(!archiveCanManage()){denyAction();return;}
+  if(archiveDeletionBusy)return;
+  const a=state.archives.find(x=>x.id===id);if(!a)return;
+  const details=a.restaurado_em
+    ? 'Este período já foi restaurado. Somente a referência do arquivo será removida; os registros restaurados serão preservados.'
+    : `Serão apagados os equipamentos e as retiradas/devoluções arquivados neste período (${a.quantidade_equipamentos} equipamento(s), ${a.quantidade_movimentacoes} movimentação(ões)).`;
+  if(!confirm(`Excluir definitivamente o período “${a.nome}”, arquivado em ${fmt(a.criado_em)}?\n\n${details}\n\nOs dados do ciclo atual serão preservados. Esta ação não pode ser desfeita.`))return;
+  const verify=prompt(`Para excluir o período “${a.nome}”, digite EXCLUIR:`);
+  if(verify!=='EXCLUIR'){message('archivesMessage','Exclusão cancelada.');return;}
+  archiveDeletionBusy=true;
+  message('archivesMessage','Excluindo período…',true);
+  try{
+    const {error}=await db.rpc('excluir_ciclo_arquivado',{p_ciclo_id:id});
+    if(error)throw error;
+    if(state.selectedArchive===id){
+      state.selectedArchive=null;state.archiveEquipment=[];state.archiveMovements=[];
+      $('archiveDetails').classList.add('hidden');
+      $('archiveEquipmentBody').innerHTML='';$('archiveMovementsBody').innerHTML='';
+    }
+    await loadArchives();
+    message('archivesMessage',`Período “${a.nome}” excluído. Os dados atuais foram preservados.`,true);
+  }catch(err){message('archivesMessage','Não foi possível excluir: '+err.message);}
+  finally{archiveDeletionBusy=false;}
 }
 async function restoreArchivedCycle(id){
   if(!archiveCanManage()){denyAction();return;}
@@ -319,7 +346,7 @@ $('scanMovementBtn').addEventListener('click',openQrScanner);
 $('qrScanDialog').addEventListener('close',()=>{stopQrReader();});
 
 function openQr(item){$('qrcode').innerHTML='';$('qrLabel').textContent=`${item.tag||item.patrimonio||''} — ${item.descricao}`;new QRCode($('qrcode'),{text:JSON.stringify({id:item.id,tag:item.tag,patrimonio:item.patrimonio,descricao:item.descricao}),width:220,height:220,correctLevel:QRCode.CorrectLevel.M});$('qrDialog').showModal();}
-document.addEventListener('click',e=>{const nav=e.target.closest('[data-page]');if(nav)goto(nav.dataset.page);const go=e.target.closest('[data-goto]');if(go)goto(go.dataset.goto);const close=e.target.closest('[data-close]');if(close)$(close.dataset.close).close();const action=e.target.closest('[data-action]');if(action){const item=state.equipment.find(x=>x.id===action.dataset.id);if(action.dataset.action==='edit')openEquipment(item);if(action.dataset.action==='delete')deleteEquipment(action.dataset.id);if(action.dataset.action==='qr')openQr(item);if(action.dataset.action==='return'){const m=state.movements.find(x=>x.id===action.dataset.id);if(m)openReturn(m);}}const archiveAction=e.target.closest('[data-archive-action]');if(archiveAction){const id=archiveAction.dataset.archiveId;if(archiveAction.dataset.archiveAction==='view')viewArchivedCycle(id);if(archiveAction.dataset.archiveAction==='restore')restoreArchivedCycle(id);}const userActionBtn=e.target.closest('[data-user-action]');if(userActionBtn)userAction(userActionBtn.dataset.userAction,userActionBtn.dataset.userId,userActionBtn.dataset.userEmail||'este usuário',userActionBtn.dataset.blocked);});
+document.addEventListener('click',e=>{const nav=e.target.closest('[data-page]');if(nav)goto(nav.dataset.page);const go=e.target.closest('[data-goto]');if(go)goto(go.dataset.goto);const close=e.target.closest('[data-close]');if(close)$(close.dataset.close).close();const action=e.target.closest('[data-action]');if(action){const item=state.equipment.find(x=>x.id===action.dataset.id);if(action.dataset.action==='edit')openEquipment(item);if(action.dataset.action==='delete')deleteEquipment(action.dataset.id);if(action.dataset.action==='qr')openQr(item);if(action.dataset.action==='return'){const m=state.movements.find(x=>x.id===action.dataset.id);if(m)openReturn(m);}}const archiveAction=e.target.closest('[data-archive-action]');if(archiveAction){const id=archiveAction.dataset.archiveId;if(archiveAction.dataset.archiveAction==='view')viewArchivedCycle(id);if(archiveAction.dataset.archiveAction==='restore')restoreArchivedCycle(id);if(archiveAction.dataset.archiveAction==='delete')deleteArchivedCycle(id);}const userActionBtn=e.target.closest('[data-user-action]');if(userActionBtn)userAction(userActionBtn.dataset.userAction,userActionBtn.dataset.userId,userActionBtn.dataset.userEmail||'este usuário',userActionBtn.dataset.blocked);});
 $('archiveNowBtn').addEventListener('click',archiveInventory);$('refreshArchivesBtn').addEventListener('click',loadArchives);$('exportArchiveEquipmentBtn').addEventListener('click',()=>exportArchivedData('equipment'));$('exportArchiveMovementsBtn').addEventListener('click',()=>exportArchivedData('movements'));
 $('createUserForm').addEventListener('submit',createUser);$('refreshUsersBtn').addEventListener('click',loadUsers);$('loginForm').addEventListener('submit',login);$('logoutBtn').addEventListener('click',logout);$('refreshBtn').addEventListener('click',loadAll);$('newEquipmentBtn').addEventListener('click',()=>openEquipment());$('equipmentForm').addEventListener('submit',saveEquipment);$('newMovementBtn').addEventListener('click',openMovement);$('movementForm').addEventListener('submit',saveMovement);$('returnForm').addEventListener('submit',saveReturn);$('exportBtn').addEventListener('click',exportCsv);$('exportReportBtn').addEventListener('click',exportReport);$('printReportBtn').addEventListener('click',printReport);$('applyReportBtn').addEventListener('click',renderReport);['reportType','reportStatus','reportStart','reportEnd'].forEach(id=>$(id).addEventListener('change',renderReport));window.addEventListener('afterprint',()=>document.body.classList.remove('report-print'));$('printQrBtn').addEventListener('click',()=>window.print());['searchEquipment','statusFilter','categoryFilter'].forEach(id=>$(id).addEventListener('input',renderEquipment));['searchMovement','movementFilter'].forEach(id=>$(id).addEventListener('input',renderMovements));
 if(!configured){message('loginMessage','Antes de entrar, configure a URL e a chave pública do Supabase no arquivo app.js.');}else{db.auth.getSession().then(({data})=>data.session?showApp(data.session):showLogin());db.auth.onAuthStateChange((_event,session)=>{if(session&&!state.user)showApp(session);else if(!session){state.user=null;state.perfil=null;showLogin();}});}
