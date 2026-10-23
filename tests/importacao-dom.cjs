@@ -1,0 +1,23 @@
+// Requer jsdom e SheetJS 0.20.3. Sem dados do usuario ou acesso ao Supabase real.
+const {JSDOM}=require('jsdom'),fs=require('fs'),vm=require('vm'),assert=require('node:assert/strict');
+const X=require(process.env.SHEETJS_TEST_PATH||'xlsx');
+const dom=new JSDOM(fs.readFileSync('index.html','utf8'),{url:'https://example.invalid',runScripts:'outside-only'}),w=dom.window,ctx=dom.getInternalVMContext();
+const run=s=>new vm.Script(s).runInContext(ctx),$=id=>w.document.getElementById(id);
+w.HTMLDialogElement.prototype.showModal=function(){this.open=true};w.HTMLDialogElement.prototype.close=function(){this.open=false;this.dispatchEvent(new w.Event('close'))};
+w.TextDecoder=TextDecoder;w.confirm=()=>true;w.XLSX=X;let calls=[],fail=true;
+const user={id:'10000000-0000-0000-0000-000000000001',email:'teste@example.invalid'};
+const db={auth:{getSession:async()=>({data:{session:null}}),onAuthStateChange:()=>{}},from:table=>{const q={select:()=>q,is:()=>q,eq:()=>q,order:()=>q,limit:()=>q,range:async()=>({data:[{tag:'TI-DUP',patrimonio:'00123'}]}),maybeSingle:async()=>({data:{perfil:'administrador'}}),then:r=>Promise.resolve({data:[]}).then(r)};return q},rpc:async(name,args)=>{calls.push({name,args});if(fail)return{error:{message:'Erro de conexão simulado'}};return{data:{importados:1,ignorados:[]}}}};
+w.supabase={createClient:()=>db};w.user=user;
+for(const f of ['importar-planilha.js','app.js'])run(fs.readFileSync(f,'utf8'));
+(async()=>{
+ await new Promise(r=>setTimeout(r,0));await run('showApp({user})');run('openImport()');
+ const csv='TAG;Patrimônio;Descrição;Estado;Situação\nTI-NOVO;111;Equipamento de teste;Bom;Disponível\nTI-DUP;123;Repetido;Bom;Disponível\nTI-USO;222;Em uso;Bom;Em uso';const bytes=Buffer.from(csv);
+ Object.defineProperty($('importFile'),'files',{value:[{name:'teste.csv',size:bytes.length,arrayBuffer:async()=>bytes.buffer.slice(bytes.byteOffset,bytes.byteOffset+bytes.byteLength)}],configurable:true});
+ await run('readImportFile()');assert.equal($('confirmImportBtn').disabled,true);assert.ok($('importPreviewSummary').textContent,$('importMessage').textContent);assert.match($('importPreviewSummary').textContent,/1 pronta/);assert.match($('importPreviewSummary').textContent,/1 duplicada/);
+ $('importInUsePolicy').value='skip';run('renderImportPreview()');assert.equal($('confirmImportBtn').disabled,false);
+ await run('confirmEquipmentImport()');assert.match($('importMessage').textContent,/Erro de conexão simulado/);assert.equal($('confirmImportBtn').disabled,false);
+ fail=false;await run('confirmEquipmentImport()');assert.equal(calls.length,2);assert.equal(calls[0].args.p_lote,calls[1].args.p_lote);assert.equal(calls[1].args.p_itens.length,1);assert.equal($('confirmImportBtn').disabled,true);assert.match($('importMessage').textContent,/1 equipamento\(s\) importado/);assert.match($('importPreviewBody').textContent,/Importado/);
+ $('importDialog').close();run('openImport()');assert.equal($('importFile').disabled,false);assert.equal($('confirmImportBtn').disabled,true);$('importDialog').close();
+ run("state.perfil='consulta';applyPermissions()");assert.ok($('importEquipmentBtn').classList.contains('hidden'));run('openImport()');assert.equal($('importDialog').open,false);
+ dom.window.close();console.log('Importacao DOM aprovada: previa, permissao, escolha Em uso, falha/repeticao idempotente e reabertura.');
+})().catch(e=>{console.error(e);dom.window.close();process.exit(1)});
