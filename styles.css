@@ -39,3 +39,6 @@ select[data-role-user]:disabled{opacity:.75;cursor:not-allowed}
 
 /* Dados completos do usuario em duas linhas legiveis. */
 @media(min-width:1101px){.user-create-form{grid-template-columns:repeat(3,minmax(0,1fr))}}
+
+.qr-labels-link{display:inline-flex;align-items:center;justify-content:center;text-decoration:none;border-radius:9px;padding:10px 14px;font-size:14px;font-weight:650;text-align:center}
+#qrLabelsDialog .dialog-actions{flex-wrap:wrap}

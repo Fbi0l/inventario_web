@@ -46,7 +46,7 @@
         <div class="panel"><div class="panel-head"><div><h2>Movimentações recentes</h2><p class="muted">Últimas retiradas e devoluções registradas</p></div><button class="secondary" data-goto="movements">Ver todas</button></div><div class="table-wrap"><table><thead><tr><th>Data/hora</th><th>Equipamento</th><th>Tipo</th><th>Responsável</th><th>Observação</th></tr></thead><tbody id="recentBody"><tr><td colspan="5" class="empty">Carregando…</td></tr></tbody></table></div></div>
       </section>
       <section id="equipmentPage" class="page hidden">
-        <div class="panel"><div class="panel-head"><div><h2>Cadastro de equipamentos</h2><p class="muted">Cadastre, edite, consulte e exporte seu inventário.</p></div><div class="actions"><button id="exportBtn" class="secondary">⇩ Exportar CSV</button><button id="newEquipmentBtn" class="primary">＋ Novo equipamento</button></div></div>
+        <div class="panel"><div class="panel-head"><div><h2>Cadastro de equipamentos</h2><p class="muted">Cadastre, edite, consulte e exporte seu inventário.</p></div><div class="actions"><button id="printAllQrBtn" class="secondary" type="button">▣ Imprimir QR Codes (A4)</button><button id="exportBtn" class="secondary">⇩ Exportar CSV</button><button id="newEquipmentBtn" class="primary">＋ Novo equipamento</button></div></div>
           <div class="filters"><input id="searchEquipment" placeholder="Pesquisar por descrição, TAG, patrimônio…"><select id="statusFilter"><option value="">Todas as situações</option><option>Disponível</option><option>Em uso</option><option>Manutenção</option><option>Baixado</option></select><select id="categoryFilter"><option value="">Todas as categorias</option></select></div>
           <div class="table-wrap"><table><thead><tr><th>TAG / Patrimônio</th><th>Equipamento</th><th>Categoria</th><th>Localização</th><th>Estado</th><th>Situação</th><th>Ações</th></tr></thead><tbody id="equipmentBody"><tr><td colspan="7" class="empty">Carregando…</td></tr></tbody></table></div>
         </div>
@@ -174,6 +174,13 @@
   <script src="https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@pdf-lib/fontkit@1.1.1/dist/fontkit.umd.min.js"></script>
   <script src="termo-fontes.js"></script>
+  <dialog id="qrLabelsDialog" aria-labelledby="qrLabelsTitle"><div class="dialog-form">
+    <div class="dialog-head"><div><h2 id="qrLabelsTitle">Etiquetas QR Code em A4</h2><p class="muted">Todos os equipamentos do ciclo atual, com 12 etiquetas por folha.</p></div><button type="button" class="icon-button" data-close="qrLabelsDialog" aria-label="Fechar etiquetas">×</button></div>
+    <p id="qrLabelsMessage" class="message" role="status" aria-live="polite"></p>
+    <p class="muted">Etiquetas de 6 × 6,2 cm, com TAG, descrição e patrimônio. Imprima em papel A4, tamanho real (100%), e recorte nas linhas pontilhadas. Se houver mais de 12 equipamentos, serão geradas outras páginas.</p>
+    <div class="dialog-actions"><a id="openQrLabelsPdf" class="primary qr-labels-link hidden" target="_blank" rel="noopener">Abrir PDF para imprimir</a><a id="downloadQrLabelsPdf" class="secondary qr-labels-link hidden">Baixar PDF</a><button type="button" class="secondary" data-close="qrLabelsDialog">Fechar</button></div>
+  </div></dialog>
+  <script src="qr-etiquetas.js"></script>
   <script src="termos.js"></script>
   <script src="app.js"></script>
 </body></html>
