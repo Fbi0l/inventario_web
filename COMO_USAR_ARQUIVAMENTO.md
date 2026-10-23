@@ -29,3 +29,14 @@ Em um ambiente de testes (preferencial), cadastre um equipamento de teste, regis
 ## Atenção
 
 O campo TAG pode ser reutilizado após arquivar, pois a exclusividade passa a valer entre equipamentos **ativos**. É uma estratégia para ciclos separados; use o número patrimonial e o identificador UUID quando precisar referenciar itens históricos sem ambiguidade.
+
+## Excluir um período arquivado
+
+1. Execute `ATUALIZACAO_EXCLUSAO_CICLOS.sql` no SQL Editor do Supabase. Esse script apenas instala a função, sem excluir dados. Não execute novamente os scripts de criação do sistema.
+2. Publique os arquivos atualizados `app.js` e `index.html` (também disponíveis em `SITE_PUBLICAR`).
+3. Entre como administrador, abra **Arquivos anteriores** e clique em **Excluir período** no arquivo desejado.
+4. Confira o nome, a data e as quantidades. Confirme e digite **EXCLUIR**.
+
+A exclusão é permanente: remove os equipamentos e movimentações vinculados ao período escolhido. Os registros ativos e outros períodos são preservados. Para períodos já restaurados, remove somente a referência do arquivo, preservando os registros restaurados. Exporte os CSVs antes se precisar guardar uma cópia.
+
+Validação após instalar: cancele a confirmação e confira que nada mudou; exclua um período de teste e confira que ele desapareceu e o ciclo atual permaneceu intacto; verifique que Operador e Consulta continuam sem acesso à área de arquivos. A função também verifica o perfil no banco, mesmo se chamada diretamente.
