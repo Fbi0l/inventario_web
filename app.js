@@ -5,8 +5,8 @@ const configured = /^https:\/\/[^/]+\.supabase\.co$/.test(SUPABASE_URL) && SUPAB
 const db = configured ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
 const $ = id => document.getElementById(id);
 const state = { equipment: [], movements: [], users: [], retirantes: [], archives: [], archiveEquipment: [], archiveMovements: [], selectedArchive: null, page: 'dashboard', user: null, perfil: null };
-const fields = ['tag','patrimonio','descricao','categoria','marca','modelo','numeroSerie','pertencimento','responsavel','localizacao','estado','situacao','valor','observacoes'];
-const dbField = {tag:'tag',patrimonio:'patrimonio',descricao:'descricao',categoria:'categoria',marca:'marca',modelo:'modelo',numeroSerie:'numero_serie',pertencimento:'pertencimento',responsavel:'responsavel',localizacao:'localizacao',estado:'estado',situacao:'situacao',valor:'valor',observacoes:'observacoes'};
+const fields = ['tag','patrimonio','descricao','categoria','marca','modelo','numeroSerie','pertencimento','responsavel','localizacao','estado','situacao','valor','observacoes','codigoOrigem','dataAquisicao'];
+const dbField = {tag:'tag',patrimonio:'patrimonio',descricao:'descricao',categoria:'categoria',marca:'marca',modelo:'modelo',numeroSerie:'numero_serie',pertencimento:'pertencimento',responsavel:'responsavel',localizacao:'localizacao',estado:'estado',situacao:'situacao',valor:'valor',observacoes:'observacoes',codigoOrigem:'codigo_origem',dataAquisicao:'data_aquisicao'};
 const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const localDateTime = d => { const x = new Date(d); return `${x.getFullYear()}-${String(x.getMonth()+1).padStart(2,'0')}-${String(x.getDate()).padStart(2,'0')}T${String(x.getHours()).padStart(2,'0')}:${String(x.getMinutes()).padStart(2,'0')}`; };
 const fmt = d => d ? new Date(d).toLocaleString('pt-BR',{dateStyle:'short',timeStyle:'short'}) : '—';
@@ -34,7 +34,17 @@ async function showApp(session){
 }
 async function login(e){e.preventDefault(); if(!db){message('loginMessage','Configure a URL e a chave do Supabase no arquivo app.js.');return;} message('loginMessage','Entrando…',true); const {error}=await db.auth.signInWithPassword({email:$('email').value.trim(),password:$('password').value}); if(error)message('loginMessage',error.message); else message('loginMessage','',true);}
 async function logout(){if(db)await db.auth.signOut();state.user=null;state.perfil=null;showLogin();}
-async function loadAll(){if(!db||!state.perfil)return; message('globalMessage','Carregando dados…',true); const [e,m]=await Promise.all([db.from('equipamentos').select('*').is('ciclo_arquivado_id',null).order('created_at',{ascending:false}),db.from('movimentacoes').select('*, equipamentos(tag, patrimonio, descricao)').is('ciclo_arquivado_id',null).order('created_at',{ascending:false}).limit(500)]); if(e.error||m.error){message('globalMessage',`Erro ao carregar: ${(e.error||m.error).message}`);return;} state.equipment=e.data||[];state.movements=m.data||[];renderAll();message('globalMessage','Dados atualizados.',true); }
+async function fetchActiveEquipment(){
+  const rows=[];
+  try{
+    for(let offset=0;offset<100000;offset+=500){
+      const {data,error}=await db.from('equipamentos').select('*').is('ciclo_arquivado_id',null).order('created_at',{ascending:false}).order('id',{ascending:true}).range(offset,offset+499);
+      if(error)throw error;rows.push(...(data||[]));if(!data||data.length<500)return {data:rows,error:null};
+    }
+    throw new Error('O inventário excede o limite de carregamento.');
+  }catch(error){return {data:null,error};}
+}
+async function loadAll(){if(!db||!state.perfil)return; message('globalMessage','Carregando dados…',true); const [e,m]=await Promise.all([fetchActiveEquipment(),db.from('movimentacoes').select('*, equipamentos(tag, patrimonio, descricao)').is('ciclo_arquivado_id',null).order('created_at',{ascending:false}).limit(500)]); if(e.error||m.error){message('globalMessage',`Erro ao carregar: ${(e.error||m.error).message}`);return;} state.equipment=e.data||[];state.movements=m.data||[];renderAll();message('globalMessage','Dados atualizados.',true); }
 const roleLabel = perfil => ({administrador:'Administrador',operador:'Operador',consulta:'Consulta'})[perfil]||'Sem perfil';
 const canManageEquipment = () => state.perfil === 'administrador';
 const canMove = () => ['administrador','operador'].includes(state.perfil);
@@ -43,7 +53,7 @@ function denyAction(){message('globalMessage','Seu perfil não permite executar 
 function applyPermissions(){
   document.querySelector('[data-page="users"]').classList.toggle('hidden',!canManageUsers());
   document.querySelector('[data-page="archives"]').classList.toggle('hidden',!canManageUsers());
-  $('newEquipmentBtn').classList.toggle('hidden',!canManageEquipment());
+  $('newEquipmentBtn').classList.toggle('hidden',!canManageEquipment());$('importEquipmentBtn').classList.toggle('hidden',!canManageEquipment());
   $('newMovementBtn').classList.toggle('hidden',!canMove());
   $('scanMovementBtn').classList.toggle('hidden',!canMove());
   if(!canManageUsers() && ['users','archives'].includes(state.page))goto('dashboard');
@@ -110,7 +120,7 @@ async function saveReturn(e){
   finally{returnSaving=false;button.disabled=false;}
 }
 function csvDownload(headers, rows, filename){const all=[headers,...rows];const csv='\ufeff'+all.map(r=>r.map(v=>`"${String(v??'').replace(/"/g,'""')}"`).join(';')).join('\r\n');const url=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8;'}));const a=document.createElement('a');a.href=url;a.download=filename;a.style.display='none';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);}
-function exportCsv(){const headers=['id','tag','patrimonio','descricao','categoria','marca','modelo','numero_serie','pertencimento','responsavel','localizacao','estado','situacao','valor','observacoes'];csvDownload(headers,state.equipment.map(x=>headers.map(h=>x[h]??'')),`inventario_${new Date().toISOString().slice(0,10)}.csv`);}
+function exportCsv(){const headers=['id','tag','patrimonio','descricao','categoria','marca','modelo','numero_serie','pertencimento','responsavel','localizacao','estado','situacao','valor','observacoes','codigo_origem','data_aquisicao'];csvDownload(headers,state.equipment.map(x=>headers.map(h=>x[h]??'')),`inventario_${new Date().toISOString().slice(0,10)}.csv`);}
 function reportDateValue(value){if(!value)return '';const d=new Date(value);if(Number.isNaN(d.getTime()))return '';return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;}
 function reportRows(){const type=$('reportType').value,start=$('reportStart').value,end=$('reportEnd').value,status=$('reportStatus').value;if(type==='equipment'){return state.equipment.filter(x=>{const date=reportDateValue(x.created_at);return(!start||!date||date>=start)&&(!end||!date||date<=end)&&(!status||x.situacao===status);}).sort((a,b)=>String(a.descricao||'').localeCompare(String(b.descricao||''),'pt-BR'));}return state.movements.filter(m=>{const date=reportDateValue(m.retirada_em||m.created_at);const situation=m.tipo||'';const stateFilter=status==='Em aberto'?!m.devolucao_em:status==='Devolvidos'?!!m.devolucao_em:!status||situation===status;return(!start||!date||date>=start)&&(!end||!date||date<=end)&&stateFilter;}).sort((a,b)=>new Date(b.retirada_em||b.created_at||0)-new Date(a.retirada_em||a.created_at||0));}
 function updateReportStatusOptions(){const type=$('reportType').value,select=$('reportStatus'),current=select.value;const options=type==='equipment'?[['','Todas as situações'],['Disponível','Disponível'],['Em uso','Em uso'],['Manutenção','Manutenção'],['Baixado','Baixado']]:[['','Todos os tipos/situações'],['Retirada','Retiradas'],['Devolução','Devoluções'],['Em aberto','Somente retiradas em aberto'],['Devolvidos','Somente equipamentos devolvidos']];select.innerHTML=options.map(([v,l])=>`<option value="${esc(v)}">${esc(l)}</option>`).join('');if(options.some(([v])=>v===current))select.value=current;}
