@@ -24,6 +24,7 @@ for(const f of ['importar-planilha.js','app.js'])run(fs.readFileSync(f,'utf8'));
  const set=(field,value)=>{const el=w.document.querySelector('[data-import-field="'+field+'"]');assert.ok(el,field);el.value=value;el.dispatchEvent(new w.Event('change',{bubbles:true}));};
  set('retirante_id',user.id);set('retirada_em','2026-01-01T09:00');set('local_acao','Local ficticio');set('avarias_retirada','false');
  assert.equal($('confirmImportBtn').disabled,false);
+ set('retirada_em','2099-01-01T09:00');assert.ok(w.document.querySelector('[data-import-field="retirada_em"]'));assert.match($('importPreviewSummary').textContent,/1 inválida/);set('retirada_em','2026-01-01T09:00');
  await run('confirmEquipmentImport()');const linked=calls.at(-1).args.p_itens.find(i=>i.situacao==='Em uso');assert.ok(linked);assert.equal(linked.retirante_id,user.id);assert.equal(linked.avarias_retirada,false);assert.equal(linked.local_acao,'Local ficticio');
  $('importDialog').close();
  run("state.perfil='consulta';applyPermissions()");assert.ok($('importEquipmentBtn').classList.contains('hidden'));run('openImport()');assert.equal($('importDialog').open,false);
