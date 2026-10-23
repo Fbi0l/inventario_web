@@ -36,3 +36,6 @@ select[data-role-user]:disabled{opacity:.75;cursor:not-allowed}
 .qr-scanner-view video{width:100%!important;max-height:65vh;object-fit:cover}
 .qr-scanner-help{font-size:13px;line-height:1.5;margin:8px 0}
 @media(max-width:680px){#movementsPage .panel-head .actions{display:flex;flex-direction:column;width:100%}#movementsPage .panel-head .actions button{width:100%}}
+
+/* Dados completos do usuario em duas linhas legiveis. */
+@media(min-width:1101px){.user-create-form{grid-template-columns:repeat(3,minmax(0,1fr))}}
