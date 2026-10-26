@@ -86,7 +86,7 @@ BEGIN
  'versao',1,'id',v_id,'retirante',jsonb_build_object('nome',r.nome,'cpf',r.cpf,'telefone',r.telefone),
  'equipamento',jsonb_build_object('descricao',e.descricao,'patrimonio',e.patrimonio,'numero_serie',e.numero_serie,'tag',e.tag),
  'local_acao',btrim(p_local_acao),'destino',p_destino,'retirada_em',p_retirada_em,
- 'estado_retirada',p_estado_retirada,'avarias_retirada',p_avarias_retirada,'observacoes',p_observacoes));
+ 'estado_retirada',p_estado_retirada,'avarias_retirada',p_avarias_retirada,'observacoes',p_observacoes),p_retirante_id);
  UPDATE public.movimentacoes SET termo_versao=1 WHERE id=v_id;
  RETURN v_id;
 END; $fn$;
