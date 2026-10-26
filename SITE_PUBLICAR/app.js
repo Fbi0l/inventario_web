@@ -4,7 +4,7 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 const configured = /^https:\/\/[^/]+\.supabase\.co$/.test(SUPABASE_URL) && SUPABASE_ANON_KEY.length > 20 && !SUPABASE_ANON_KEY.includes('COLE_AQUI');
 const db = configured ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
 const $ = id => document.getElementById(id);
-const state = { equipment: [], movements: [], users: [], retirantes: [], archives: [], archiveEquipment: [], archiveMovements: [], selectedArchive: null, page: 'dashboard', user: null, perfil: null };
+const state = { equipment: [], movements: [], users: [], retirantes: [], archives: [], archiveEquipment: [], archiveMovements: [], selectedArchive: null, page: 'dashboard', user: null, perfil: null, visibleTermIds: new Set() };
 const fields = ['tag','patrimonio','descricao','categoria','marca','modelo','numeroSerie','pertencimento','responsavel','localizacao','estado','situacao','valor','observacoes','codigoOrigem','dataAquisicao'];
 const dbField = {tag:'tag',patrimonio:'patrimonio',descricao:'descricao',categoria:'categoria',marca:'marca',modelo:'modelo',numeroSerie:'numero_serie',pertencimento:'pertencimento',responsavel:'responsavel',localizacao:'localizacao',estado:'estado',situacao:'situacao',valor:'valor',observacoes:'observacoes',codigoOrigem:'codigo_origem',dataAquisicao:'data_aquisicao'};
 const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -12,13 +12,23 @@ const localDateTime = d => { const x = new Date(d); return `${x.getFullYear()}-$
 const fmt = d => d ? new Date(d).toLocaleString('pt-BR',{dateStyle:'short',timeStyle:'short'}) : '—';
 const pill = s => `<span class="pill ${s==='Disponível'?'available':s==='Em uso'?'use':s==='Manutenção'?'maintenance':s==='Baixado'?'retired':''}">${esc(s||'—')}</span>`;
 function message(id, text='', good=false){ const el=$(id); el.textContent=text; el.style.color=good?'#18794e':'#b42318'; }
-function showLogin(){ state.users=[];state.retirantes=[];$('borrowerForm').reset();$('createUserForm').reset();$('usersBody').innerHTML='';document.querySelectorAll('dialog[open]').forEach(d=>d.close());$('loginView').classList.remove('hidden'); $('appView').classList.add('hidden'); }
+function showLogin(){
+  state.users=[];state.retirantes=[];
+  $('borrowerForm').reset();$('createUserForm').reset();$('usersBody').innerHTML='';
+  document.querySelectorAll('dialog[open]').forEach(d=>d.close());
+  const token=new URLSearchParams(window.location.search).get('cadastro');
+  const register=!!token && /^[a-zA-Z0-9_-]{43}$/.test(token);
+  $('registerView').classList.toggle('hidden',!register);
+  $('loginView').classList.toggle('hidden',register);
+  $('appView').classList.add('hidden');
+}
 async function showApp(session){
   state.user=session.user;
   state.perfil=null;
   $('userEmail').textContent=session.user.email||'';
   $('userProfile').textContent='Verificando acesso…';
   $('loginView').classList.add('hidden');
+  $('registerView').classList.add('hidden');
   $('appView').classList.remove('hidden');
   applyPermissions();
   const {data,error}=await db.from('perfis_usuarios').select('perfil').eq('usuario_id',session.user.id).maybeSingle();
@@ -44,10 +54,12 @@ async function fetchActiveEquipment(){
     throw new Error('O inventário excede o limite de carregamento.');
   }catch(error){return {data:null,error};}
 }
-async function loadAll(){if(!db||!state.perfil)return; message('globalMessage','Carregando dados…',true); const [e,m]=await Promise.all([fetchActiveEquipment(),db.from('movimentacoes').select('*, equipamentos(tag, patrimonio, descricao)').is('ciclo_arquivado_id',null).order('created_at',{ascending:false}).limit(500)]); if(e.error||m.error){message('globalMessage',`Erro ao carregar: ${(e.error||m.error).message}`);return;} state.equipment=e.data||[];state.movements=m.data||[];renderAll();message('globalMessage','Dados atualizados.',true); }
+async function loadAll(){if(!db||!state.perfil)return; message('globalMessage','Carregando dados…',true); const [e,m]=await Promise.all([fetchActiveEquipment(),db.from('movimentacoes').select('*, equipamentos(tag, patrimonio, descricao)').is('ciclo_arquivado_id',null).order('created_at',{ascending:false}).limit(500)]); if(e.error||m.error){message('globalMessage',`Erro ao carregar: ${(e.error||m.error).message}`);return;} state.equipment=e.data||[];state.movements=m.data||[];await loadVisibleTermIds();renderAll();message('globalMessage','Dados atualizados.',true); }
 const roleLabel = perfil => ({administrador:'Administrador',operador:'Operador',consulta:'Consulta'})[perfil]||'Sem perfil';
 const canManageEquipment = () => state.perfil === 'administrador';
 const canMove = () => ['administrador','operador'].includes(state.perfil);
+const canViewTerms = () => ['administrador','operador','consulta'].includes(state.perfil);
+const isTermVisible = id => state.visibleTermIds.has(id);
 const canManageUsers = () => state.perfil === 'administrador';
 function denyAction(){message('globalMessage','Seu perfil não permite executar esta ação.');}
 function applyPermissions(){
@@ -56,6 +68,7 @@ function applyPermissions(){
   $('newEquipmentBtn').classList.toggle('hidden',!canManageEquipment());$('importEquipmentBtn').classList.toggle('hidden',!canManageEquipment());
   $('newMovementBtn').classList.toggle('hidden',!canMove());
   $('scanMovementBtn').classList.toggle('hidden',!canMove());
+  $('termsSearchPanel').classList.toggle('hidden',!canViewTerms());
   if(!canManageUsers() && ['users','archives'].includes(state.page))goto('dashboard');
   renderEquipment();renderMovements();
 }
@@ -63,7 +76,42 @@ function renderAll(){renderStats();renderEquipment();renderMovements();renderRec
 function renderStats(){ $('statTotal').textContent=state.equipment.length; $('statAvailable').textContent=state.equipment.filter(x=>x.situacao==='Disponível').length; $('statInUse').textContent=state.equipment.filter(x=>x.situacao==='Em uso').length; $('statMaintenance').textContent=state.equipment.filter(x=>x.situacao==='Manutenção').length; }
 function renderEquipment(){const q=$('searchEquipment').value.toLowerCase(), status=$('statusFilter').value,cat=$('categoryFilter').value;const arr=state.equipment.filter(x=>(!q||[x.tag,x.patrimonio,x.descricao,x.marca,x.modelo,x.numero_serie].some(v=>String(v||'').toLowerCase().includes(q)))&&(!status||x.situacao===status)&&(!cat||x.categoria===cat));$('equipmentBody').innerHTML=arr.length?arr.map(x=>`<tr><td><strong>${esc(x.tag||'—')}</strong><br><small>${esc(x.patrimonio||'Sem patrimônio')}</small></td><td><strong>${esc(x.descricao)}</strong><br><small>${esc([x.marca,x.modelo].filter(Boolean).join(' ')||'')}</small></td><td>${esc(x.categoria||'—')}</td><td>${esc(x.localizacao||'—')}</td><td>${pill(x.estado)}</td><td>${pill(x.situacao)}</td><td><div class="table-actions">${canManageEquipment()?`<button class="secondary" data-action="edit" data-id="${x.id}">Editar</button>`:''}<button class="secondary" data-action="qr" data-id="${x.id}">QR</button>${canManageEquipment()?`<button class="secondary" data-action="delete" data-id="${x.id}">Excluir</button>`:''}</div></td></tr>`).join(''):'<tr><td colspan="7" class="empty">Nenhum equipamento encontrado.</td></tr>';}
 function movementName(m){return m.equipamentos?.descricao||state.equipment.find(e=>e.id===m.equipamento_id)?.descricao||'Equipamento removido';}
-function renderMovements(){const q=$('searchMovement').value.toLowerCase(),type=$('movementFilter').value;const arr=state.movements.filter(m=>(!q||[movementName(m),m.responsavel,m.destino].some(v=>String(v||'').toLowerCase().includes(q)))&&(!type||m.tipo===type));$('movementBody').innerHTML=arr.length?arr.map(m=>`<tr><td>${fmt(m.created_at||m.retirada_em)}</td><td><strong>${esc(movementName(m))}</strong><br><small>${esc(m.equipamentos?.tag||'')}</small></td><td>${pill(m.tipo)}</td><td>${esc(m.responsavel||'—')}</td><td>${fmt(m.retirada_em)}</td><td>${fmt(m.devolucao_em)}</td><td>${canMove()&&m.tipo==='Retirada'&&!m.devolucao_em?`<button class="primary" data-action="return" data-id="${m.id}">Devolver</button>`:canMove()&&m.tipo==='Retirada'&&m.devolucao_em&&m.termo_versao?`<button class="secondary" data-term-id="${esc(m.id)}">Termo PDF</button>`:'—'}</td></tr>`).join(''):'<tr><td colspan="7" class="empty">Nenhuma movimentação encontrada.</td></tr>';}
+async function loadVisibleTermIds(){
+  state.visibleTermIds=new Set();
+  const ids=state.movements.filter(m=>m.tipo==='Retirada'&&m.devolucao_em&&m.termo_versao).map(m=>m.id);
+  if(!ids.length||!canViewTerms())return;
+  try{
+    const {data,error}=await db.rpc('listar_termos_visiveis',{p_ids:ids});
+    if(error)throw error;
+    state.visibleTermIds=new Set((data||[]).map(x=>x.movimentacao_id));
+  }catch(err){message('globalMessage','Não foi possível verificar permissões dos termos: '+err.message);}
+}
+function renderMovements(){const q=$('searchMovement').value.toLowerCase(),type=$('movementFilter').value;const arr=state.movements.filter(m=>(!q||[movementName(m),m.responsavel,m.destino].some(v=>String(v||'').toLowerCase().includes(q)))&&(!type||m.tipo===type));$('movementBody').innerHTML=arr.length?arr.map(m=>`<tr><td>${fmt(m.created_at||m.retirada_em)}</td><td><strong>${esc(movementName(m))}</strong><br><small>${esc(m.equipamentos?.tag||'')}</small></td><td>${pill(m.tipo)}</td><td>${esc(m.responsavel||'—')}</td><td>${fmt(m.retirada_em)}</td><td>${fmt(m.devolucao_em)}</td><td>${canMove()&&m.tipo==='Retirada'&&!m.devolucao_em?`<button class="primary" data-action="return" data-id="${m.id}">Devolver</button>`:canViewTerms()&&isTermVisible(m.id)&&m.tipo==='Retirada'&&m.devolucao_em&&m.termo_versao?`<button class="secondary" data-term-id="${esc(m.id)}">Termo PDF</button>`:'—'}</td></tr>`).join(''):'<tr><td colspan="7" class="empty">Nenhuma movimentação encontrada.</td></tr>';}
+/* Consulta termos concluídos pela data real da ação escolhida, não pela criação do registro. */
+async function searchIssuedTerms(){
+  if(!canViewTerms()){denyAction();return;}
+  const day=$('termsDate').value, action=$('termsAction').value;
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(day)){message('termsFilterMessage','Escolha o dia da ação.');return;}
+  const [year,month,date]=day.split('-').map(Number);
+  const from=new Date(year,month-1,date),to=new Date(year,month-1,date+1);
+  if(from.getFullYear()!==year||from.getMonth()!==month-1||from.getDate()!==date){
+    message('termsFilterMessage','Data inválida.');return;
+  }
+  const button=$('searchTermsBtn');button.disabled=true;
+  $('termsFilterBody').innerHTML='<tr><td class="empty" colspan="5">Buscando termos…</td></tr>';
+  message('termsFilterMessage','Consultando termos…',true);
+  try{
+    const {data:results,error}=await db.rpc('listar_termos_por_dia',{
+      p_inicio:from.toISOString(),p_fim:to.toISOString(),p_acao:action
+    });
+    if(error)throw error;
+    $('termsFilterBody').innerHTML=results.length?results.map(m=>`<tr><td>${esc(fmt(m.acao_em))}</td><td>${esc(m.tag||m.patrimonio||'—')}</td><td>${esc(m.descricao||'Equipamento removido')}</td><td>${esc(m.responsavel||'—')}</td><td><button class="secondary" type="button" data-term-id="${esc(m.movimentacao_id)}">Termo PDF</button></td></tr>`).join(''):'<tr><td colspan="5" class="empty">Nenhum termo concluído nesta data.</td></tr>';
+    message('termsFilterMessage',`${results.length} termo(s) encontrado(s) para ${action.toLowerCase()} em ${date.toString().padStart(2,'0')}/${month.toString().padStart(2,'0')}/${year}.${results.length===10000?' Limite de exibição atingido.':''}`,true);
+  }catch(error){
+    $('termsFilterBody').innerHTML='<tr><td colspan="5" class="empty">Não foi possível consultar os termos.</td></tr>';
+    message('termsFilterMessage','Falha na consulta: '+error.message);
+  }finally{button.disabled=false;}
+}
 function renderRecent(){const arr=state.movements.slice(0,8);$('recentBody').innerHTML=arr.length?arr.map(m=>`<tr><td>${fmt(m.created_at||m.retirada_em)}</td><td>${esc(movementName(m))}</td><td>${pill(m.tipo)}</td><td>${esc(m.responsavel||'—')}</td><td>${esc(m.observacoes||'—')}</td></tr>`).join(''):'<tr><td colspan="5" class="empty">Nenhuma movimentação registrada.</td></tr>';}
 function populateCategories(){const select=$('categoryFilter'),current=select.value,cats=[...new Set(state.equipment.map(x=>x.categoria).filter(Boolean))].sort();select.innerHTML='<option value="">Todas as categorias</option>'+cats.map(c=>`<option>${esc(c)}</option>`).join('');select.value=current;}
 function populateMovementEquipment(){const select=$('movementEquipment'),available=state.equipment.filter(x=>x.situacao==='Disponível');select.innerHTML='<option value="">Selecione…</option>'+available.map(x=>`<option value="${x.id}">${esc(x.tag||x.patrimonio||'Sem código')} — ${esc(x.descricao)}</option>`).join('');}
@@ -114,7 +162,7 @@ async function saveReturn(e){
     const {error}=await db.rpc('registrar_devolucao_termo',{p_movimentacao_id:id,p_devolucao_em:new Date($('returnAt').value).toISOString(),p_estado_devolucao:$('returnCondition').value,p_observacoes_devolucao:$('returnNotes').value.trim()||null,p_ocorrencia:$('returnOccurrence').value});
     if(error)throw error;
     $('returnDialog').close();await loadAll();
-    if(m.termo_versao)await openEquipmentTerm(id);
+    if(m.termo_versao&&isTermVisible(id))await openEquipmentTerm(id);
     else message('globalMessage','Devolução registrada. Esta retirada antiga não possui os dados necessários para gerar o termo automático.',true);
   }catch(err){message('returnMessage','Não foi possível registrar: '+err.message);}
   finally{returnSaving=false;button.disabled=false;}
@@ -132,6 +180,59 @@ async function callUserAdmin(action, payload={}){
   if(error){let detail=error.message||'Falha ao chamar a função de usuários.';try{const ctx=error.context;if(ctx&&typeof ctx.json==='function'){const body=await ctx.json();detail=body.error||body.message||detail;}}catch(_){}throw new Error(detail);}
   if(data?.error)throw new Error(data.error);
   return data;
+}
+async function generateRegistrationInvite(){
+  if(!canManageUsers()){denyAction();return;}
+  const button=$('createInvitationBtn');button.disabled=true;
+  $('invitationResult').classList.add('hidden');
+  message('inviteMessage','Gerando convite…',true);
+  try{
+    const result=await callUserAdmin('invite');
+    const url=new URL(window.location.pathname,window.location.origin);
+    url.searchParams.set('cadastro',result.token);
+    $('invitationLink').value=url.toString();
+    $('invitationResult').classList.remove('hidden');
+    message('inviteMessage','Link criado. Válido por 48 horas e utilizável uma única vez.',true);
+  }catch(err){message('inviteMessage','Não foi possível gerar o convite: '+err.message);}
+  finally{button.disabled=false;}
+}
+async function copyRegistrationInvite(){
+  const link=$('invitationLink').value;
+  if(!link)return;
+  try{
+    if(!navigator.clipboard?.writeText)throw new Error('Clipboard não disponível');
+    await navigator.clipboard.writeText(link);
+    message('inviteMessage','Link copiado. Envie-o somente ao usuário autorizado.',true);
+  }catch(_){
+    $('invitationLink').select();
+    message('inviteMessage','Selecione o texto e copie o link manualmente.');
+  }
+}
+async function registerFromInvite(e){
+  e.preventDefault();
+  if(!db){message('registerMessage','Configuração do sistema indisponível.');return;}
+  const token=new URLSearchParams(window.location.search).get('cadastro');
+  if(!token||!(/^[a-zA-Z0-9_-]{43}$/.test(token))){message('registerMessage','Convite inválido.');return;}
+  const button=$('registerForm').querySelector('button[type="submit"]');
+  button.disabled=true;message('registerMessage','Criando cadastro…',true);
+  try{
+    const {data,error}=await db.functions.invoke('register-user',{
+      body:{token,name:$('registerName').value.trim(),cpf:$('registerCpf').value,
+        phone:$('registerPhone').value.trim(),email:$('registerEmail').value.trim().toLowerCase(),
+        password:$('registerPassword').value}
+    });
+    if(error){
+      let detail=error.message||'Falha na solicitação.';
+      try{if(error.context?.json){const body=await error.context.json();detail=body.error||detail;}}catch(_){}
+      throw new Error(detail);
+    }
+    if(data?.error)throw new Error(data.error);
+    $('registerForm').reset();
+    const url=new URL(window.location.href);url.searchParams.delete('cadastro');
+    window.history.replaceState({},'',url.pathname+url.search+url.hash);
+    showLogin();message('loginMessage','Cadastro realizado! Entre com seu e-mail e senha.',true);
+  }catch(err){message('registerMessage','Não foi possível cadastrar: '+err.message);}
+  finally{button.disabled=false;}
 }
 function renderUsers(){
   const body=$('usersBody');
@@ -419,8 +520,8 @@ $('qrScanDialog').addEventListener('close',()=>{stopQrReader();});
 function openQr(item){$('qrcode').innerHTML='';$('qrLabel').textContent=`${item.tag||item.patrimonio||''} — ${item.descricao}`;new QRCode($('qrcode'),{text:JSON.stringify({id:item.id,tag:item.tag,patrimonio:item.patrimonio,descricao:item.descricao}),width:220,height:220,correctLevel:QRCode.CorrectLevel.M});$('qrDialog').showModal();}
 document.addEventListener('click',e=>{const nav=e.target.closest('[data-page]');if(nav)goto(nav.dataset.page);const go=e.target.closest('[data-goto]');if(go)goto(go.dataset.goto);const close=e.target.closest('[data-close]');if(close)$(close.dataset.close).close();const action=e.target.closest('[data-action]');if(action){const item=state.equipment.find(x=>x.id===action.dataset.id);if(action.dataset.action==='edit')openEquipment(item);if(action.dataset.action==='delete')deleteEquipment(action.dataset.id);if(action.dataset.action==='qr')openQr(item);if(action.dataset.action==='return'){const m=state.movements.find(x=>x.id===action.dataset.id);if(m)openReturn(m);}}const archiveAction=e.target.closest('[data-archive-action]');if(archiveAction){const id=archiveAction.dataset.archiveId;if(archiveAction.dataset.archiveAction==='view')viewArchivedCycle(id);if(archiveAction.dataset.archiveAction==='restore')restoreArchivedCycle(id);if(archiveAction.dataset.archiveAction==='delete')deleteArchivedCycle(id);}const userActionBtn=e.target.closest('[data-user-action]');if(userActionBtn)userAction(userActionBtn.dataset.userAction,userActionBtn.dataset.userId,userActionBtn.dataset.userEmail||'este usuário',userActionBtn.dataset.blocked);});
 $('archiveNowBtn').addEventListener('click',archiveInventory);$('refreshArchivesBtn').addEventListener('click',loadArchives);$('exportArchiveEquipmentBtn').addEventListener('click',()=>exportArchivedData('equipment'));$('exportArchiveMovementsBtn').addEventListener('click',()=>exportArchivedData('movements'));
-$('createUserForm').addEventListener('submit',createUser);$('refreshUsersBtn').addEventListener('click',loadUsers);$('loginForm').addEventListener('submit',login);$('logoutBtn').addEventListener('click',logout);$('refreshBtn').addEventListener('click',loadAll);$('newEquipmentBtn').addEventListener('click',()=>openEquipment());$('equipmentForm').addEventListener('submit',saveEquipment);$('newMovementBtn').addEventListener('click',openMovement);$('movementForm').addEventListener('submit',saveMovement);$('returnForm').addEventListener('submit',saveReturn);$('exportBtn').addEventListener('click',exportCsv);$('exportReportBtn').addEventListener('click',exportReport);$('printReportBtn').addEventListener('click',printReport);$('applyReportBtn').addEventListener('click',renderReport);['reportType','reportStatus','reportStart','reportEnd'].forEach(id=>$(id).addEventListener('change',renderReport));window.addEventListener('afterprint',()=>document.body.classList.remove('report-print'));$('printQrBtn').addEventListener('click',()=>window.print());['searchEquipment','statusFilter','categoryFilter'].forEach(id=>$(id).addEventListener('input',renderEquipment));['searchMovement','movementFilter'].forEach(id=>$(id).addEventListener('input',renderMovements));
+$('createUserForm').addEventListener('submit',createUser);$('createInvitationBtn').addEventListener('click',generateRegistrationInvite);$('copyInvitationBtn').addEventListener('click',copyRegistrationInvite);$('registerForm').addEventListener('submit',registerFromInvite);$('searchTermsBtn').addEventListener('click',searchIssuedTerms);$('refreshUsersBtn').addEventListener('click',loadUsers);$('loginForm').addEventListener('submit',login);$('logoutBtn').addEventListener('click',logout);$('refreshBtn').addEventListener('click',loadAll);$('newEquipmentBtn').addEventListener('click',()=>openEquipment());$('equipmentForm').addEventListener('submit',saveEquipment);$('newMovementBtn').addEventListener('click',openMovement);$('movementForm').addEventListener('submit',saveMovement);$('returnForm').addEventListener('submit',saveReturn);$('exportBtn').addEventListener('click',exportCsv);$('exportReportBtn').addEventListener('click',exportReport);$('printReportBtn').addEventListener('click',printReport);$('applyReportBtn').addEventListener('click',renderReport);['reportType','reportStatus','reportStart','reportEnd'].forEach(id=>$(id).addEventListener('change',renderReport));window.addEventListener('afterprint',()=>document.body.classList.remove('report-print'));$('printQrBtn').addEventListener('click',()=>window.print());['searchEquipment','statusFilter','categoryFilter'].forEach(id=>$(id).addEventListener('input',renderEquipment));['searchMovement','movementFilter'].forEach(id=>$(id).addEventListener('input',renderMovements));
 if(!configured){message('loginMessage','Antes de entrar, configure a URL e a chave pública do Supabase no arquivo app.js.');}else{db.auth.getSession().then(({data})=>data.session?showApp(data.session):showLogin());db.auth.onAuthStateChange((_event,session)=>{if(session&&!state.user)showApp(session);else if(!session){state.user=null;state.perfil=null;showLogin();}});}
 
 $('borrowerForm').addEventListener('submit',saveBorrowerDetails);
-document.addEventListener('click',e=>{const btn=e.target.closest('[data-term-id]');if(btn&&canMove())openEquipmentTerm(btn.dataset.termId);});
+document.addEventListener('click',e=>{const btn=e.target.closest('[data-term-id]');if(btn&&canViewTerms())openEquipmentTerm(btn.dataset.termId);});

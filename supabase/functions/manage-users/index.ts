@@ -63,6 +63,19 @@ Deno.serve(async (req: Request) => {
     const body = await req.json().catch(() => ({}));
     const action = String(body.action || "");
 
+    if (action === "invite") {
+      const bytes=crypto.getRandomValues(new Uint8Array(32));
+      const token=btoa(String.fromCharCode(...bytes)).replaceAll("+","-").replaceAll("/","_").replace(/=+$/,"");
+      const digest=await crypto.subtle.digest("SHA-256",new TextEncoder().encode(token));
+      const token_hash=Array.from(new Uint8Array(digest)).map(b=>b.toString(16).padStart(2,"0")).join("");
+      const {error}=await admin.from("convites_cadastro").insert({
+        token_hash,criado_por:authData.user.id,
+        expira_em:new Date(Date.now()+48*60*60*1000).toISOString()
+      });
+      if(error)return response({error:"Não foi possível salvar o convite: "+error.message},500);
+      return response({token,expires_in_hours:48});
+    }
+
     if (action === "list") {
       const users: any[] = [];
       for (let page = 1; page <= 100; page++) {
