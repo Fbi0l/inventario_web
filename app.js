@@ -54,7 +54,24 @@ async function fetchActiveEquipment(){
     throw new Error('O inventário excede o limite de carregamento.');
   }catch(error){return {data:null,error};}
 }
-async function loadAll(){if(!db||!state.perfil)return; message('globalMessage','Carregando dados…',true); const [e,m]=await Promise.all([fetchActiveEquipment(),db.from('movimentacoes').select('*, equipamentos(tag, patrimonio, descricao)').is('ciclo_arquivado_id',null).order('created_at',{ascending:false}).limit(500)]); if(e.error||m.error){message('globalMessage',`Erro ao carregar: ${(e.error||m.error).message}`);return;} state.equipment=e.data||[];state.movements=m.data||[];await loadVisibleTermIds();renderAll();message('globalMessage','Dados atualizados.',true); }
+async function fetchActiveMovements(){
+  const rows=[];
+  try{
+    for(let offset=0;offset<100000;offset+=500){
+      const {data,error}=await db.from('movimentacoes')
+        .select('*, equipamentos(tag, patrimonio, descricao)')
+        .is('ciclo_arquivado_id',null)
+        .order('created_at',{ascending:false})
+        .order('id',{ascending:true})
+        .range(offset,offset+499);
+      if(error)throw error;
+      rows.push(...(data||[]));
+      if(!data||data.length<500)return {data:rows,error:null};
+    }
+    throw new Error('O histórico excede o limite de carregamento.');
+  }catch(error){return {data:null,error};}
+}
+async function loadAll(){if(!db||!state.perfil)return; message('globalMessage','Carregando dados…',true); const [e,m]=await Promise.all([fetchActiveEquipment(),fetchActiveMovements()]); if(e.error||m.error){message('globalMessage',`Erro ao carregar: ${(e.error||m.error).message}`);return;} state.equipment=e.data||[];state.movements=m.data||[];await loadVisibleTermIds();renderAll();message('globalMessage','Dados atualizados.',true); }
 const roleLabel = perfil => ({administrador:'Administrador',operador:'Operador',consulta:'Consulta'})[perfil]||'Sem perfil';
 const canManageEquipment = () => state.perfil === 'administrador';
 const canMove = () => ['administrador','operador'].includes(state.perfil);
@@ -81,9 +98,14 @@ async function loadVisibleTermIds(){
   const ids=state.movements.filter(m=>m.tipo==='Retirada'&&m.devolucao_em&&m.termo_versao).map(m=>m.id);
   if(!ids.length||!canViewTerms())return;
   try{
-    const {data,error}=await db.rpc('listar_termos_visiveis',{p_ids:ids});
-    if(error)throw error;
-    state.visibleTermIds=new Set((data||[]).map(x=>x.movimentacao_id));
+    const visible=[];
+    // A RPC de privacidade aceita no maximo 500 IDs por chamada.
+    for(let offset=0;offset<ids.length;offset+=200){
+      const {data,error}=await db.rpc('listar_termos_visiveis',{p_ids:ids.slice(offset,offset+200)});
+      if(error)throw error;
+      visible.push(...(data||[]).map(x=>x.movimentacao_id));
+    }
+    state.visibleTermIds=new Set(visible);
   }catch(err){message('globalMessage','Não foi possível verificar permissões dos termos: '+err.message);}
 }
 function renderMovements(){const q=$('searchMovement').value.toLowerCase(),type=$('movementFilter').value;const arr=state.movements.filter(m=>(!q||[movementName(m),m.responsavel,m.destino].some(v=>String(v||'').toLowerCase().includes(q)))&&(!type||m.tipo===type));$('movementBody').innerHTML=arr.length?arr.map(m=>`<tr><td>${fmt(m.created_at||m.retirada_em)}</td><td><strong>${esc(movementName(m))}</strong><br><small>${esc(m.equipamentos?.tag||'')}</small></td><td>${pill(m.tipo)}</td><td>${esc(m.responsavel||'—')}</td><td>${fmt(m.retirada_em)}</td><td>${fmt(m.devolucao_em)}</td><td>${canMove()&&m.tipo==='Retirada'&&!m.devolucao_em?`<button class="primary" data-action="return" data-id="${m.id}">Devolver</button>`:canViewTerms()&&isTermVisible(m.id)&&m.tipo==='Retirada'&&m.devolucao_em&&m.termo_versao?`<button class="secondary" data-term-id="${esc(m.id)}">Termo PDF</button>`:'—'}</td></tr>`).join(''):'<tr><td colspan="7" class="empty">Nenhuma movimentação encontrada.</td></tr>';}
