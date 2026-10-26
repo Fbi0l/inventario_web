@@ -65,7 +65,7 @@ Deno.serve(async (req: Request) => {
 
     if (action === "invite") {
       const bytes=crypto.getRandomValues(new Uint8Array(32));
-      const token=btoa(String.fromCharCode(...bytes)).replace(/\\+/g,"-").replace(/\\//g,"_").replace(/=+$/,"");
+      const token=btoa(String.fromCharCode(...bytes)).replaceAll("+","-").replaceAll("/","_").replace(/=+$/,"");
       const digest=await crypto.subtle.digest("SHA-256",new TextEncoder().encode(token));
       const token_hash=Array.from(new Uint8Array(digest)).map(b=>b.toString(16).padStart(2,"0")).join("");
       const {error}=await admin.from("convites_cadastro").insert({
