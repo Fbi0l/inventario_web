@@ -14,7 +14,7 @@ CREATE INDEX IF NOT EXISTS termos_equipamentos_titular_idx
 
 -- Consulta PDF condicionada a titularidade, no servidor.
 CREATE OR REPLACE FUNCTION public.obter_termo_equipamento(p_movimentacao_id uuid)
-RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path = '' AS $
+RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path = '' AS $fn$
 DECLARE v_dados jsonb; v_perfil text;
 BEGIN
  v_perfil:=coalesce(public.meu_perfil(),'');
@@ -34,7 +34,7 @@ END; $;
 
 CREATE OR REPLACE FUNCTION public.listar_termos_por_dia(p_inicio timestamptz,p_fim timestamptz,p_acao text)
 RETURNS TABLE(movimentacao_id uuid,acao_em timestamptz,tag text,patrimonio text,descricao text,responsavel text)
-LANGUAGE plpgsql SECURITY DEFINER SET search_path = '' AS $
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = '' AS $fn$
 DECLARE v_perfil text;
 BEGIN
  v_perfil:=coalesce(public.meu_perfil(),'');
@@ -66,7 +66,7 @@ CREATE OR REPLACE FUNCTION public.registrar_retirada_termo(
  p_equipamento_id uuid,p_retirante_id uuid,p_destino text,p_retirada_em timestamptz,
  p_previsao_devolucao timestamptz,p_estado_retirada text,p_observacoes text,
  p_local_acao text,p_avarias_retirada boolean)
-RETURNS uuid LANGUAGE plpgsql SECURITY DEFINER SET search_path = '' AS $
+RETURNS uuid LANGUAGE plpgsql SECURITY DEFINER SET search_path = '' AS $fn$
 DECLARE r public.dados_retirantes; e public.equipamentos; v_id uuid;
 BEGIN
  IF auth.uid() IS NULL OR coalesce(public.meu_perfil(),'') NOT IN ('administrador','operador') THEN RAISE EXCEPTION 'Sem permissao para retirar.'; END IF;
@@ -94,7 +94,7 @@ END; $;
 -- A listagem da tabela de movimentacoes pode continuar mostrando todas as operacoes,
 -- mas o botao PDF deve ficar disponivel somente para os IDs retornados.
 CREATE OR REPLACE FUNCTION public.listar_termos_visiveis(p_ids uuid[])
-RETURNS TABLE(movimentacao_id uuid) LANGUAGE plpgsql SECURITY DEFINER SET search_path = '' AS $
+RETURNS TABLE(movimentacao_id uuid) LANGUAGE plpgsql SECURITY DEFINER SET search_path = '' AS $fn$
 DECLARE v_perfil text;
 BEGIN
  v_perfil:=coalesce(public.meu_perfil(),'');
@@ -115,10 +115,10 @@ GRANT EXECUTE ON FUNCTION public.listar_termos_visiveis(uuid[]) TO authenticated
 
 -- O arquivo modelo e privado e nao contem dados de outros usuarios.
 CREATE OR REPLACE FUNCTION public.pode_ler_modelo_termo()
-RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER SET search_path = '' AS $
+RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER SET search_path = '' AS $fn$
  SELECT auth.uid() IS NOT NULL AND coalesce(public.meu_perfil(),'')
  IN ('administrador','operador','consulta');
-$;
+$fn$;
 REVOKE ALL ON FUNCTION public.pode_ler_modelo_termo() FROM PUBLIC,anon;
 GRANT EXECUTE ON FUNCTION public.pode_ler_modelo_termo() TO authenticated;
 
