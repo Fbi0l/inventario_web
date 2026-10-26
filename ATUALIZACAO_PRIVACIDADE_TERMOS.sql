@@ -30,7 +30,7 @@ BEGIN
   RAISE EXCEPTION 'Termo indisponivel ou acesso nao autorizado.';
  END IF;
  RETURN v_dados;
-END; $;
+END; $fn$;
 
 CREATE OR REPLACE FUNCTION public.listar_termos_por_dia(p_inicio timestamptz,p_fim timestamptz,p_acao text)
 RETURNS TABLE(movimentacao_id uuid,acao_em timestamptz,tag text,patrimonio text,descricao text,responsavel text)
@@ -56,7 +56,7 @@ BEGIN
  AND (CASE WHEN p_acao='Retirada' THEN m.retirada_em ELSE m.devolucao_em END)>=p_inicio
  AND (CASE WHEN p_acao='Retirada' THEN m.retirada_em ELSE m.devolucao_em END)<p_fim
  ORDER BY 2 DESC LIMIT 10000;
-END; $;
+END; $fn$;
 REVOKE ALL ON FUNCTION public.listar_termos_por_dia(timestamptz,timestamptz,text) FROM public,anon;
 GRANT EXECUTE ON FUNCTION public.listar_termos_por_dia(timestamptz,timestamptz,text) TO authenticated;
 
@@ -89,7 +89,7 @@ BEGIN
  'estado_retirada',p_estado_retirada,'avarias_retirada',p_avarias_retirada,'observacoes',p_observacoes));
  UPDATE public.movimentacoes SET termo_versao=1 WHERE id=v_id;
  RETURN v_id;
-END; $;
+END; $fn$;
 
 -- A listagem da tabela de movimentacoes pode continuar mostrando todas as operacoes,
 -- mas o botao PDF deve ficar disponivel somente para os IDs retornados.
@@ -108,7 +108,7 @@ BEGIN
  AND m.ciclo_arquivado_id IS NULL AND m.tipo='Retirada' AND m.termo_versao IS NOT NULL
  AND m.devolucao_em IS NOT NULL AND t.dados ? 'devolucao_em'
  AND (v_perfil='administrador' OR t.retirante_usuario_id=auth.uid());
-END; $;
+END; $fn$;
 REVOKE ALL ON FUNCTION public.listar_termos_visiveis(uuid[]) FROM public,anon;
 GRANT EXECUTE ON FUNCTION public.listar_termos_visiveis(uuid[]) TO authenticated;
 
