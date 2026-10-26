@@ -13,7 +13,7 @@ assert.throws(()=>api.parseValue(-1));assert.throws(()=>api.parseValue('1.234'))
 book.Sheets.Cadastro.B2.w='000123';book.Sheets.Cadastro.B2.t='n';book.Sheets.Cadastro.B2.v=123;assert.equal(api.parseWorkbook(X,book,'Cadastro')[0].item.tag,'000123');
 const exported=workbook([['id','codigo_origem','tag','descricao'],['uuid-ficticio','INV-42','TI-42','Equipamento']]);assert.equal(api.parseWorkbook(X,exported,'Cadastro')[0].item.codigo_origem,'INV-42');
 console.log('Parser aprovado: colunas, identificadores, datas, valores, Em uso e duplicidades.');
-const app=fs.readFileSync('app.js','utf8');const helper=app.slice(app.indexOf('async function fetchActiveEquipment('),app.indexOf('async function loadAll('));
+const app=fs.readFileSync('app.js','utf8');const helper=app.slice(app.indexOf('async function fetchActiveEquipment('),app.indexOf('async function fetchActiveMovements('));
 let batches=0;const equipment=Array.from({length:1001},(_,id)=>({id}));
 const db={from:()=>{const q={select:()=>q,is:()=>q,order:()=>q,range:async(a,b)=>{batches++;return{data:equipment.slice(a,b+1)}}};return q}};
 (async()=>{const fetchAll=new Function('db',helper+';return fetchActiveEquipment;')(db);const result=await fetchAll();assert.equal(result.data.length,1001);assert.equal(batches,3);console.log('Carregamento aprovado: inventario com mais de 1000 equipamentos.');})().catch(e=>{console.error(e);process.exit(1)});
