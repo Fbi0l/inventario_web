@@ -91,7 +91,7 @@ async function loadPrivateTermTemplate(){
 }
 let termObjectUrl=null,termRequest=0;
 async function openEquipmentTerm(id){
-  if(!canMove()){denyAction();return;}
+  if(!canViewTerms()){denyAction();return;}
   const request=++termRequest,dialog=$('termDialog'),button=$('downloadTermBtn');
   if(termObjectUrl){URL.revokeObjectURL(termObjectUrl);termObjectUrl=null;}
   button.disabled=true;button.onclick=null;
