@@ -1,0 +1,1 @@
+-- Versão 1.4.0: configuração de privacidade dos termos.
