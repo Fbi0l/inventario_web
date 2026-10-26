@@ -112,4 +112,14 @@ END; $;
 REVOKE ALL ON FUNCTION public.listar_termos_visiveis(uuid[]) FROM public,anon;
 GRANT EXECUTE ON FUNCTION public.listar_termos_visiveis(uuid[]) TO authenticated;
 
+
+-- O arquivo modelo e privado e nao contem dados de outros usuarios.
+CREATE OR REPLACE FUNCTION public.pode_ler_modelo_termo()
+RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER SET search_path = '' AS $
+ SELECT auth.uid() IS NOT NULL AND coalesce(public.meu_perfil(),'')
+ IN ('administrador','operador','consulta');
+$;
+REVOKE ALL ON FUNCTION public.pode_ler_modelo_termo() FROM PUBLIC,anon;
+GRANT EXECUTE ON FUNCTION public.pode_ler_modelo_termo() TO authenticated;
+
 COMMIT;
