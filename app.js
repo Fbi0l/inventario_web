@@ -97,7 +97,6 @@ async function searchIssuedTerms(){
   if(from.getFullYear()!==year||from.getMonth()!==month-1||from.getDate()!==date){
     message('termsFilterMessage','Data inválida.');return;
   }
-  const field=action==='Retirada'?'retirada_em':'devolucao_em';
   const button=$('searchTermsBtn');button.disabled=true;
   $('termsFilterBody').innerHTML='<tr><td class="empty" colspan="5">Buscando termos…</td></tr>';
   message('termsFilterMessage','Consultando termos…',true);
@@ -106,7 +105,7 @@ async function searchIssuedTerms(){
       p_inicio:from.toISOString(),p_fim:to.toISOString(),p_acao:action
     });
     if(error)throw error;
-    $('termsFilterBody').innerHTML=results.length?results.map(m=>`<tr><td>${esc(fmt(action==='Retirada'?m.acao_em:m.acao_em))}</td><td>${esc(m.tag||m.patrimonio||'—')}</td><td>${esc(m.descricao||'Equipamento removido')}</td><td>${esc(m.responsavel||'—')}</td><td><button class="secondary" type="button" data-term-id="${esc(m.movimentacao_id)}">Termo PDF</button></td></tr>`).join(''):'<tr><td colspan="5" class="empty">Nenhum termo concluído nesta data.</td></tr>';
+    $('termsFilterBody').innerHTML=results.length?results.map(m=>`<tr><td>${esc(fmt(m.acao_em))}</td><td>${esc(m.tag||m.patrimonio||'—')}</td><td>${esc(m.descricao||'Equipamento removido')}</td><td>${esc(m.responsavel||'—')}</td><td><button class="secondary" type="button" data-term-id="${esc(m.movimentacao_id)}">Termo PDF</button></td></tr>`).join(''):'<tr><td colspan="5" class="empty">Nenhum termo concluído nesta data.</td></tr>';
     message('termsFilterMessage',`${results.length} termo(s) encontrado(s) para ${action.toLowerCase()} em ${date.toString().padStart(2,'0')}/${month.toString().padStart(2,'0')}/${year}.${results.length===10000?' Limite de exibição atingido.':''}`,true);
   }catch(error){
     $('termsFilterBody').innerHTML='<tr><td colspan="5" class="empty">Não foi possível consultar os termos.</td></tr>';
@@ -163,7 +162,7 @@ async function saveReturn(e){
     const {error}=await db.rpc('registrar_devolucao_termo',{p_movimentacao_id:id,p_devolucao_em:new Date($('returnAt').value).toISOString(),p_estado_devolucao:$('returnCondition').value,p_observacoes_devolucao:$('returnNotes').value.trim()||null,p_ocorrencia:$('returnOccurrence').value});
     if(error)throw error;
     $('returnDialog').close();await loadAll();
-    if(m.termo_versao&&canViewTerms())await openEquipmentTerm(id);
+    if(m.termo_versao&&isTermVisible(id))await openEquipmentTerm(id);
     else message('globalMessage','Devolução registrada. Esta retirada antiga não possui os dados necessários para gerar o termo automático.',true);
   }catch(err){message('returnMessage','Não foi possível registrar: '+err.message);}
   finally{returnSaving=false;button.disabled=false;}
