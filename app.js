@@ -4,7 +4,7 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 const configured = /^https:\/\/[^/]+\.supabase\.co$/.test(SUPABASE_URL) && SUPABASE_ANON_KEY.length > 20 && !SUPABASE_ANON_KEY.includes('COLE_AQUI');
 const db = configured ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
 const $ = id => document.getElementById(id);
-const state = { equipment: [], movements: [], users: [], retirantes: [], archives: [], archiveEquipment: [], archiveMovements: [], selectedArchive: null, page: 'dashboard', user: null, perfil: null };
+const state = { equipment: [], movements: [], users: [], retirantes: [], archives: [], archiveEquipment: [], archiveMovements: [], selectedArchive: null, page: 'dashboard', user: null, perfil: null, visibleTermIds: new Set() };
 const fields = ['tag','patrimonio','descricao','categoria','marca','modelo','numeroSerie','pertencimento','responsavel','localizacao','estado','situacao','valor','observacoes','codigoOrigem','dataAquisicao'];
 const dbField = {tag:'tag',patrimonio:'patrimonio',descricao:'descricao',categoria:'categoria',marca:'marca',modelo:'modelo',numeroSerie:'numero_serie',pertencimento:'pertencimento',responsavel:'responsavel',localizacao:'localizacao',estado:'estado',situacao:'situacao',valor:'valor',observacoes:'observacoes',codigoOrigem:'codigo_origem',dataAquisicao:'data_aquisicao'};
 const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -54,10 +54,12 @@ async function fetchActiveEquipment(){
     throw new Error('O inventário excede o limite de carregamento.');
   }catch(error){return {data:null,error};}
 }
-async function loadAll(){if(!db||!state.perfil)return; message('globalMessage','Carregando dados…',true); const [e,m]=await Promise.all([fetchActiveEquipment(),db.from('movimentacoes').select('*, equipamentos(tag, patrimonio, descricao)').is('ciclo_arquivado_id',null).order('created_at',{ascending:false}).limit(500)]); if(e.error||m.error){message('globalMessage',`Erro ao carregar: ${(e.error||m.error).message}`);return;} state.equipment=e.data||[];state.movements=m.data||[];renderAll();message('globalMessage','Dados atualizados.',true); }
+async function loadAll(){if(!db||!state.perfil)return; message('globalMessage','Carregando dados…',true); const [e,m]=await Promise.all([fetchActiveEquipment(),db.from('movimentacoes').select('*, equipamentos(tag, patrimonio, descricao)').is('ciclo_arquivado_id',null).order('created_at',{ascending:false}).limit(500)]); if(e.error||m.error){message('globalMessage',`Erro ao carregar: ${(e.error||m.error).message}`);return;} state.equipment=e.data||[];state.movements=m.data||[];await loadVisibleTermIds();renderAll();message('globalMessage','Dados atualizados.',true); }
 const roleLabel = perfil => ({administrador:'Administrador',operador:'Operador',consulta:'Consulta'})[perfil]||'Sem perfil';
 const canManageEquipment = () => state.perfil === 'administrador';
 const canMove = () => ['administrador','operador'].includes(state.perfil);
+const canViewTerms = () => ['administrador','operador','consulta'].includes(state.perfil);
+const isTermVisible = id => state.visibleTermIds.has(id);
 const canManageUsers = () => state.perfil === 'administrador';
 function denyAction(){message('globalMessage','Seu perfil não permite executar esta ação.');}
 function applyPermissions(){
@@ -66,7 +68,7 @@ function applyPermissions(){
   $('newEquipmentBtn').classList.toggle('hidden',!canManageEquipment());$('importEquipmentBtn').classList.toggle('hidden',!canManageEquipment());
   $('newMovementBtn').classList.toggle('hidden',!canMove());
   $('scanMovementBtn').classList.toggle('hidden',!canMove());
-  $('termsSearchPanel').classList.toggle('hidden',!canMove());
+  $('termsSearchPanel').classList.toggle('hidden',!canViewTerms());
   if(!canManageUsers() && ['users','archives'].includes(state.page))goto('dashboard');
   renderEquipment();renderMovements();
 }
@@ -74,10 +76,20 @@ function renderAll(){renderStats();renderEquipment();renderMovements();renderRec
 function renderStats(){ $('statTotal').textContent=state.equipment.length; $('statAvailable').textContent=state.equipment.filter(x=>x.situacao==='Disponível').length; $('statInUse').textContent=state.equipment.filter(x=>x.situacao==='Em uso').length; $('statMaintenance').textContent=state.equipment.filter(x=>x.situacao==='Manutenção').length; }
 function renderEquipment(){const q=$('searchEquipment').value.toLowerCase(), status=$('statusFilter').value,cat=$('categoryFilter').value;const arr=state.equipment.filter(x=>(!q||[x.tag,x.patrimonio,x.descricao,x.marca,x.modelo,x.numero_serie].some(v=>String(v||'').toLowerCase().includes(q)))&&(!status||x.situacao===status)&&(!cat||x.categoria===cat));$('equipmentBody').innerHTML=arr.length?arr.map(x=>`<tr><td><strong>${esc(x.tag||'—')}</strong><br><small>${esc(x.patrimonio||'Sem patrimônio')}</small></td><td><strong>${esc(x.descricao)}</strong><br><small>${esc([x.marca,x.modelo].filter(Boolean).join(' ')||'')}</small></td><td>${esc(x.categoria||'—')}</td><td>${esc(x.localizacao||'—')}</td><td>${pill(x.estado)}</td><td>${pill(x.situacao)}</td><td><div class="table-actions">${canManageEquipment()?`<button class="secondary" data-action="edit" data-id="${x.id}">Editar</button>`:''}<button class="secondary" data-action="qr" data-id="${x.id}">QR</button>${canManageEquipment()?`<button class="secondary" data-action="delete" data-id="${x.id}">Excluir</button>`:''}</div></td></tr>`).join(''):'<tr><td colspan="7" class="empty">Nenhum equipamento encontrado.</td></tr>';}
 function movementName(m){return m.equipamentos?.descricao||state.equipment.find(e=>e.id===m.equipamento_id)?.descricao||'Equipamento removido';}
-function renderMovements(){const q=$('searchMovement').value.toLowerCase(),type=$('movementFilter').value;const arr=state.movements.filter(m=>(!q||[movementName(m),m.responsavel,m.destino].some(v=>String(v||'').toLowerCase().includes(q)))&&(!type||m.tipo===type));$('movementBody').innerHTML=arr.length?arr.map(m=>`<tr><td>${fmt(m.created_at||m.retirada_em)}</td><td><strong>${esc(movementName(m))}</strong><br><small>${esc(m.equipamentos?.tag||'')}</small></td><td>${pill(m.tipo)}</td><td>${esc(m.responsavel||'—')}</td><td>${fmt(m.retirada_em)}</td><td>${fmt(m.devolucao_em)}</td><td>${canMove()&&m.tipo==='Retirada'&&!m.devolucao_em?`<button class="primary" data-action="return" data-id="${m.id}">Devolver</button>`:canMove()&&m.tipo==='Retirada'&&m.devolucao_em&&m.termo_versao?`<button class="secondary" data-term-id="${esc(m.id)}">Termo PDF</button>`:'—'}</td></tr>`).join(''):'<tr><td colspan="7" class="empty">Nenhuma movimentação encontrada.</td></tr>';}
+async function loadVisibleTermIds(){
+  state.visibleTermIds=new Set();
+  const ids=state.movements.filter(m=>m.tipo==='Retirada'&&m.devolucao_em&&m.termo_versao).map(m=>m.id);
+  if(!ids.length||!canViewTerms())return;
+  try{
+    const {data,error}=await db.rpc('listar_termos_visiveis',{p_ids:ids});
+    if(error)throw error;
+    state.visibleTermIds=new Set((data||[]).map(x=>x.movimentacao_id));
+  }catch(err){message('globalMessage','Não foi possível verificar permissões dos termos: '+err.message);}
+}
+function renderMovements(){const q=$('searchMovement').value.toLowerCase(),type=$('movementFilter').value;const arr=state.movements.filter(m=>(!q||[movementName(m),m.responsavel,m.destino].some(v=>String(v||'').toLowerCase().includes(q)))&&(!type||m.tipo===type));$('movementBody').innerHTML=arr.length?arr.map(m=>`<tr><td>${fmt(m.created_at||m.retirada_em)}</td><td><strong>${esc(movementName(m))}</strong><br><small>${esc(m.equipamentos?.tag||'')}</small></td><td>${pill(m.tipo)}</td><td>${esc(m.responsavel||'—')}</td><td>${fmt(m.retirada_em)}</td><td>${fmt(m.devolucao_em)}</td><td>${canMove()&&m.tipo==='Retirada'&&!m.devolucao_em?`<button class="primary" data-action="return" data-id="${m.id}">Devolver</button>`:canViewTerms()&&isTermVisible(m.id)&&m.tipo==='Retirada'&&m.devolucao_em&&m.termo_versao?`<button class="secondary" data-term-id="${esc(m.id)}">Termo PDF</button>`:'—'}</td></tr>`).join(''):'<tr><td colspan="7" class="empty">Nenhuma movimentação encontrada.</td></tr>';}
 /* Consulta termos concluídos pela data real da ação escolhida, não pela criação do registro. */
 async function searchIssuedTerms(){
-  if(!canMove()){denyAction();return;}
+  if(!canViewTerms()){denyAction();return;}
   const day=$('termsDate').value, action=$('termsAction').value;
   if(!/^\d{4}-\d{2}-\d{2}$/.test(day)){message('termsFilterMessage','Escolha o dia da ação.');return;}
   const [year,month,date]=day.split('-').map(Number);
@@ -90,19 +102,11 @@ async function searchIssuedTerms(){
   $('termsFilterBody').innerHTML='<tr><td class="empty" colspan="5">Buscando termos…</td></tr>';
   message('termsFilterMessage','Consultando termos…',true);
   try{
-    const results=[];
-    for(let offset=0;offset<10000;offset+=500){
-      const {data,error}=await db.from('movimentacoes')
-        .select('id,retirada_em,devolucao_em,responsavel,termo_versao,equipamentos(tag,patrimonio,descricao)')
-        .eq('tipo','Retirada').is('ciclo_arquivado_id',null)
-        .not('termo_versao','is',null).not('devolucao_em','is',null)
-        .gte(field,from.toISOString()).lt(field,to.toISOString())
-        .order(field,{ascending:false}).range(offset,offset+499);
-      if(error)throw error;
-      results.push(...(data||[]));
-      if(!data||data.length<500)break;
-    }
-    $('termsFilterBody').innerHTML=results.length?results.map(m=>`<tr><td>${esc(fmt(action==='Retirada'?m.retirada_em:m.devolucao_em))}</td><td>${esc(m.equipamentos?.tag||m.equipamentos?.patrimonio||'—')}</td><td>${esc(m.equipamentos?.descricao||'Equipamento removido')}</td><td>${esc(m.responsavel||'—')}</td><td><button class="secondary" type="button" data-term-id="${esc(m.id)}">Termo PDF</button></td></tr>`).join(''):'<tr><td colspan="5" class="empty">Nenhum termo concluído nesta data.</td></tr>';
+    const {data:results,error}=await db.rpc('listar_termos_por_dia',{
+      p_inicio:from.toISOString(),p_fim:to.toISOString(),p_acao:action
+    });
+    if(error)throw error;
+    $('termsFilterBody').innerHTML=results.length?results.map(m=>`<tr><td>${esc(fmt(action==='Retirada'?m.acao_em:m.acao_em))}</td><td>${esc(m.tag||m.patrimonio||'—')}</td><td>${esc(m.descricao||'Equipamento removido')}</td><td>${esc(m.responsavel||'—')}</td><td><button class="secondary" type="button" data-term-id="${esc(m.movimentacao_id)}">Termo PDF</button></td></tr>`).join(''):'<tr><td colspan="5" class="empty">Nenhum termo concluído nesta data.</td></tr>';
     message('termsFilterMessage',`${results.length} termo(s) encontrado(s) para ${action.toLowerCase()} em ${date.toString().padStart(2,'0')}/${month.toString().padStart(2,'0')}/${year}.${results.length===10000?' Limite de exibição atingido.':''}`,true);
   }catch(error){
     $('termsFilterBody').innerHTML='<tr><td colspan="5" class="empty">Não foi possível consultar os termos.</td></tr>';
@@ -159,7 +163,7 @@ async function saveReturn(e){
     const {error}=await db.rpc('registrar_devolucao_termo',{p_movimentacao_id:id,p_devolucao_em:new Date($('returnAt').value).toISOString(),p_estado_devolucao:$('returnCondition').value,p_observacoes_devolucao:$('returnNotes').value.trim()||null,p_ocorrencia:$('returnOccurrence').value});
     if(error)throw error;
     $('returnDialog').close();await loadAll();
-    if(m.termo_versao)await openEquipmentTerm(id);
+    if(m.termo_versao&&canViewTerms())await openEquipmentTerm(id);
     else message('globalMessage','Devolução registrada. Esta retirada antiga não possui os dados necessários para gerar o termo automático.',true);
   }catch(err){message('returnMessage','Não foi possível registrar: '+err.message);}
   finally{returnSaving=false;button.disabled=false;}
@@ -521,4 +525,4 @@ $('createUserForm').addEventListener('submit',createUser);$('createInvitationBtn
 if(!configured){message('loginMessage','Antes de entrar, configure a URL e a chave pública do Supabase no arquivo app.js.');}else{db.auth.getSession().then(({data})=>data.session?showApp(data.session):showLogin());db.auth.onAuthStateChange((_event,session)=>{if(session&&!state.user)showApp(session);else if(!session){state.user=null;state.perfil=null;showLogin();}});}
 
 $('borrowerForm').addEventListener('submit',saveBorrowerDetails);
-document.addEventListener('click',e=>{const btn=e.target.closest('[data-term-id]');if(btn&&canMove())openEquipmentTerm(btn.dataset.termId);});
+document.addEventListener('click',e=>{const btn=e.target.closest('[data-term-id]');if(btn&&canViewTerms())openEquipmentTerm(btn.dataset.termId);});
