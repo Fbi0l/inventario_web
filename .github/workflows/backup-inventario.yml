@@ -1,0 +1,94 @@
+name: Backup criptografado do Inventario
+
+on:
+  schedule:
+    # Diariamente, 06h00 em Belem/PA (09h00 UTC).
+    - cron: '0 9 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: backup-inventario-producao
+  cancel-in-progress: false
+
+jobs:
+  backup-postgresql:
+    name: Backup PostgreSQL public
+    if: vars.BACKUP_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout da branch principal
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Ferramentas de criptografia e copia remota
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq age rclone
+
+      - name: Gerar, verificar e criptografar backup
+        id: backup
+        env:
+          PGHOST: ${{ vars.SUPABASE_DB_HOST }}
+          PGPORT: ${{ vars.SUPABASE_DB_PORT }}
+          PGUSER: ${{ vars.SUPABASE_DB_USER }}
+          PGPASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+          PGDATABASE: postgres
+          PGSSLMODE: require
+          BACKUP_AGE_RECIPIENT: ${{ vars.BACKUP_AGE_RECIPIENT }}
+          BACKUP_OUTPUT_DIR: ${{ runner.temp }}/inventario-backup
+        run: bash scripts/backup-inventario.sh
+
+      - name: Guardar somente arquivos criptografados por 14 dias
+        uses: actions/upload-artifact@v4
+        with:
+          name: backup-inventario-${{ github.run_id }}
+          path: |
+            ${{ runner.temp }}/inventario-backup/*.age
+            ${{ runner.temp }}/inventario-backup/*.sha256
+          if-no-files-found: error
+          retention-days: 14
+          compression-level: 0
+
+      - name: Guardar copia externa em S3/R2 (opcional)
+        if: vars.BACKUP_OFFSITE_ENABLED == 'true'
+        env:
+          RCLONE_CONFIG_ARQUIVO_TYPE: s3
+          RCLONE_CONFIG_ARQUIVO_PROVIDER: ${{ vars.BACKUP_S3_PROVIDER }}
+          RCLONE_CONFIG_ARQUIVO_ACCESS_KEY_ID: ${{ secrets.BACKUP_S3_ACCESS_KEY_ID }}
+          RCLONE_CONFIG_ARQUIVO_SECRET_ACCESS_KEY: ${{ secrets.BACKUP_S3_SECRET_ACCESS_KEY }}
+          RCLONE_CONFIG_ARQUIVO_ENDPOINT: ${{ vars.BACKUP_S3_ENDPOINT }}
+          RCLONE_CONFIG_ARQUIVO_REGION: ${{ vars.BACKUP_S3_REGION }}
+          BACKUP_S3_BUCKET: ${{ vars.BACKUP_S3_BUCKET }}
+          BACKUP_OUTPUT_DIR: ${{ runner.temp }}/inventario-backup
+          BACKUP_NAME: ${{ steps.backup.outputs.backup_name }}
+          CHECKSUM_NAME: ${{ steps.backup.outputs.checksum_name }}
+        run: |
+          set -Eeuo pipefail
+          test -n "$BACKUP_S3_BUCKET"
+          test -n "$RCLONE_CONFIG_ARQUIVO_PROVIDER"
+          test -n "$RCLONE_CONFIG_ARQUIVO_ACCESS_KEY_ID"
+          test -n "$RCLONE_CONFIG_ARQUIVO_SECRET_ACCESS_KEY"
+          test -n "$RCLONE_CONFIG_ARQUIVO_ENDPOINT"
+          rclone copyto "$BACKUP_OUTPUT_DIR/$BACKUP_NAME" "arquivo:$BACKUP_S3_BUCKET/inventario/$BACKUP_NAME"
+          rclone copyto "$BACKUP_OUTPUT_DIR/$CHECKSUM_NAME" "arquivo:$BACKUP_S3_BUCKET/inventario/$CHECKSUM_NAME"
+
+      - name: Resumo da execucao
+        if: success()
+        env:
+          BACKUP_NAME: ${{ steps.backup.outputs.backup_name }}
+        run: |
+          {
+            echo '### Backup criptografado criado'
+            echo
+            echo "- Arquivo: `$BACKUP_NAME`"
+            echo '- Conteudo: schema `public` (nao inclui Storage nem Auth).'
+            echo '- Validacao: leitura completa do dump pelo `pg_restore` e checksum SHA-256.'
+            echo '- Retencao do artefato temporario: 14 dias.'
+            echo '- Copia externa: depende de BACKUP_OFFSITE_ENABLED e configuracao S3/R2.'
+            echo '- Esta execucao nao representa teste integral de restauracao.'
+          } >> "$GITHUB_STEP_SUMMARY"
