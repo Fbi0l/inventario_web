@@ -65,6 +65,8 @@ jobs:
           RCLONE_CONFIG_ARQUIVO_SECRET_ACCESS_KEY: ${{ secrets.BACKUP_S3_SECRET_ACCESS_KEY }}
           RCLONE_CONFIG_ARQUIVO_ENDPOINT: ${{ vars.BACKUP_S3_ENDPOINT }}
           RCLONE_CONFIG_ARQUIVO_REGION: ${{ vars.BACKUP_S3_REGION }}
+          # Tokens Object Read & Write restritos a um bucket nao podem checar/criar buckets.
+          RCLONE_CONFIG_ARQUIVO_NO_CHECK_BUCKET: 'true'
           BACKUP_S3_BUCKET: ${{ vars.BACKUP_S3_BUCKET }}
           BACKUP_OUTPUT_DIR: ${{ runner.temp }}/inventario-backup
           BACKUP_NAME: ${{ steps.backup.outputs.backup_name }}
