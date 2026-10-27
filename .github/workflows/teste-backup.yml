@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - 'scripts/backup-inventario.sh'
+      - 'scripts/testar-restauracao-local.sh'
       - '.github/workflows/backup-inventario.yml'
       - '.github/workflows/teste-backup.yml'
   workflow_dispatch:
@@ -68,4 +69,6 @@ jobs:
           total="$(docker exec "$container" psql -At -U postgres -d restauracao_ficticia \
             -c 'SELECT count(*) FROM public.itens_backup_teste')"
           [[ "$total" == '2' ]] || { echo 'Restauracao ficticia divergiu.'; exit 1; }
+          bash -n scripts/testar-restauracao-local.sh
+          bash scripts/testar-restauracao-local.sh "${files[0]}" "${files[0]}.sha256" "$RUNNER_TEMP/chave-age-teste.txt"
           echo 'Teste aprovado: backup, criptografia, descriptografia e restauracao com 2 registros.'
