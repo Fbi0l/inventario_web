@@ -1,0 +1,60 @@
+name: Check-up automatizado do Inventario
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch:
+  schedule:
+    - cron: '20 9 * * 1'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: checkup-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verificacoes-rapidas:
+    name: Sintaxe, paginacao e avisos
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Executar testes sem acesso a servicos externos
+        run: npm run test:rapido
+
+  integracao-isolada:
+    name: Banco ficticio e interface
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Instalar dependencias de testes
+        run: npm install --no-audit --no-fund
+      - name: Testar banco PostgreSQL em memoria e UI simulada
+        run: npm test
+
+  navegador:
+    name: Termo PDF no navegador simulado
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Instalar dependencias de testes
+        run: npm install --no-audit --no-fund
+      - name: Instalar Chromium do Playwright
+        run: npx playwright install --with-deps chromium
+      - name: Testar interface PDF no Chromium
+        run: npm run test:navegador
