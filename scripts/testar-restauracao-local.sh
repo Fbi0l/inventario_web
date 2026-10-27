@@ -90,6 +90,10 @@ echo "4/5: Restaurando exclusivamente dentro do banco temporario..."
 docker cp "$temp_dir/backup.dump" "$container_name:/tmp/backup.dump"
 docker exec "$container_name" createdb -U postgres inventario_teste_restauracao
 docker exec "$container_name" pg_restore --list /tmp/backup.dump >/dev/null
+# O PostgreSQL 18 cria public por padrao. O dump do schema public tambem
+# inclui CREATE SCHEMA public; remover o schema SOMENTE neste banco descartavel.
+docker exec "$container_name" psql -v ON_ERROR_STOP=1 -U postgres -d inventario_teste_restauracao \
+  -c 'DROP SCHEMA IF EXISTS public CASCADE;'
 docker exec "$container_name" pg_restore --exit-on-error --no-owner --no-acl \
   -U postgres --dbname inventario_teste_restauracao /tmp/backup.dump
 
