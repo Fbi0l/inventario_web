@@ -63,7 +63,7 @@ jobs:
             -o "$RUNNER_TEMP/restaurado.dump" "${files[0]}"
           docker cp "$RUNNER_TEMP/restaurado.dump" "$container:/tmp/restaurado.dump"
           docker exec "$container" createdb -U postgres restauracao_ficticia
-          docker exec "$container" pg_restore --no-owner --no-acl \
+          docker exec "$container" pg_restore --clean --if-exists --no-owner --no-acl \
             -U postgres -d restauracao_ficticia /tmp/restaurado.dump
           total="$(docker exec "$container" psql -At -U postgres -d restauracao_ficticia \
             -c 'SELECT count(*) FROM public.itens_backup_teste')"
