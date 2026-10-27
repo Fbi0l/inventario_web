@@ -71,7 +71,7 @@ async function fetchActiveMovements(){
     throw new Error('O histórico excede o limite de carregamento.');
   }catch(error){return {data:null,error};}
 }
-async function loadAll(){if(!db||!state.perfil)return; message('globalMessage','Carregando dados…',true); const [e,m]=await Promise.all([fetchActiveEquipment(),fetchActiveMovements()]); if(e.error||m.error){message('globalMessage',`Erro ao carregar: ${(e.error||m.error).message}`);return;} state.equipment=e.data||[];state.movements=m.data||[];await loadVisibleTermIds();renderAll();message('globalMessage','Dados atualizados.',true); }
+async function loadAll(){if(!db||!state.perfil)return; message('globalMessage','Carregando dados…',true); const [e,m]=await Promise.all([fetchActiveEquipment(),fetchActiveMovements()]); if(e.error||m.error){message('globalMessage',`Erro ao carregar: ${(e.error||m.error).message}`);return;} state.equipment=e.data||[];state.movements=m.data||[];const erroTermos=await loadVisibleTermIds();renderAll();if(erroTermos){message('globalMessage','Dados carregados, mas não foi possível verificar permissões dos termos: '+erroTermos.message);}else{message('globalMessage','Dados atualizados.',true);} }
 const roleLabel = perfil => ({administrador:'Administrador',operador:'Operador',consulta:'Consulta'})[perfil]||'Sem perfil';
 const canManageEquipment = () => state.perfil === 'administrador';
 const canMove = () => ['administrador','operador'].includes(state.perfil);
@@ -106,7 +106,8 @@ async function loadVisibleTermIds(){
       visible.push(...(data||[]).map(x=>x.movimentacao_id));
     }
     state.visibleTermIds=new Set(visible);
-  }catch(err){message('globalMessage','Não foi possível verificar permissões dos termos: '+err.message);}
+  }catch(err){return err;}
+  return null;
 }
 function renderMovements(){const q=$('searchMovement').value.toLowerCase(),type=$('movementFilter').value;const arr=state.movements.filter(m=>(!q||[movementName(m),m.responsavel,m.destino].some(v=>String(v||'').toLowerCase().includes(q)))&&(!type||m.tipo===type));$('movementBody').innerHTML=arr.length?arr.map(m=>`<tr><td>${fmt(m.created_at||m.retirada_em)}</td><td><strong>${esc(movementName(m))}</strong><br><small>${esc(m.equipamentos?.tag||'')}</small></td><td>${pill(m.tipo)}</td><td>${esc(m.responsavel||'—')}</td><td>${fmt(m.retirada_em)}</td><td>${fmt(m.devolucao_em)}</td><td>${canMove()&&m.tipo==='Retirada'&&!m.devolucao_em?`<button class="primary" data-action="return" data-id="${m.id}">Devolver</button>`:canViewTerms()&&isTermVisible(m.id)&&m.tipo==='Retirada'&&m.devolucao_em&&m.termo_versao?`<button class="secondary" data-term-id="${esc(m.id)}">Termo PDF</button>`:'—'}</td></tr>`).join(''):'<tr><td colspan="7" class="empty">Nenhuma movimentação encontrada.</td></tr>';}
 /* Consulta termos concluídos pela data real da ação escolhida, não pela criação do registro. */
