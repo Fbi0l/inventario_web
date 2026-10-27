@@ -1,0 +1,71 @@
+name: Teste isolado da rotina de backup
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'scripts/backup-inventario.sh'
+      - '.github/workflows/backup-inventario.yml'
+      - '.github/workflows/teste-backup.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  backup-restauracao-ficticia:
+    name: Backup e restauracao de dados ficticios
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Instalar criptografia
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq age
+
+      - name: Executar backup e restaurar em PostgreSQL temporario
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          umask 077
+          bash -n scripts/backup-inventario.sh
+          container="inventario-backup-smoke-${GITHUB_RUN_ID}"
+          docker run -d --name "$container" \
+            -e POSTGRES_PASSWORD=senha_ficticia_teste \
+            -p 127.0.0.1:55442:5432 postgres:18
+          trap 'docker rm -f "$container" >/dev/null 2>&1 || true' EXIT
+          for i in {1..40}; do
+            if docker exec "$container" pg_isready -U postgres >/dev/null 2>&1; then break; fi
+            sleep 2
+          done
+          docker exec "$container" psql -v ON_ERROR_STOP=1 -U postgres -d postgres \
+            -c "CREATE TABLE public.itens_backup_teste (id integer PRIMARY KEY, descricao text NOT NULL); INSERT INTO public.itens_backup_teste VALUES (1, 'item ficticio'), (2, 'outro item');"
+          mkdir -p "$RUNNER_TEMP/backup-test"
+          age-keygen -o "$RUNNER_TEMP/chave-age-teste.txt"
+          export PGHOST=127.0.0.1
+          export PGPORT=55442
+          export PGUSER=postgres
+          export PGPASSWORD=senha_ficticia_teste
+          export PGDATABASE=postgres
+          export PGSSLMODE=disable
+          export BACKUP_OUTPUT_DIR="$RUNNER_TEMP/backup-test"
+          export BACKUP_AGE_RECIPIENT="$(age-keygen -y "$RUNNER_TEMP/chave-age-teste.txt")"
+          bash scripts/backup-inventario.sh
+          shopt -s nullglob
+          files=("$BACKUP_OUTPUT_DIR"/*.dump.age)
+          [[ ${#files[@]} -eq 1 ]]
+          [[ ! -e "${files[0]%.age}" ]]
+          age --decrypt -i "$RUNNER_TEMP/chave-age-teste.txt" \
+            -o "$RUNNER_TEMP/restaurado.dump" "${files[0]}"
+          docker cp "$RUNNER_TEMP/restaurado.dump" "$container:/tmp/restaurado.dump"
+          docker exec "$container" createdb -U postgres restauracao_ficticia
+          docker exec "$container" pg_restore --no-owner --no-acl \
+            -U postgres -d restauracao_ficticia /tmp/restaurado.dump
+          total="$(docker exec "$container" psql -At -U postgres -d restauracao_ficticia \
+            -c 'SELECT count(*) FROM public.itens_backup_teste')"
+          [[ "$total" == '2' ]] || { echo 'Restauracao ficticia divergiu.'; exit 1; }
+          echo 'Teste aprovado: backup, criptografia, descriptografia e restauracao com 2 registros.'
