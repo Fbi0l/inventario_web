@@ -16,7 +16,9 @@ concurrency:
 jobs:
   backup-postgresql:
     name: Backup PostgreSQL public
-    if: vars.BACKUP_ENABLED == 'true'
+    # Execuções manuais podem diagnosticar o backup mesmo com agendamento desativado.
+    # O agendamento diário continua controlado por BACKUP_ENABLED.
+    if: github.event_name == 'workflow_dispatch' || vars.BACKUP_ENABLED == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
