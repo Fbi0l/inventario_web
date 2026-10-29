@@ -41,7 +41,7 @@ npm run test:navegador
 
 - Integrar auditoria somente de leitura ao Supabase usando credenciais de menor privilégio e autorização específica.
 - Criar backups externos criptografados, retenção, alerta por falhas e restauração agendada em infraestrutura isolada.
-- Cobrir exclusão de contas com histórico/convites e testar explicitamente a migração final de privacidade.
-- Fixar e versionar arquivo de lock de dependências para instalações totalmente reproduzíveis.
+- ~~Cobrir exclusão de contas com histórico/convites e testar explicitamente a migração final de privacidade.~~ Feito em `tests/exclusao-contas-db.cjs`.
+- ~~Fixar e versionar arquivo de lock de dependências para instalações totalmente reproduzíveis.~~ Feito: `package-lock.json` e `npm ci` no check-up.
 
 A presente proposta não altera o esquema do banco oficial nem dispara backup real.
