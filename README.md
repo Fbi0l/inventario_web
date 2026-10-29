@@ -1,6 +1,28 @@
 # inventario_web
 Sistema de inventário patrimonial
 
+### Trilha de auditoria (1.5.0)
+
+O menu **Auditoria**, visível só para administradores, mostra quem fez cada ação administrativa e quando:
+
+- **Usuários:** convites gerados, cadastros por convite, criação, mudança de perfil (antes → depois), alteração de dados do retirante (apenas quais campos mudaram), bloqueio, desbloqueio, troca de senha e exclusão.
+- **Equipamentos e movimentações** editados diretamente: criação, alteração com valor antes e depois de cada campo, e exclusão.
+- **Arquivamento, restauração e exclusão de ciclos**, e **importações de planilha**.
+
+Retiradas e devoluções não são duplicadas: continuam no histórico de movimentações. Senhas, CPF e telefone nunca são gravados na auditoria. Os registros não podem ser alterados nem apagados pelo sistema, e continuam lá mesmo que a conta do autor seja excluída (aparece "Conta excluída"). A tela mostra os 1.000 mais recentes, com busca, filtro por tipo e exportação CSV.
+
+Para aplicar, nesta ordem:
+
+1. Faça backup e execute `ATUALIZACAO_1_5_0_AUDITORIA.sql` no SQL Editor do Supabase.
+2. Publique as duas funções (mantendo as configurações de JWT de cada uma):
+   ```bat
+   npx supabase functions deploy manage-users
+   npx supabase functions deploy register-user --no-verify-jwt
+   ```
+3. Publique o site (`index.html` e `app.js`, ou a pasta `SITE_PUBLICAR`), se a hospedagem não atualizar sozinha.
+
+Até o passo 1 ser feito, as funções novas continuam funcionando, só não gravam a auditoria. A tela mostra um aviso se a tabela ainda não existir.
+
 ### Convites criam contas como Consulta (1.4.5)
 
 Quem se cadastra por link de convite passa a entrar com o perfil **Consulta**, e não mais **Operador**. Assim, um link que chegue a outra pessoa não dá permissão para registrar retiradas e devoluções. Para quem precisa operar, o administrador altera o perfil em **Usuários** depois do cadastro. Contas já existentes não mudam.

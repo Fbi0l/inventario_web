@@ -60,6 +60,16 @@ Deno.serve(async (req: Request) => {
       return response({ error: "Somente administradores podem gerenciar usuários." }, 403);
     }
 
+    // Trilha de auditoria (1.5.0). Falha ao registrar nao desfaz a acao ja concluida,
+    // mas fica no log da funcao. Nunca grava senha, CPF ou telefone.
+    const audit = async (acao: string, entidade: string, entidade_id: string | null, descricao: string, detalhes: Record<string, unknown> = {}) => {
+      const { error } = await admin.from("auditoria").insert({
+        autor_id: authData.user.id, autor_email: authData.user.email ?? null,
+        acao, entidade, entidade_id, descricao, detalhes,
+      });
+      if (error) console.error("Falha ao registrar auditoria", acao, error.message);
+    };
+
     const body = await req.json().catch(() => ({}));
     const action = String(body.action || "");
 
@@ -73,6 +83,7 @@ Deno.serve(async (req: Request) => {
         expira_em:new Date(Date.now()+48*60*60*1000).toISOString()
       });
       if(error)return response({error:"Não foi possível salvar o convite: "+error.message},500);
+      await audit("gerou_convite","convite",null,"Convite de cadastro válido por 48 horas");
       return response({token,expires_in_hours:48});
     }
 
@@ -130,6 +141,7 @@ Deno.serve(async (req: Request) => {
         await admin.auth.admin.deleteUser(data.user.id);
         return response({error:`Não foi possível salvar os dados: ${detailsError.message}`},500);
       }
+      await audit("criou", "usuario", data.user.id, email, { perfil });
       return response({ user: { id: data.user.id, email: data.user.email, perfil }, message: "Usuário criado." }, 201);
     }
 
@@ -139,8 +151,12 @@ Deno.serve(async (req: Request) => {
       if (!validBorrower(details)) return response({error:"Informe nome completo e CPF válido."},400);
       const {data:target,error:targetError}=await admin.auth.admin.getUserById(userId);
       if(targetError||!target.user)return response({error:"Usuário não encontrado."},404);
+      const {data:previous}=await admin.from("dados_retirantes").select("nome,cpf,telefone").eq("usuario_id",userId).maybeSingle();
       const {error}=await admin.from("dados_retirantes").upsert({usuario_id:userId,...details,atualizado_em:new Date().toISOString()});
       if(error)return response({error:error.message},400);
+      // Registra apenas QUAIS campos mudaram, sem os valores pessoais.
+      const campos=(["nome","cpf","telefone"] as const).filter(k=>!previous||previous[k]!==details[k]);
+      await audit("alterou_dados_retirante","usuario",userId,target.user.email||userId,{campos});
       return response({message:"Dados do retirante atualizados."});
     }
     if (action === "role") {
@@ -151,9 +167,12 @@ Deno.serve(async (req: Request) => {
         return response({ error: "Não é permitido retirar seu próprio perfil de administrador." }, 400);
       const { data: target, error: targetError } = await admin.auth.admin.getUserById(userId);
       if (targetError || !target.user) return response({ error: "Usuário não encontrado." }, 404);
+      const { data: previousRole } = await admin.from("perfis_usuarios")
+        .select("perfil").eq("usuario_id", userId).maybeSingle();
       const { error } = await admin.from("perfis_usuarios")
         .upsert({ usuario_id: userId, perfil, atualizado_em: new Date().toISOString() });
       if (error) return response({ error: error.message }, 400);
+      await audit("alterou_perfil", "usuario", userId, target.user.email || userId, { antes: previousRole?.perfil ?? null, depois: perfil });
       return response({ message: "Perfil alterado." });
     }
 
@@ -167,8 +186,11 @@ Deno.serve(async (req: Request) => {
       }
       const { data: target, error: targetError } = await admin.auth.admin.getUserById(userId);
       if (targetError || !target.user) return response({ error: "Usuário não encontrado." }, 404);
+      const { data: previousRole } = await admin.from("perfis_usuarios")
+        .select("perfil").eq("usuario_id", userId).maybeSingle();
       const { error } = await admin.auth.admin.deleteUser(userId);
       if (error) return response({ error: error.message }, 400);
+      await audit("excluiu", "usuario", userId, target.user.email || userId, { perfil: previousRole?.perfil ?? null });
       return response({ message: "Usuário excluído com sucesso." });
     }
     if (action === "access") {
@@ -176,10 +198,13 @@ Deno.serve(async (req: Request) => {
       const blocked = body.blocked === true;
       if (!userId) return response({ error: "Informe o usuário." }, 400);
       if (userId === authData.user.id) return response({ error: "Você não pode bloquear sua própria conta." }, 400);
+      const { data: target, error: targetError } = await admin.auth.admin.getUserById(userId);
+      if (targetError || !target.user) return response({ error: "Usuário não encontrado." }, 404);
       const { error } = await admin.auth.admin.updateUserById(userId, {
         ban_duration: blocked ? "876000h" : "none",
       });
       if (error) return response({ error: error.message }, 400);
+      await audit(blocked ? "bloqueou" : "desbloqueou", "usuario", userId, target.user.email || userId);
       return response({ message: blocked ? "Conta bloqueada." : "Conta desbloqueada." });
     }
 
@@ -188,8 +213,11 @@ Deno.serve(async (req: Request) => {
       const password = String(body.password || "");
       if (!userId) return response({ error: "Informe o usuário." }, 400);
       if (password.length < 8) return response({ error: "Senha deve ter no mínimo 8 caracteres." }, 400);
+      const { data: target, error: targetError } = await admin.auth.admin.getUserById(userId);
+      if (targetError || !target.user) return response({ error: "Usuário não encontrado." }, 404);
       const { error } = await admin.auth.admin.updateUserById(userId, { password });
       if (error) return response({ error: error.message }, 400);
+      await audit("alterou_senha", "usuario", userId, target.user.email || userId);
       return response({ message: "Senha atualizada." });
     }
 

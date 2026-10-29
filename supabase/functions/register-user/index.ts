@@ -45,7 +45,11 @@ Deno.serve(async(req:Request)=>{
   if(detailsError)throw detailsError;
   const {data:used,error:finalizeError}=await admin.rpc("finalizar_convite_cadastro",{p_hash:hash,p_reserva:reservation,p_user:createdUser});
   if(finalizeError||!used)throw finalizeError||new Error("Não foi possível finalizar o convite.");
+  const newUser=createdUser;
   createdUser="";reservation="";
+  // Trilha de auditoria (1.5.0): falha aqui nao desfaz o cadastro concluido.
+  const {error:auditError}=await admin.from("auditoria").insert({autor_id:newUser,autor_email:email,acao:"cadastrou_por_convite",entidade:"usuario",entidade_id:newUser,descricao:email,detalhes:{perfil:"consulta"}});
+  if(auditError)console.error("Falha ao registrar auditoria",auditError.message);
   return response({message:"Cadastro criado como Consulta. O administrador pode alterar o perfil em Usuarios."},201);
  }catch(error){
   return response({error:error instanceof Error?error.message:"Erro no cadastro."},500);
