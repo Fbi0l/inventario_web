@@ -39,8 +39,8 @@ npm run test:navegador
 
 ## Pendências de fase 2
 
-- Integrar auditoria somente de leitura ao Supabase usando credenciais de menor privilégio e autorização específica.
-- Criar backups externos criptografados, retenção, alerta por falhas e restauração agendada em infraestrutura isolada.
+- ~~Integrar auditoria somente de leitura ao Supabase usando credenciais de menor privilégio e autorização específica.~~ Feito: [AUDITORIA_SUPABASE.md](AUDITORIA_SUPABASE.md) (1.5.2).
+- Criar backups externos criptografados, retenção, alerta por falhas e restauração agendada em infraestrutura isolada. Feito, exceto a restauração agendada: o ensaio continua manual por decisão de segurança (a chave privada não vai para o GitHub). Backup das contas de login incluído; `termo-v1.pdf` com cópia manual.
 - ~~Cobrir exclusão de contas com histórico/convites e testar explicitamente a migração final de privacidade.~~ Feito em `tests/exclusao-contas-db.cjs`.
 - ~~Fixar e versionar arquivo de lock de dependências para instalações totalmente reproduzíveis.~~ Feito: `package-lock.json` e `npm ci` no check-up.
 

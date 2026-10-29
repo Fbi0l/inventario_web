@@ -1,0 +1,84 @@
+# Foto APROVADA da configuracao de seguranca do Supabase (scripts/auditoria-supabase.sh).
+# Gerada em 29/10/2026 a partir do projeto oficial, ja considerando ATUALIZACAO_1_5_2_AUDITORIA_LEITURA.sql.
+# Se uma mudanca de seguranca for INTENCIONAL, atualize este arquivo no mesmo PR:
+#   bash scripts/auditoria-supabase.sh --gerar > docs/auditoria-supabase-esperado.txt
+# (e recoloque este cabecalho). Linhas iniciadas por # sao ignoradas.
+bucket | modelos-termos | public=false
+chave-auth | ciclos_arquivados.criado_por | on_delete=set_null
+chave-auth | ciclos_arquivados.restaurado_por | on_delete=set_null
+chave-auth | convites_cadastro.criado_por | on_delete=set_null
+chave-auth | convites_cadastro.usado_por | on_delete=set_null
+chave-auth | dados_retirantes.usuario_id | on_delete=cascade
+chave-auth | equipamentos.criado_por | on_delete=set_null
+chave-auth | importacoes_equipamentos.criado_por | on_delete=set_null
+chave-auth | movimentacoes.registrado_por | on_delete=set_null
+chave-auth | perfis_usuarios.usuario_id | on_delete=cascade
+chave-auth | termos_equipamentos.retirante_usuario_id | on_delete=set_null
+funcao | arquivar_inventario(p_nome text) | definer=true config=search_path="" executa=authenticated,service_role
+funcao | auditar_ciclo() | definer=false config=search_path="" executa=service_role
+funcao | auditar_edicao_direta() | definer=false config=search_path="" executa=service_role
+funcao | auditar_importacao() | definer=false config=search_path="" executa=service_role
+funcao | auditoria_diferencas(p_antes jsonb, p_depois jsonb) | definer=false config=search_path="" executa=PUBLIC,anon,authenticated,service_role
+funcao | auditoria_somente_inclusao() | definer=false config=search_path="" executa=service_role
+funcao | cpf_valido(p_cpf text) | definer=false config=search_path="" executa=PUBLIC,anon,authenticated,service_role
+funcao | excluir_ciclo_arquivado(p_ciclo_id uuid) | definer=true config=search_path="" executa=authenticated,service_role
+funcao | finalizar_convite_cadastro(p_hash text, p_reserva uuid, p_user uuid) | definer=true config=search_path="" executa=service_role
+funcao | importar_equipamentos(p_lote uuid, p_itens jsonb) | definer=true config=search_path="" executa=authenticated,service_role
+funcao | liberar_convite_cadastro(p_hash text, p_reserva uuid) | definer=true config=search_path="" executa=service_role
+funcao | listar_retirantes() | definer=true config=search_path="" executa=authenticated,service_role
+funcao | listar_termos_por_dia(p_inicio timestamp with time zone, p_fim timestamp with time zone, p_acao text) | definer=true config=search_path="" executa=authenticated,service_role
+funcao | listar_termos_visiveis(p_ids uuid[]) | definer=true config=search_path="" executa=authenticated,service_role
+funcao | meu_perfil() | definer=true config=search_path="" executa=authenticated,service_role
+funcao | normalizar_patrimonio_importacao(p_valor text) | definer=false config=search_path="" executa=PUBLIC,anon,authenticated,service_role
+funcao | obter_termo_equipamento(p_movimentacao_id uuid) | definer=true config=search_path="" executa=authenticated,service_role
+funcao | pode_ler_modelo_termo() | definer=true config=search_path="" executa=authenticated,service_role
+funcao | proteger_situacao_em_uso() | definer=true config=search_path="" executa=service_role
+funcao | registrar_auditoria(p_acao text, p_entidade text, p_entidade_id text, p_descricao text, p_detalhes jsonb) | definer=true config=search_path="" executa=authenticated,service_role
+funcao | registrar_devolucao(p_movimentacao_id uuid, p_devolucao_em timestamp with time zone, p_estado_devolucao text, p_observacoes_devolucao text) | definer=true config=search_path="" executa=service_role
+funcao | registrar_devolucao_termo(p_movimentacao_id uuid, p_devolucao_em timestamp with time zone, p_estado_devolucao text, p_observacoes_devolucao text, p_ocorrencia text) | definer=true config=search_path="" executa=authenticated,service_role
+funcao | registrar_retirada(p_equipamento_id uuid, p_responsavel text, p_destino text, p_retirada_em timestamp with time zone, p_previsao_devolucao timestamp with time zone, p_estado_retirada text, p_observacoes text) | definer=true config=search_path="" executa=service_role
+funcao | registrar_retirada_termo(p_equipamento_id uuid, p_retirante_id uuid, p_destino text, p_retirada_em timestamp with time zone, p_previsao_devolucao timestamp with time zone, p_estado_retirada text, p_observacoes text, p_local_acao text, p_avarias_retirada boolean) | definer=true config=search_path="" executa=authenticated,service_role
+funcao | reservar_convite_cadastro(p_hash text, p_reserva uuid) | definer=true config=search_path="" executa=service_role
+funcao | restaurar_inventario(p_ciclo_id uuid) | definer=true config=search_path="" executa=authenticated,service_role
+funcao | rls_auto_enable() | definer=true config=search_path=pg_catalog executa=service_role
+funcao | validar_movimentacao_ciclo() | definer=false config=search_path="" executa=PUBLIC,anon,authenticated,service_role
+gatilho | auditoria :: trg_auditoria_sem_truncate | ativo=true funcao=auditoria_somente_inclusao
+gatilho | auditoria :: trg_auditoria_somente_inclusao | ativo=true funcao=auditoria_somente_inclusao
+gatilho | ciclos_arquivados :: trg_auditar_ciclos | ativo=true funcao=auditar_ciclo
+gatilho | equipamentos :: trg_auditar_equipamentos | ativo=true funcao=auditar_edicao_direta
+gatilho | equipamentos :: trg_proteger_situacao_em_uso | ativo=true funcao=proteger_situacao_em_uso
+gatilho | importacoes_equipamentos :: trg_auditar_importacoes | ativo=true funcao=auditar_importacao
+gatilho | movimentacoes :: trg_auditar_movimentacoes | ativo=true funcao=auditar_edicao_direta
+gatilho | movimentacoes :: trg_validar_movimentacao_ciclo | ativo=true funcao=validar_movimentacao_ciclo
+permissao-tabela | auditoria authenticated | SELECT
+permissao-tabela | ciclos_arquivados authenticated | SELECT
+permissao-tabela | dados_retirantes authenticated | SELECT
+permissao-tabela | equipamentos anon | DELETE,INSERT,SELECT,UPDATE
+permissao-tabela | equipamentos authenticated | DELETE,INSERT,SELECT,UPDATE
+permissao-tabela | importacoes_equipamentos authenticated | SELECT
+permissao-tabela | movimentacoes anon | DELETE,INSERT,SELECT,UPDATE
+permissao-tabela | movimentacoes authenticated | DELETE,INSERT,SELECT,UPDATE
+permissao-tabela | perfis_usuarios authenticated | SELECT
+politica | public.auditoria :: auditoria leitura administrador | PERMISSIVE SELECT {authenticated} using=(( SELECT meu_perfil() AS meu_perfil) = 'administrador'::text) check=-
+politica | public.ciclos_arquivados :: arquivos consulta administrador | PERMISSIVE SELECT {authenticated} using=(( SELECT meu_perfil() AS meu_perfil) = 'administrador'::text) check=-
+politica | public.dados_retirantes :: dados pessoais administrador | PERMISSIVE SELECT {authenticated} using=(( SELECT meu_perfil() AS meu_perfil) = 'administrador'::text) check=-
+politica | public.equipamentos :: equipamentos atualizar administrador | PERMISSIVE UPDATE {authenticated} using=((( SELECT meu_perfil() AS meu_perfil) = 'administrador'::text) AND (ciclo_arquivado_id IS NULL)) check=((( SELECT meu_perfil() AS meu_perfil) = 'administrador'::text) AND (ciclo_arquivado_id IS NULL))
+politica | public.equipamentos :: equipamentos excluir administrador | PERMISSIVE DELETE {authenticated} using=((( SELECT meu_perfil() AS meu_perfil) = 'administrador'::text) AND (ciclo_arquivado_id IS NULL)) check=-
+politica | public.equipamentos :: equipamentos inserir administrador | PERMISSIVE INSERT {authenticated} using=- check=((( SELECT meu_perfil() AS meu_perfil) = 'administrador'::text) AND (ciclo_arquivado_id IS NULL))
+politica | public.equipamentos :: equipamentos leitura por perfil | PERMISSIVE SELECT {authenticated} using=(((( SELECT meu_perfil() AS meu_perfil) IS NOT NULL) AND (ciclo_arquivado_id IS NULL)) OR (( SELECT meu_perfil() AS meu_perfil) = 'administrador'::text)) check=-
+politica | public.importacoes_equipamentos :: importacoes leitura administrador | PERMISSIVE SELECT {authenticated} using=(( SELECT meu_perfil() AS meu_perfil) = 'administrador'::text) check=-
+politica | public.movimentacoes :: movimentacoes atualizar administrador | PERMISSIVE UPDATE {authenticated} using=((( SELECT meu_perfil() AS meu_perfil) = 'administrador'::text) AND (ciclo_arquivado_id IS NULL)) check=((( SELECT meu_perfil() AS meu_perfil) = 'administrador'::text) AND (ciclo_arquivado_id IS NULL))
+politica | public.movimentacoes :: movimentacoes excluir administrador | PERMISSIVE DELETE {authenticated} using=((( SELECT meu_perfil() AS meu_perfil) = 'administrador'::text) AND (ciclo_arquivado_id IS NULL)) check=-
+politica | public.movimentacoes :: movimentacoes inserir administrador | PERMISSIVE INSERT {authenticated} using=- check=((( SELECT meu_perfil() AS meu_perfil) = 'administrador'::text) AND (ciclo_arquivado_id IS NULL))
+politica | public.movimentacoes :: movimentacoes leitura por perfil | PERMISSIVE SELECT {authenticated} using=(((( SELECT meu_perfil() AS meu_perfil) IS NOT NULL) AND (ciclo_arquivado_id IS NULL)) OR (( SELECT meu_perfil() AS meu_perfil) = 'administrador'::text)) check=-
+politica | public.perfis_usuarios :: visualizar proprio perfil | PERMISSIVE SELECT {authenticated} using=(usuario_id = ( SELECT auth.uid() AS uid)) check=-
+politica | storage.objects :: modelo termo leitura autorizada | PERMISSIVE SELECT {authenticated} using=((bucket_id = 'modelos-termos'::text) AND (name = 'termo-v1.pdf'::text) AND ( SELECT pode_ler_modelo_termo() AS pode_ler_modelo_termo)) check=-
+tabela | auditoria | rls=true force=false
+tabela | ciclos_arquivados | rls=true force=false
+tabela | convites_cadastro | rls=true force=false
+tabela | dados_retirantes | rls=true force=false
+tabela | equipamentos | rls=true force=false
+tabela | importacoes_equipamentos | rls=true force=false
+tabela | movimentacoes | rls=true force=false
+tabela | perfis_usuarios | rls=true force=false
+tabela | termos_equipamentos | rls=true force=false

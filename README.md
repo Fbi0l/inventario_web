@@ -1,6 +1,12 @@
 # inventario_web
 Sistema de inventário patrimonial
 
+### Auditoria automática de segurança (1.5.2)
+
+Toda segunda-feira, um workflow confere, **somente para leitura**, a configuração de segurança do Supabase (RLS, políticas, permissões, funções e buckets) e falha, gerando alerta, se algo mudar ou violar uma regra básica. Ele usa o usuário de banco `auditoria_leitura`, que não tem acesso a nenhum dado. A mesma versão remove de `anon`/`authenticated` as permissões `TRUNCATE`, `TRIGGER`, `REFERENCES` e `MAINTAIN` em equipamentos e movimentações, que o sistema não usa.
+
+Para aplicar: execute `ATUALIZACAO_1_5_2_AUDITORIA_LEITURA.sql`, defina a senha do usuário e crie o segredo `SUPABASE_AUDIT_DB_PASSWORD`, conforme [AUDITORIA_SUPABASE.md](AUDITORIA_SUPABASE.md). Não é preciso republicar o site nem as funções.
+
 ### Cancelar convites pendentes (1.5.1)
 
 Em **Usuários**, o quadro de convites lista os links ainda não usados e dentro da validade, com quem gerou cada um. O botão **Cancelar** faz o link parar de funcionar na hora (o convite vence imediatamente) e registra "Cancelou convite" na Auditoria. O link em si nunca é guardado nem exibido de novo; só o resultado da geração aparece uma vez.
