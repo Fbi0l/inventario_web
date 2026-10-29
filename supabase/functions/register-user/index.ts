@@ -39,14 +39,14 @@ Deno.serve(async(req:Request)=>{
   });
   if(createError||!created.user)return response({error:createError?.message||"Não foi possível criar a conta."},400);
   createdUser=created.user.id;
-  const {error:roleError}=await admin.from("perfis_usuarios").insert({usuario_id:createdUser,perfil:"operador"});
+  const {error:roleError}=await admin.from("perfis_usuarios").insert({usuario_id:createdUser,perfil:"consulta"});
   if(roleError)throw roleError;
   const {error:detailsError}=await admin.from("dados_retirantes").insert({usuario_id:createdUser,nome:name,cpf,telefone:phone});
   if(detailsError)throw detailsError;
   const {data:used,error:finalizeError}=await admin.rpc("finalizar_convite_cadastro",{p_hash:hash,p_reserva:reservation,p_user:createdUser});
   if(finalizeError||!used)throw finalizeError||new Error("Não foi possível finalizar o convite.");
   createdUser="";reservation="";
-  return response({message:"Cadastro criado como Operador."},201);
+  return response({message:"Cadastro criado como Consulta. O administrador pode alterar o perfil em Usuarios."},201);
  }catch(error){
   return response({error:error instanceof Error?error.message:"Erro no cadastro."},500);
  }finally{
