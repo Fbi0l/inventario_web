@@ -111,7 +111,8 @@ jobs:
       # se algo aqui falhar, o backup do schema public do dia ja foi salvo.
       - name: Gerar e criptografar backup das contas de login
         id: auth
-        if: vars.BACKUP_AUTH_ENABLED == 'true'
+        # Ligado por padrao; so e desligado com BACKUP_AUTH_ENABLED=false.
+        if: vars.BACKUP_AUTH_ENABLED != 'false'
         env:
           PGHOST: ${{ vars.SUPABASE_DB_HOST }}
           PGPORT: ${{ vars.SUPABASE_DB_PORT }}
@@ -175,7 +176,7 @@ jobs:
             echo '### Backup criptografado criado'
             echo
             echo "- Arquivo: \`$BACKUP_NAME\`"
-            echo "- Contas de login: ${AUTH_BACKUP_NAME:+\`$AUTH_BACKUP_NAME\`}${AUTH_BACKUP_NAME:-nao incluidas (BACKUP_AUTH_ENABLED desligado)}"
+            echo "- Contas de login: ${AUTH_BACKUP_NAME:+\`$AUTH_BACKUP_NAME\`}${AUTH_BACKUP_NAME:-nao incluidas (BACKUP_AUTH_ENABLED=false)}"
             echo '- Conteudo: schema `public` e, se ativado, dados de `auth.users`/`auth.identities` (nao inclui Storage).'
             echo '- Validacao: leitura completa do dump pelo `pg_restore` e checksum SHA-256.'
             echo '- Retencao do artefato temporario: 14 dias.'
