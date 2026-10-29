@@ -1,0 +1,49 @@
+name: Auditoria de seguranca do Supabase
+
+# Somente leitura: confere a configuracao de seguranca do projeto oficial
+# (RLS, politicas, permissoes, funcoes, buckets) com o usuario auditoria_leitura,
+# que nao tem acesso a nenhum dado. Ver AUDITORIA_SUPABASE.md.
+on:
+  schedule:
+    # Toda segunda-feira, 06h40 em Belem/PA (09h40 UTC), depois do backup diario.
+    - cron: '40 9 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: auditoria-supabase
+  cancel-in-progress: false
+
+jobs:
+  auditoria:
+    name: Conferir configuracao de seguranca
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout da branch principal
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Auditar (somente leitura)
+        env:
+          PGHOST: ${{ vars.SUPABASE_DB_HOST }}
+          PGPORT: ${{ vars.SUPABASE_DB_PORT }}
+          # O pooler do Supabase usa usuario.projeto; o sufixo vem do usuario do backup.
+          SUPABASE_DB_USER: ${{ vars.SUPABASE_DB_USER }}
+          PGPASSWORD: ${{ secrets.SUPABASE_AUDIT_DB_PASSWORD }}
+          PGDATABASE: postgres
+          PGSSLMODE: require
+          AUDITORIA_USAR_DOCKER: '1'
+        run: |
+          set -Eeuo pipefail
+          if [[ -z "$PGPASSWORD" ]]; then
+            echo "::error::Segredo SUPABASE_AUDIT_DB_PASSWORD ausente. Veja AUDITORIA_SUPABASE.md, passo 2."
+            exit 2
+          fi
+          sufixo=""
+          if [[ "$SUPABASE_DB_USER" == *.* ]]; then sufixo=".${SUPABASE_DB_USER#*.}"; fi
+          export PGUSER="auditoria_leitura${sufixo}"
+          bash scripts/auditoria-supabase.sh
