@@ -4,7 +4,7 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 const configured = /^https:\/\/[^/]+\.supabase\.co$/.test(SUPABASE_URL) && SUPABASE_ANON_KEY.length > 20 && !SUPABASE_ANON_KEY.includes('COLE_AQUI');
 const db = configured ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
 const $ = id => document.getElementById(id);
-const state = { equipment: [], movements: [], users: [], retirantes: [], archives: [], archiveEquipment: [], archiveMovements: [], selectedArchive: null, audit: [], page: 'dashboard', user: null, perfil: null, visibleTermIds: new Set() };
+const state = { equipment: [], movements: [], users: [], retirantes: [], archives: [], archiveEquipment: [], archiveMovements: [], selectedArchive: null, audit: [], invites: [], lastInviteId: null, page: 'dashboard', user: null, perfil: null, visibleTermIds: new Set() };
 const fields = ['tag','patrimonio','descricao','categoria','marca','modelo','numeroSerie','pertencimento','responsavel','localizacao','estado','situacao','valor','observacoes','codigoOrigem','dataAquisicao'];
 const dbField = {tag:'tag',patrimonio:'patrimonio',descricao:'descricao',categoria:'categoria',marca:'marca',modelo:'modelo',numeroSerie:'numero_serie',pertencimento:'pertencimento',responsavel:'responsavel',localizacao:'localizacao',estado:'estado',situacao:'situacao',valor:'valor',observacoes:'observacoes',codigoOrigem:'codigo_origem',dataAquisicao:'data_aquisicao'};
 const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -13,8 +13,8 @@ const fmt = d => d ? new Date(d).toLocaleString('pt-BR',{dateStyle:'short',timeS
 const pill = s => `<span class="pill ${s==='Disponível'?'available':s==='Em uso'?'use':s==='Manutenção'?'maintenance':s==='Baixado'?'retired':''}">${esc(s||'—')}</span>`;
 function message(id, text='', good=false){ const el=$(id); el.textContent=text; el.style.color=good?'#18794e':'#b42318'; }
 function showLogin(){
-  state.users=[];state.retirantes=[];state.audit=[];
-  $('borrowerForm').reset();$('createUserForm').reset();$('usersBody').innerHTML='';
+  state.users=[];state.retirantes=[];state.audit=[];state.invites=[];state.lastInviteId=null;
+  $('borrowerForm').reset();$('createUserForm').reset();$('usersBody').innerHTML='';$('invitesBody').innerHTML='';$('invitationLink').value='';$('invitationResult').classList.add('hidden');
   document.querySelectorAll('dialog[open]').forEach(d=>d.close());
   const token=new URLSearchParams(window.location.search).get('cadastro');
   const register=!!token && /^[a-zA-Z0-9_-]{43}$/.test(token);
@@ -216,7 +216,9 @@ async function generateRegistrationInvite(){
     url.searchParams.set('cadastro',result.token);
     $('invitationLink').value=url.toString();
     $('invitationResult').classList.remove('hidden');
+    state.lastInviteId=result.id||null;
     message('inviteMessage','Link criado. Válido por 48 horas e utilizável uma única vez.',true);
+    await loadInvites();
   }catch(err){message('inviteMessage','Não foi possível gerar o convite: '+err.message);}
   finally{button.disabled=false;}
 }
@@ -258,6 +260,30 @@ async function registerFromInvite(e){
   }catch(err){message('registerMessage','Não foi possível cadastrar: '+err.message);}
   finally{button.disabled=false;}
 }
+/* Convites pendentes (1.5.1): listar e cancelar. O token nunca volta do servidor. */
+function renderInvites(){
+  const emailOf=id=>!id?'Conta excluída':state.users.find(u=>u.id===id)?.email||'—';
+  $('invitesBody').innerHTML=state.invites.length?state.invites.map(c=>`<tr><td>${esc(fmt(c.criado_em))}${c.id===state.lastInviteId?'<br><small>Link exibido acima</small>':''}</td><td>${esc(emailOf(c.criado_por))}</td><td>${esc(fmt(c.expira_em))}</td><td><button class="secondary" type="button" data-invite-cancel="${esc(c.id)}">Cancelar</button></td></tr>`).join(''):'<tr><td colspan="4" class="empty">Nenhum convite pendente.</td></tr>';
+}
+async function loadInvites(){
+  if(!canManageUsers())return;
+  try{const data=await callUserAdmin('list_invites');state.invites=data.invites||[];renderInvites();}
+  catch(err){$('invitesBody').innerHTML='<tr><td colspan="4" class="empty">Não foi possível carregar os convites.</td></tr>';message('inviteMessage','Convites pendentes: '+err.message);}
+}
+let inviteCancelBusy=false;
+async function cancelInvite(id){
+  if(!canManageUsers()){denyAction();return;}
+  if(inviteCancelBusy)return;
+  if(!confirm('Cancelar este convite? O link deixará de funcionar imediatamente.'))return;
+  inviteCancelBusy=true;message('inviteMessage','Cancelando convite…',true);
+  try{
+    await callUserAdmin('revoke_invite',{inviteId:id});
+    if(id===state.lastInviteId){state.lastInviteId=null;$('invitationLink').value='';$('invitationResult').classList.add('hidden');}
+    message('inviteMessage','Convite cancelado. O link não funciona mais.',true);
+  }catch(err){message('inviteMessage','Não foi possível cancelar: '+err.message);}
+  finally{inviteCancelBusy=false;await loadInvites();}
+}
+document.addEventListener('click',e=>{const b=e.target.closest('[data-invite-cancel]');if(b)cancelInvite(b.dataset.inviteCancel);});
 function renderUsers(){
   const body=$('usersBody');
   body.innerHTML=state.users.length?state.users.map(u=>{
@@ -271,7 +297,7 @@ function renderUsers(){
 async function loadUsers(){
   if(!canManageUsers())return;
   message('usersMessage','Carregando usuários…',true);
-  try{const data=await callUserAdmin('list');state.users=data.users||[];renderUsers();message('usersMessage',`${state.users.length} usuário(s) carregado(s).`,true);}
+  try{const data=await callUserAdmin('list');state.users=data.users||[];renderUsers();message('usersMessage',`${state.users.length} usuário(s) carregado(s).`,true);await loadInvites();}
   catch(err){message('usersMessage',`${err.message}. Confira se a função manage-users foi publicada e se o perfil Administrador foi configurado no banco.`);}
 }
 async function createUser(e){
@@ -464,7 +490,7 @@ async function restoreArchivedCycle(id){
 
 /* Trilha de auditoria (1.5.0): somente leitura, visivel apenas ao administrador. */
 const auditActionLabel={criou:'Criou',alterou:'Alterou',excluiu:'Excluiu',arquivou:'Arquivou ciclo',restaurou:'Restaurou ciclo',importou:'Importou planilha',
-  gerou_convite:'Gerou convite',cadastrou_por_convite:'Cadastro por convite',alterou_perfil:'Alterou perfil',alterou_dados_retirante:'Alterou dados do retirante',
+  gerou_convite:'Gerou convite',cancelou_convite:'Cancelou convite',cadastrou_por_convite:'Cadastro por convite',alterou_perfil:'Alterou perfil',alterou_dados_retirante:'Alterou dados do retirante',
   bloqueou:'Bloqueou acesso',desbloqueou:'Desbloqueou acesso',alterou_senha:'Alterou senha'};
 const auditEntityLabel={usuario:'Usuário',convite:'Convite',equipamento:'Equipamento',movimentacao:'Movimentação',ciclo:'Ciclo',planilha:'Planilha'};
 const auditFieldLabel={tag:'TAG',patrimonio:'Patrimônio',descricao:'Descrição',categoria:'Categoria',marca:'Marca',modelo:'Modelo',numero_serie:'Nº de série',
@@ -478,6 +504,7 @@ function auditDetail(a){
   if(a.acao==='alterou_perfil')return `${roleLabel(d.antes)} → ${roleLabel(d.depois)}`;
   if(Array.isArray(d.campos))return d.campos.length?'Campos: '+d.campos.map(k=>auditFieldLabel[k]||k).join(', '):'Sem alterações';
   if(d.perfil)return 'Perfil: '+roleLabel(d.perfil);
+  if(a.acao==='cancelou_convite'&&d.gerado_em)return 'Gerado em '+fmt(d.gerado_em);
   if(a.entidade==='ciclo')return `${d.equipamentos??0} equipamento(s), ${d.movimentacoes??0} movimentação(ões)${d.ja_restaurado?' — período já restaurado':''}`;
   return '';
 }
