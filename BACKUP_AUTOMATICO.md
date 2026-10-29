@@ -6,9 +6,11 @@ A rotina [scripts/backup-inventario.sh](scripts/backup-inventario.sh) e o workfl
 
 O backup é SOMENTE-LEITURA e exporta, em formato customizado, **apenas o schema public** do PostgreSQL. Confere conteúdo extraível com pg_restore e SHA-256; criptografa com age antes de salvar os arquivos. O arquivo não criptografado é excluído do runner.
 
-**Não inclui** contas do auth.users, senhas, Auth gerenciado, arquivos físicos do Storage, nem outros esquemas gerenciados. O modelo privado termo-v1.pdf continua exigindo backup separado. Ler o dump integralmente não prova que a restauração completa do Supabase funcionará.
+**Contas de login (opcional):** com a variável BACKUP_AUTH_ENABLED=true, a mesma execução gera um segundo arquivo criptografado, `inventario_auth_DATA.dump.age`, com os **dados** de `auth.users` e `auth.identities` (e-mails, hashes de senha e vínculos de login). Ele serve para recriar as contas em um projeto Supabase novo e roda **depois** do backup principal: se falhar, o backup do schema public do dia já está salvo e o job aparece como falho para gerar alerta.
 
-O workflow de testes [teste-backup.yml](.github/workflows/teste-backup.yml) usa um PostgreSQL local e dados fictícios, sem contato com a produção.
+**Não inclui** configurações do Auth (provedores, modelos de e-mail, URLs), arquivos físicos do Storage, secrets das Edge Functions nem outros esquemas gerenciados. O modelo privado termo-v1.pdf continua exigindo backup separado.
+
+O workflow de testes [teste-backup.yml](.github/workflows/teste-backup.yml) usa um PostgreSQL local e dados fictícios, sem contato com a produção. Ele aplica todas as migrações do projeto, gera os dois backups com o script real e os restaura com o script de ensaio ([tests/backup-esquema-real.sh](tests/backup-esquema-real.sh)), e roda de novo sempre que uma migração ou script de backup muda.
 
 ## 1. Criar chave de criptografia no próprio computador
 
@@ -37,6 +39,7 @@ Na aba **Variables**:
 | SUPABASE_DB_USER | Usuário PostgreSQL do projeto |
 | BACKUP_AGE_RECIPIENT | Chave pública age1... |
 | BACKUP_ENABLED | false no começo; true depois da configuração |
+| BACKUP_AUTH_ENABLED | true para incluir o backup das contas de login (opcional) |
 
 Na aba **Secrets**:
 

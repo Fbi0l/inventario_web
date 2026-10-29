@@ -6,6 +6,10 @@ on:
     paths:
       - 'scripts/backup-inventario.sh'
       - 'scripts/testar-restauracao-local.sh'
+      - 'scripts/restauracao-preparar-auth.sql'
+      - 'tests/backup-esquema-real.sh'
+      # Migracoes mudam o que o backup precisa restaurar.
+      - '*.sql'
       - '.github/workflows/backup-inventario.yml'
       - '.github/workflows/teste-backup.yml'
   workflow_dispatch:
@@ -72,3 +76,7 @@ jobs:
           bash -n scripts/testar-restauracao-local.sh
           bash scripts/testar-restauracao-local.sh "${files[0]}" "${files[0]}.sha256" "$RUNNER_TEMP/chave-age-teste.txt"
           echo 'Teste aprovado: backup, criptografia, descriptografia e restauracao com 2 registros.'
+
+      - name: Backup e restauracao com o esquema real (dados ficticios)
+        shell: bash
+        run: bash tests/backup-esquema-real.sh

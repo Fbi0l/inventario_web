@@ -107,16 +107,76 @@ jobs:
           ( cd "$tmp_dir" && sha256sum --check "$CHECKSUM_NAME" )
           echo "Copia criptografada baixada do R2 e checksum SHA-256 validado."
 
+      # Contas de login (auth.users e auth.identities). Fica DEPOIS do backup principal:
+      # se algo aqui falhar, o backup do schema public do dia ja foi salvo.
+      - name: Gerar e criptografar backup das contas de login
+        id: auth
+        if: vars.BACKUP_AUTH_ENABLED == 'true'
+        env:
+          PGHOST: ${{ vars.SUPABASE_DB_HOST }}
+          PGPORT: ${{ vars.SUPABASE_DB_PORT }}
+          PGUSER: ${{ vars.SUPABASE_DB_USER }}
+          PGPASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+          PGDATABASE: postgres
+          PGSSLMODE: require
+          BACKUP_AGE_RECIPIENT: ${{ vars.BACKUP_AGE_RECIPIENT }}
+          BACKUP_OUTPUT_DIR: ${{ runner.temp }}/inventario-backup-auth
+          BACKUP_SCOPE: auth
+        run: bash scripts/backup-inventario.sh
+
+      - name: Guardar backup criptografado das contas por 14 dias
+        if: steps.auth.outcome == 'success'
+        uses: actions/upload-artifact@v4
+        with:
+          name: backup-inventario-auth-${{ github.run_id }}
+          path: |
+            ${{ runner.temp }}/inventario-backup-auth/*.age
+            ${{ runner.temp }}/inventario-backup-auth/*.sha256
+          if-no-files-found: error
+          retention-days: 14
+          compression-level: 0
+
+      - name: Copiar backup das contas para o R2 e verificar
+        if: steps.auth.outcome == 'success' && vars.BACKUP_OFFSITE_ENABLED == 'true'
+        env:
+          RCLONE_CONFIG_ARQUIVO_TYPE: s3
+          RCLONE_CONFIG_ARQUIVO_PROVIDER: ${{ vars.BACKUP_S3_PROVIDER }}
+          RCLONE_CONFIG_ARQUIVO_ACCESS_KEY_ID: ${{ secrets.BACKUP_S3_ACCESS_KEY_ID }}
+          RCLONE_CONFIG_ARQUIVO_SECRET_ACCESS_KEY: ${{ secrets.BACKUP_S3_SECRET_ACCESS_KEY }}
+          RCLONE_CONFIG_ARQUIVO_ENDPOINT: ${{ vars.BACKUP_S3_ENDPOINT }}
+          RCLONE_CONFIG_ARQUIVO_REGION: ${{ vars.BACKUP_S3_REGION }}
+          RCLONE_CONFIG_ARQUIVO_NO_CHECK_BUCKET: 'true'
+          BACKUP_S3_BUCKET: ${{ vars.BACKUP_S3_BUCKET }}
+          BACKUP_OUTPUT_DIR: ${{ runner.temp }}/inventario-backup-auth
+          BACKUP_NAME: ${{ steps.auth.outputs.backup_name }}
+          CHECKSUM_NAME: ${{ steps.auth.outputs.checksum_name }}
+        run: |
+          set -Eeuo pipefail
+          umask 077
+          test -n "$BACKUP_S3_BUCKET"
+          test -n "$BACKUP_NAME"
+          test -n "$CHECKSUM_NAME"
+          rclone copyto "$BACKUP_OUTPUT_DIR/$BACKUP_NAME" "arquivo:$BACKUP_S3_BUCKET/inventario/$BACKUP_NAME"
+          rclone copyto "$BACKUP_OUTPUT_DIR/$CHECKSUM_NAME" "arquivo:$BACKUP_S3_BUCKET/inventario/$CHECKSUM_NAME"
+          tmp_dir="$(mktemp -d)"
+          trap 'rm -rf -- "$tmp_dir"' EXIT
+          rclone copyto "arquivo:$BACKUP_S3_BUCKET/inventario/$BACKUP_NAME" "$tmp_dir/$BACKUP_NAME"
+          rclone copyto "arquivo:$BACKUP_S3_BUCKET/inventario/$CHECKSUM_NAME" "$tmp_dir/$CHECKSUM_NAME"
+          ( cd "$tmp_dir" && sha256sum --check "$CHECKSUM_NAME" )
+          echo "Backup das contas copiado para o R2 e checksum SHA-256 validado."
+
       - name: Resumo da execucao
         if: success()
         env:
           BACKUP_NAME: ${{ steps.backup.outputs.backup_name }}
+          AUTH_BACKUP_NAME: ${{ steps.auth.outputs.backup_name }}
         run: |
           {
             echo '### Backup criptografado criado'
             echo
-            echo "- Arquivo: `$BACKUP_NAME`"
-            echo '- Conteudo: schema `public` (nao inclui Storage nem Auth).'
+            echo "- Arquivo: \`$BACKUP_NAME\`"
+            echo "- Contas de login: ${AUTH_BACKUP_NAME:+\`$AUTH_BACKUP_NAME\`}${AUTH_BACKUP_NAME:-nao incluidas (BACKUP_AUTH_ENABLED desligado)}"
+            echo '- Conteudo: schema `public` e, se ativado, dados de `auth.users`/`auth.identities` (nao inclui Storage).'
             echo '- Validacao: leitura completa do dump pelo `pg_restore` e checksum SHA-256.'
             echo '- Retencao do artefato temporario: 14 dias.'
             echo '- Copia externa: depende de BACKUP_OFFSITE_ENABLED e configuracao S3/R2.'
