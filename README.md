@@ -1,6 +1,15 @@
 # inventario_web
 Sistema de inventário patrimonial
 
+### Integridade de usuários e situação dos equipamentos (1.4.4)
+
+Execute `ATUALIZACAO_1_4_4_INTEGRIDADE.sql` no SQL Editor do Supabase, após backup. Não é preciso republicar o site nem as Edge Functions, e nenhum dado é alterado ao instalar.
+
+- **Exclusão de usuários:** contas que já cadastraram equipamentos ou registraram retiradas/devoluções agora podem ser excluídas. Os registros permanecem; apenas a referência à conta excluída fica vazia. O nome do retirante continua na movimentação e no termo. Se preferir manter essa referência, use **Bloquear acesso** em vez de excluir.
+- **Situação "Em uso":** enquanto houver retirada em aberto, a edição do equipamento não permite trocar a situação para Disponível, Manutenção ou Baixado. Registre a devolução normalmente. As demais edições continuam liberadas.
+
+Ao final, o script mostra duas conferências somente leitura. A segunda lista equipamentos que já estejam inconsistentes; se aparecer algum, edite-o, volte a situação para Em uso e registre a devolução.
+
 ### Importar equipamentos em posse de retirantes (1.3.1)
 
 Execute `ATUALIZACAO_IMPORTACAO_EM_USO.sql` no Supabase depois das migrações de importação e termos, antes de publicar. Não importa nem altera equipamentos ao instalar.
