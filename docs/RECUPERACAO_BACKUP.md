@@ -32,10 +32,18 @@ Execute dentro da cópia do repositório:
 bash scripts/testar-restauracao-local.sh \
   /caminho/inventario_public_DATA.dump.age \
   /caminho/inventario_public_DATA.dump.age.sha256 \
-  /caminho/privado/chave-age.txt
+  /caminho/privado/chave-age.txt \
+  /caminho/inventario_auth_DATA.dump.age \
+  /caminho/inventario_auth_DATA.dump.age.sha256
 ```
 
-O script confere SHA-256, descriptografa num diretório temporário, cria um PostgreSQL **sem rede**, restaura o dump em `inventario_teste_restauracao`, verifica a existência de tabelas do schema `public` e destrói o ambiente temporário ao finalizar.
+Os dois últimos argumentos (backup das contas) são opcionais; informe-os quando BACKUP_AUTH_ENABLED estiver ativo.
+
+O script confere SHA-256, descriptografa num diretório temporário, cria um PostgreSQL **sem rede**, restaura o dump em `inventario_teste_restauracao`, mostra quantas tabelas, chaves estrangeiras e registros voltaram e destrói o ambiente temporário ao finalizar.
+
+Como o backup do `public` depende de objetos do Supabase que não estão nele (`auth.users`, `auth.uid()` e os papéis `anon`/`authenticated`/`service_role`), o script cria substitutos mínimos **só no banco descartável** ([scripts/restauracao-preparar-auth.sql](../scripts/restauracao-preparar-auth.sql)) antes de restaurar. Até 29/10/2026 o script não fazia isso e o ensaio com um backup real falharia em `schema "auth" does not exist`.
+
+O backup das contas é apenas conferido (legível e com `auth.users`/`auth.identities`). Ele só pode ser restaurado de fato em um projeto Supabase, que já traz o schema `auth` completo.
 
 **Se a restauração falhar**, não execute `pg_restore` no Supabase oficial. Dependências externas ao `public` (como `auth` ou extensões) são uma causa possível. Preserve somente os arquivos criptografados e compartilhe apenas mensagens de erro **sem dados pessoais e sem chaves** para diagnóstico.
 
