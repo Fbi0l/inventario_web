@@ -37,7 +37,7 @@ bash scripts/testar-restauracao-local.sh \
   /caminho/inventario_auth_DATA.dump.age.sha256
 ```
 
-Os dois últimos argumentos (backup das contas) são opcionais; informe-os quando BACKUP_AUTH_ENABLED estiver ativo.
+Os dois últimos argumentos (backup das contas) são opcionais; o backup das contas é gerado por padrão junto com o principal.
 
 O script confere SHA-256, descriptografa num diretório temporário, cria um PostgreSQL **sem rede**, restaura o dump em `inventario_teste_restauracao`, mostra quantas tabelas, chaves estrangeiras e registros voltaram e destrói o ambiente temporário ao finalizar.
 

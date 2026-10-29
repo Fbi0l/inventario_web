@@ -6,7 +6,7 @@ A rotina [scripts/backup-inventario.sh](scripts/backup-inventario.sh) e o workfl
 
 O backup é SOMENTE-LEITURA e exporta, em formato customizado, **apenas o schema public** do PostgreSQL. Confere conteúdo extraível com pg_restore e SHA-256; criptografa com age antes de salvar os arquivos. O arquivo não criptografado é excluído do runner.
 
-**Contas de login (opcional):** com a variável BACKUP_AUTH_ENABLED=true, a mesma execução gera um segundo arquivo criptografado, `inventario_auth_DATA.dump.age`, com os **dados** de `auth.users` e `auth.identities` (e-mails, hashes de senha e vínculos de login). Ele serve para recriar as contas em um projeto Supabase novo e roda **depois** do backup principal: se falhar, o backup do schema public do dia já está salvo e o job aparece como falho para gerar alerta.
+**Contas de login:** por padrão, a mesma execução gera um segundo arquivo criptografado, `inventario_auth_DATA.dump.age`, com os **dados** de `auth.users` e `auth.identities` (e-mails, hashes de senha e vínculos de login). Para desligar, crie a variável BACKUP_AUTH_ENABLED=false. Ele serve para recriar as contas em um projeto Supabase novo e roda **depois** do backup principal: se falhar, o backup do schema public do dia já está salvo e o job aparece como falho para gerar alerta.
 
 **Não inclui** configurações do Auth (provedores, modelos de e-mail, URLs), arquivos físicos do Storage, secrets das Edge Functions nem outros esquemas gerenciados. O modelo privado termo-v1.pdf continua exigindo backup separado.
 
@@ -39,7 +39,7 @@ Na aba **Variables**:
 | SUPABASE_DB_USER | Usuário PostgreSQL do projeto |
 | BACKUP_AGE_RECIPIENT | Chave pública age1... |
 | BACKUP_ENABLED | false no começo; true depois da configuração |
-| BACKUP_AUTH_ENABLED | true para incluir o backup das contas de login (opcional) |
+| BACKUP_AUTH_ENABLED | Não é preciso criar. Use false só para desligar o backup das contas |
 
 Na aba **Secrets**:
 
