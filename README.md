@@ -1,6 +1,20 @@
 # inventario_web
 Sistema de inventário patrimonial
 
+### Convites criam contas como Consulta (1.4.5)
+
+Quem se cadastra por link de convite passa a entrar com o perfil **Consulta**, e não mais **Operador**. Assim, um link que chegue a outra pessoa não dá permissão para registrar retiradas e devoluções. Para quem precisa operar, o administrador altera o perfil em **Usuários** depois do cadastro. Contas já existentes não mudam.
+
+Quem tem perfil Consulta continua podendo ser escolhido como retirante e ver os próprios termos.
+
+Para aplicar, republique a função de cadastro e o site:
+
+```bat
+npx supabase functions deploy register-user --no-verify-jwt
+```
+
+Depois publique `index.html` (ou a pasta `SITE_PUBLICAR`) na hospedagem, se ela não for atualizada automaticamente. Não há SQL nesta versão.
+
 ### Integridade de usuários e situação dos equipamentos (1.4.4)
 
 Execute `ATUALIZACAO_1_4_4_INTEGRIDADE.sql` no SQL Editor do Supabase, após backup. Não é preciso republicar o site nem as Edge Functions, e nenhum dado é alterado ao instalar.

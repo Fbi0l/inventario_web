@@ -1,12 +1,12 @@
 {
   "name": "inventario-web-checkup",
-  "version": "1.4.3",
+  "version": "1.4.5",
   "private": true,
   "description": "Testes automatizados locais e de CI; nao utiliza credenciais do Supabase oficial.",
   "scripts": {
     "test:rapido": "node --check app.js && node --check SITE_PUBLICAR/app.js && node tests/historico-paginacao.cjs && node tests/avisos-termos.cjs",
     "test:banco": "node tests/importacao-db.cjs && node tests/importacao-posse-db.cjs && node tests/termos-db.cjs && node tests/integridade-db.cjs",
-    "test:interface": "node tests/importacao-parser.cjs && node tests/importacao-dom.cjs && node tests/termos-dom.cjs && node tests/qr-etiquetas.cjs && node tests/termos-users.cjs",
+    "test:interface": "node tests/importacao-parser.cjs && node tests/importacao-dom.cjs && node tests/termos-dom.cjs && node tests/qr-etiquetas.cjs && node tests/termos-users.cjs && node tests/register-user.cjs",
     "test:navegador": "node tests/termos-ui.cjs",
     "test": "npm run test:rapido && npm run test:banco && npm run test:interface"
   },

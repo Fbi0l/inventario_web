@@ -9,12 +9,12 @@
    ```
    O segundo endpoint precisa receber um pedido de cadastro sem sessão; sua autorização é o convite de uso único, verificado no servidor.
 3. Publique na hospedagem os arquivos atualizados da pasta `SITE_PUBLICAR` (HTML e JS). Não publique a pasta `supabase` no site.
-4. Teste com um convite novo num navegador sem sessão e confirme o perfil Operador em Usuários. Depois teste o mesmo link novamente: ele deve ser recusado.
+4. Teste com um convite novo num navegador sem sessão e confirme o perfil Consulta em Usuários (a partir da versão 1.4.5; antes era Operador). Depois teste o mesmo link novamente: ele deve ser recusado.
 5. Teste a consulta de termos em **Retiradas e devoluções** escolhendo **Dia da ação** e **Retirada** ou **Devolução**.
 
 ## Comportamento
 - O administrador gera um convite válido por 48 horas, de uso único e sem associação prévia ao e-mail. Encaminhe cada link de forma privada ao destinatário.
-- O novo usuário preenche nome, CPF, telefone (opcional), e-mail e senha. O servidor impõe o perfil **operador**; só o administrador pode alterar a permissão depois.
+- O novo usuário preenche nome, CPF, telefone (opcional), e-mail e senha. O servidor impõe o perfil **consulta** (desde a 1.4.5; antes era operador); só o administrador pode alterar a permissão depois, em **Usuários**.
 - O cadastro preenche também `dados_retirantes`, para uso nos termos.
 - A consulta traz **somente termos concluídos do ciclo atual**, consultando os registros diretamente no Supabase (não se limita às últimas 500 movimentações). Quando a retirada e a devolução caíram em dias diferentes, o filtro usa o dia correspondente à ação selecionada.
 - A geração do PDF permanece disponível apenas após a devolução, conforme regra já existente no sistema.

@@ -22,13 +22,13 @@
       <footer class="site-footer" aria-label="Propriedade e versão do sistema">
         <span>&copy; 2026 <strong>Fbiol</strong> · Todos os direitos reservados</span>
         <span class="site-footer-separator" aria-hidden="true">•</span>
-        <span>Versão 1.4.3</span>
+        <span>Versão 1.4.5</span>
       </footer>
   </div>
 
   <div id="registerView" class="login-wrap hidden">
     <form id="registerForm" class="login-card">
-      <h1>Cadastro por convite</h1><p class="muted">Preencha seus dados para criar acesso como Operador.</p>
+      <h1>Cadastro por convite</h1><p class="muted">Preencha seus dados para criar seu acesso. O perfil inicial é Consulta; o administrador pode alterá-lo depois.</p>
       <label>Nome completo *<input id="registerName" required minlength="3" maxlength="150" autocomplete="name"></label>
       <label>CPF *<input id="registerCpf" required inputmode="numeric" maxlength="14"></label>
       <label>Telefone (opcional)<input id="registerPhone" type="tel" maxlength="30"></label>
@@ -98,7 +98,7 @@
           <div class="panel-head"><div><h2>Gerenciamento de usuários</h2><p class="muted">Crie contas, consulte os usuários cadastrados, altere senhas ou remova acessos.</p></div><button id="refreshUsersBtn" class="secondary">↻ Atualizar lista</button></div>
           <div class="user-create-box">
             <h3>Convite para autocadastro</h3>
-            <p class="muted">Somente administradores geram links. Cada convite expira em 48 horas, permite um cadastro e atribui exclusivamente o perfil Operador.</p>
+            <p class="muted">Somente administradores geram links. Cada convite expira em 48 horas, permite um cadastro e atribui o perfil Consulta. Para que a pessoa registre retiradas e devoluções, altere o perfil dela para Operador na lista abaixo.</p>
             <button id="createInvitationBtn" type="button" class="primary">Gerar link de cadastro</button>
             <div id="invitationResult" class="hidden">
               <label>Link de uso único<input id="invitationLink" readonly aria-label="Link de cadastro"></label>
@@ -154,7 +154,7 @@
       <footer class="site-footer" aria-label="Propriedade e versão do sistema">
         <span>&copy; 2026 <strong>Fbiol</strong> · Todos os direitos reservados</span>
         <span class="site-footer-separator" aria-hidden="true">•</span>
-        <span>Versão 1.4.3</span>
+        <span>Versão 1.4.5</span>
       </footer>
     </main>
   </div>
