@@ -39,7 +39,7 @@ jobs:
         with:
           node-version: '22'
       - name: Instalar dependencias de testes
-        run: npm install --no-audit --no-fund
+        run: npm ci --no-audit --no-fund
       - name: Testar banco PostgreSQL em memoria e UI simulada
         run: npm test
 
@@ -53,7 +53,7 @@ jobs:
         with:
           node-version: '22'
       - name: Instalar dependencias de testes
-        run: npm install --no-audit --no-fund
+        run: npm ci --no-audit --no-fund
       - name: Instalar Chromium do Playwright
         run: npx playwright install --with-deps chromium
       - name: Testar interface PDF no Chromium
