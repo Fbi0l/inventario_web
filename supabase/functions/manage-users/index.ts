@@ -78,13 +78,40 @@ Deno.serve(async (req: Request) => {
       const token=btoa(String.fromCharCode(...bytes)).replaceAll("+","-").replaceAll("/","_").replace(/=+$/,"");
       const digest=await crypto.subtle.digest("SHA-256",new TextEncoder().encode(token));
       const token_hash=Array.from(new Uint8Array(digest)).map(b=>b.toString(16).padStart(2,"0")).join("");
-      const {error}=await admin.from("convites_cadastro").insert({
+      const {data:invite,error}=await admin.from("convites_cadastro").insert({
         token_hash,criado_por:authData.user.id,
         expira_em:new Date(Date.now()+48*60*60*1000).toISOString()
-      });
+      }).select("id").single();
       if(error)return response({error:"Não foi possível salvar o convite: "+error.message},500);
-      await audit("gerou_convite","convite",null,"Convite de cadastro válido por 48 horas");
-      return response({token,expires_in_hours:48});
+      await audit("gerou_convite","convite",invite?.id??null,"Convite de cadastro válido por 48 horas");
+      return response({token,id:invite?.id??null,expires_in_hours:48});
+    }
+
+    // Convites ainda utilizaveis (sem uso e dentro da validade). O token nunca e devolvido.
+    if (action === "list_invites") {
+      const { data, error } = await admin.from("convites_cadastro")
+        .select("id,criado_em,expira_em,criado_por")
+        .is("usado_em", null).gt("expira_em", new Date().toISOString())
+        .order("criado_em", { ascending: false }).limit(200);
+      if (error) return response({ error: error.message }, 400);
+      return response({ invites: data || [] });
+    }
+
+    // Cancelar = vencer o convite agora; o link deixa de funcionar imediatamente.
+    if (action === "revoke_invite") {
+      const inviteId = String(body.inviteId || "").trim();
+      if (!/^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$/i.test(inviteId)) {
+        return response({ error: "Convite inválido." }, 400);
+      }
+      const now = new Date().toISOString();
+      const { data: revoked, error } = await admin.from("convites_cadastro")
+        .update({ expira_em: now })
+        .eq("id", inviteId).is("usado_em", null).gt("expira_em", now)
+        .select("id,criado_em").maybeSingle();
+      if (error) return response({ error: error.message }, 400);
+      if (!revoked) return response({ error: "Convite não encontrado, já utilizado ou expirado." }, 404);
+      await audit("cancelou_convite", "convite", inviteId, "Convite de cadastro cancelado", { gerado_em: revoked.criado_em });
+      return response({ message: "Convite cancelado." });
     }
 
     if (action === "list") {

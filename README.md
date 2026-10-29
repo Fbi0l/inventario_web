@@ -1,6 +1,12 @@
 # inventario_web
 Sistema de inventário patrimonial
 
+### Cancelar convites pendentes (1.5.1)
+
+Em **Usuários**, o quadro de convites lista os links ainda não usados e dentro da validade, com quem gerou cada um. O botão **Cancelar** faz o link parar de funcionar na hora (o convite vence imediatamente) e registra "Cancelou convite" na Auditoria. O link em si nunca é guardado nem exibido de novo; só o resultado da geração aparece uma vez.
+
+Não há SQL nesta versão. Para aplicar, publique a função `manage-users` (Verify JWT ligado) e o site.
+
 ### Trilha de auditoria (1.5.0)
 
 O menu **Auditoria**, visível só para administradores, mostra quem fez cada ação administrativa e quando:
