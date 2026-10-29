@@ -4,7 +4,7 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 const configured = /^https:\/\/[^/]+\.supabase\.co$/.test(SUPABASE_URL) && SUPABASE_ANON_KEY.length > 20 && !SUPABASE_ANON_KEY.includes('COLE_AQUI');
 const db = configured ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
 const $ = id => document.getElementById(id);
-const state = { equipment: [], movements: [], users: [], retirantes: [], archives: [], archiveEquipment: [], archiveMovements: [], selectedArchive: null, page: 'dashboard', user: null, perfil: null, visibleTermIds: new Set() };
+const state = { equipment: [], movements: [], users: [], retirantes: [], archives: [], archiveEquipment: [], archiveMovements: [], selectedArchive: null, audit: [], page: 'dashboard', user: null, perfil: null, visibleTermIds: new Set() };
 const fields = ['tag','patrimonio','descricao','categoria','marca','modelo','numeroSerie','pertencimento','responsavel','localizacao','estado','situacao','valor','observacoes','codigoOrigem','dataAquisicao'];
 const dbField = {tag:'tag',patrimonio:'patrimonio',descricao:'descricao',categoria:'categoria',marca:'marca',modelo:'modelo',numeroSerie:'numero_serie',pertencimento:'pertencimento',responsavel:'responsavel',localizacao:'localizacao',estado:'estado',situacao:'situacao',valor:'valor',observacoes:'observacoes',codigoOrigem:'codigo_origem',dataAquisicao:'data_aquisicao'};
 const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -13,7 +13,7 @@ const fmt = d => d ? new Date(d).toLocaleString('pt-BR',{dateStyle:'short',timeS
 const pill = s => `<span class="pill ${s==='Disponível'?'available':s==='Em uso'?'use':s==='Manutenção'?'maintenance':s==='Baixado'?'retired':''}">${esc(s||'—')}</span>`;
 function message(id, text='', good=false){ const el=$(id); el.textContent=text; el.style.color=good?'#18794e':'#b42318'; }
 function showLogin(){
-  state.users=[];state.retirantes=[];
+  state.users=[];state.retirantes=[];state.audit=[];
   $('borrowerForm').reset();$('createUserForm').reset();$('usersBody').innerHTML='';
   document.querySelectorAll('dialog[open]').forEach(d=>d.close());
   const token=new URLSearchParams(window.location.search).get('cadastro');
@@ -82,11 +82,12 @@ function denyAction(){message('globalMessage','Seu perfil não permite executar 
 function applyPermissions(){
   document.querySelector('[data-page="users"]').classList.toggle('hidden',!canManageUsers());
   document.querySelector('[data-page="archives"]').classList.toggle('hidden',!canManageUsers());
+  document.querySelector('[data-page="audit"]').classList.toggle('hidden',!canManageUsers());
   $('newEquipmentBtn').classList.toggle('hidden',!canManageEquipment());$('importEquipmentBtn').classList.toggle('hidden',!canManageEquipment());
   $('newMovementBtn').classList.toggle('hidden',!canMove());
   $('scanMovementBtn').classList.toggle('hidden',!canMove());
   $('termsSearchPanel').classList.toggle('hidden',!canViewTerms());
-  if(!canManageUsers() && ['users','archives'].includes(state.page))goto('dashboard');
+  if(!canManageUsers() && ['users','archives','audit'].includes(state.page))goto('dashboard');
   renderEquipment();renderMovements();
 }
 function renderAll(){renderStats();renderEquipment();renderMovements();renderRecent();populateCategories();populateMovementEquipment();if($('reportsPage'))renderReport();}
@@ -138,7 +139,7 @@ async function searchIssuedTerms(){
 function renderRecent(){const arr=state.movements.slice(0,8);$('recentBody').innerHTML=arr.length?arr.map(m=>`<tr><td>${fmt(m.created_at||m.retirada_em)}</td><td>${esc(movementName(m))}</td><td>${pill(m.tipo)}</td><td>${esc(m.responsavel||'—')}</td><td>${esc(m.observacoes||'—')}</td></tr>`).join(''):'<tr><td colspan="5" class="empty">Nenhuma movimentação registrada.</td></tr>';}
 function populateCategories(){const select=$('categoryFilter'),current=select.value,cats=[...new Set(state.equipment.map(x=>x.categoria).filter(Boolean))].sort();select.innerHTML='<option value="">Todas as categorias</option>'+cats.map(c=>`<option>${esc(c)}</option>`).join('');select.value=current;}
 function populateMovementEquipment(){const select=$('movementEquipment'),available=state.equipment.filter(x=>x.situacao==='Disponível');select.innerHTML='<option value="">Selecione…</option>'+available.map(x=>`<option value="${x.id}">${esc(x.tag||x.patrimonio||'Sem código')} — ${esc(x.descricao)}</option>`).join('');}
-function goto(page){if(['users','archives'].includes(page)&&!canManageUsers()){denyAction();return;}state.page=page;document.querySelectorAll('.page').forEach(x=>x.classList.add('hidden'));$(`${page}Page`).classList.remove('hidden');document.querySelectorAll('.nav-item[data-page]').forEach(x=>x.classList.toggle('active',x.dataset.page===page));$('pageTitle').textContent=({dashboard:'Painel geral',equipment:'Equipamentos',movements:'Retiradas e devoluções',reports:'Relatórios',users:'Usuários',archives:'Arquivos anteriores'})[page];if(page==='reports')renderReport();if(page==='users')loadUsers();if(page==='archives')loadArchives();}
+function goto(page){if(['users','archives','audit'].includes(page)&&!canManageUsers()){denyAction();return;}state.page=page;document.querySelectorAll('.page').forEach(x=>x.classList.add('hidden'));$(`${page}Page`).classList.remove('hidden');document.querySelectorAll('.nav-item[data-page]').forEach(x=>x.classList.toggle('active',x.dataset.page===page));$('pageTitle').textContent=({dashboard:'Painel geral',equipment:'Equipamentos',movements:'Retiradas e devoluções',reports:'Relatórios',users:'Usuários',archives:'Arquivos anteriores',audit:'Auditoria'})[page];if(page==='reports')renderReport();if(page==='users')loadUsers();if(page==='archives')loadArchives();if(page==='audit')loadAudit();}
 function openEquipment(item=null){if(!canManageEquipment()){denyAction();return;}$('equipmentForm').reset();$('equipmentId').value=item?.id||'';$('equipmentDialogTitle').textContent=item?'Editar equipamento':'Novo equipamento';fields.forEach(f=>{const el=$(f);if(el)el.value=item?.[dbField[f]]??'';});$('situacao').value=item?.situacao||'Disponível';$('estado').value=item?.estado||'Bom';$('equipmentDialog').showModal();}
 async function saveEquipment(e){e.preventDefault();if(!canManageEquipment()){denyAction();return;}const id=$('equipmentId').value;const payload={};fields.forEach(f=>{const el=$(f);let v=el.value.trim();payload[dbField[f]]=f==='valor'?(v===''?null:Number(v)):(v||null);});if(!payload.tag)payload.tag=`EQ-${Date.now().toString().slice(-8)}`;message('equipmentMessage','Salvando…',true);const res=id?await db.from('equipamentos').update(payload).eq('id',id).select().single():await db.from('equipamentos').insert({...payload,criado_por:state.user.id}).select().single();if(res.error){message('equipmentMessage',res.error.message);return;} $('equipmentDialog').close();await loadAll();}
 async function deleteEquipment(id){if(!canManageEquipment()){denyAction();return;}const item=state.equipment.find(x=>x.id===id);if(!item)return;if(!confirm(`Excluir “${item.descricao}”? Esta ação não pode ser desfeita.`))return;const {error}=await db.from('equipamentos').delete().eq('id',id);if(error){message('globalMessage',`Não foi possível excluir: ${error.message}`);return;}await loadAll();}
@@ -460,6 +461,49 @@ async function restoreArchivedCycle(id){
   await loadAll();await loadArchives();
   message('archivesMessage','Arquivo restaurado com sucesso.',true);
 }
+
+/* Trilha de auditoria (1.5.0): somente leitura, visivel apenas ao administrador. */
+const auditActionLabel={criou:'Criou',alterou:'Alterou',excluiu:'Excluiu',arquivou:'Arquivou ciclo',restaurou:'Restaurou ciclo',importou:'Importou planilha',
+  gerou_convite:'Gerou convite',cadastrou_por_convite:'Cadastro por convite',alterou_perfil:'Alterou perfil',alterou_dados_retirante:'Alterou dados do retirante',
+  bloqueou:'Bloqueou acesso',desbloqueou:'Desbloqueou acesso',alterou_senha:'Alterou senha'};
+const auditEntityLabel={usuario:'Usuário',convite:'Convite',equipamento:'Equipamento',movimentacao:'Movimentação',ciclo:'Ciclo',planilha:'Planilha'};
+const auditFieldLabel={tag:'TAG',patrimonio:'Patrimônio',descricao:'Descrição',categoria:'Categoria',marca:'Marca',modelo:'Modelo',numero_serie:'Nº de série',
+  pertencimento:'Setor',responsavel:'Responsável',localizacao:'Localização',estado:'Estado',situacao:'Situação',valor:'Valor',observacoes:'Observações',
+  codigo_origem:'Código de origem',data_aquisicao:'Data de aquisição',devolucao_em:'Devolução em',retirada_em:'Retirada em',destino:'Destino',
+  nome:'Nome',cpf:'CPF',telefone:'Telefone'};
+const auditValue=v=>v===null||v===undefined||v===''?'vazio':String(v);
+function auditDetail(a){
+  const d=a.detalhes||{};
+  if(d.alteracoes)return Object.entries(d.alteracoes).map(([k,v])=>`${auditFieldLabel[k]||k}: ${auditValue(v?.antes)} → ${auditValue(v?.depois)}`).join('; ');
+  if(a.acao==='alterou_perfil')return `${roleLabel(d.antes)} → ${roleLabel(d.depois)}`;
+  if(Array.isArray(d.campos))return d.campos.length?'Campos: '+d.campos.map(k=>auditFieldLabel[k]||k).join(', '):'Sem alterações';
+  if(d.perfil)return 'Perfil: '+roleLabel(d.perfil);
+  if(a.entidade==='ciclo')return `${d.equipamentos??0} equipamento(s), ${d.movimentacoes??0} movimentação(ões)${d.ja_restaurado?' — período já restaurado':''}`;
+  return '';
+}
+function auditRows(){
+  const q=$('searchAudit').value.toLowerCase(),ent=$('auditEntityFilter').value;
+  return state.audit.filter(a=>(!ent||a.entidade===ent)&&(!q||[a.autor_email,auditActionLabel[a.acao]||a.acao,a.descricao,auditEntityLabel[a.entidade]].some(v=>String(v||'').toLowerCase().includes(q))));
+}
+function renderAudit(){
+  const rows=auditRows();
+  $('auditBody').innerHTML=rows.length?rows.map(a=>`<tr><td>${esc(fmt(a.ocorrido_em))}</td><td>${esc(a.autor_email||'Conta excluída')}</td><td>${esc(auditActionLabel[a.acao]||a.acao)}<br><small>${esc(auditEntityLabel[a.entidade]||a.entidade)}</small></td><td>${esc(a.descricao||'—')}</td><td style="white-space:normal;min-width:240px">${esc(auditDetail(a)||'—')}</td></tr>`).join(''):'<tr><td colspan="5" class="empty">Nenhum registro encontrado.</td></tr>';
+}
+async function loadAudit(){
+  if(!canManageUsers())return;
+  message('auditMessage','Carregando registros…',true);
+  const {data,error}=await db.from('auditoria').select('*').order('ocorrido_em',{ascending:false}).order('id',{ascending:false}).limit(1000);
+  if(error){message('auditMessage','Não foi possível carregar a auditoria: '+error.message+'. Confira se a atualização 1.5.0 foi aplicada no banco.');return;}
+  state.audit=data||[];renderAudit();
+  message('auditMessage',`${state.audit.length} registro(s) mais recente(s)${state.audit.length===1000?' (limite de exibição: exporte ou filtre para refinar)':''}.`,true);
+}
+function exportAudit(){
+  if(!canManageUsers())return;
+  const rows=auditRows();if(!rows.length){message('auditMessage','Nenhum registro para exportar.');return;}
+  csvDownload(['Data/hora','Quem','Ação','Tipo','Item','Detalhes'],rows.map(a=>[fmt(a.ocorrido_em),a.autor_email||'Conta excluída',auditActionLabel[a.acao]||a.acao,auditEntityLabel[a.entidade]||a.entidade,a.descricao,auditDetail(a)]),`auditoria_${new Date().toISOString().slice(0,10)}.csv`);
+}
+$('refreshAuditBtn').addEventListener('click',loadAudit);$('exportAuditBtn').addEventListener('click',exportAudit);
+['searchAudit','auditEntityFilter'].forEach(id=>$(id).addEventListener('input',renderAudit));
 
 document.addEventListener('change',e=>{
   const select=e.target.closest('select[data-role-user]');

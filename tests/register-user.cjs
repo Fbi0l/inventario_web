@@ -32,6 +32,9 @@ const valid={token:'A'.repeat(43),name:'Pessoa Convidada',cpf:'529.982.247-25',p
  assert.equal(inserted.find(x=>x.table==='dados_retirantes').data.cpf,'52998224725');
  assert.ok(rpcs.includes('finalizar_convite_cadastro'));
  assert.equal(deleted.length,0);
+ const audit=inserted.find(x=>x.table==='auditoria').data;
+ assert.equal(audit.acao,'cadastrou_por_convite');assert.equal(audit.autor_id,'novo-usuario');assert.equal(audit.detalhes.perfil,'consulta');
+ assert.ok(!JSON.stringify(audit).includes('52998224725')&&!JSON.stringify(audit).includes(valid.password),'auditoria sem CPF nem senha');
  // Campos enviados pelo navegador nao elevam o perfil.
  reset();r=await call({...valid,perfil:'administrador'});
  assert.equal(r.status,201);assert.equal(inserted.find(x=>x.table==='perfis_usuarios').data.perfil,'consulta');
@@ -40,6 +43,6 @@ const valid={token:'A'.repeat(43),name:'Pessoa Convidada',cpf:'529.982.247-25',p
  reset();reserveOk=false;r=await call(valid);assert.equal(r.status,409);assert.equal(inserted.length,0);
  // Falha ao salvar dados pessoais: conta revertida e reserva liberada.
  reset();failOn='dados_retirantes';r=await call(valid);
- assert.equal(r.status,500);assert.deepEqual(deleted,['novo-usuario']);assert.ok(rpcs.includes('liberar_convite_cadastro'));
+ assert.equal(r.status,500);assert.deepEqual(deleted,['novo-usuario']);assert.ok(!inserted.some(x=>x.table==='auditoria'),'cadastro desfeito nao gera auditoria');assert.ok(rpcs.includes('liberar_convite_cadastro'));
  console.log('Convites aprovados: perfil Consulta imposto pelo servidor, convite invalido/usado recusado e rollback de cadastro incompleto.');
 })().catch(e=>{console.error(e);process.exit(1)});

@@ -22,7 +22,7 @@
       <footer class="site-footer" aria-label="Propriedade e versão do sistema">
         <span>&copy; 2026 <strong>Fbiol</strong> · Todos os direitos reservados</span>
         <span class="site-footer-separator" aria-hidden="true">•</span>
-        <span>Versão 1.4.5</span>
+        <span>Versão 1.5.0</span>
       </footer>
   </div>
 
@@ -48,6 +48,7 @@
         <button class="nav-item" data-page="reports">▤ <span>Relatórios</span></button>
         <button class="nav-item" data-page="users">♙ <span>Usuários</span></button>
         <button class="nav-item hidden" data-page="archives">▤ <span>Arquivos anteriores</span></button>
+        <button class="nav-item hidden" data-page="audit">☰ <span>Auditoria</span></button>
       </nav>
       <div class="sidebar-bottom"><span id="userEmail" class="user-email"></span><small id="userProfile" class="user-email"></small><button id="logoutBtn" class="nav-item">↪ <span>Sair</span></button></div>
     </aside>
@@ -123,6 +124,17 @@
           <div class="table-wrap"><table><thead><tr><th>E-mail</th><th>Nome</th><th>Acesso</th><th>Criado em</th><th>Último acesso</th><th>Ações</th></tr></thead><tbody id="usersBody"><tr><td colspan="6" class="empty">Clique em Atualizar lista para carregar os usuários.</td></tr></tbody></table></div>
         </div>
       </section>
+      <section id="auditPage" class="page hidden">
+        <div class="panel">
+          <div class="panel-head">
+            <div><h2>Trilha de auditoria</h2><p class="muted">Ações administrativas registradas pelo sistema: usuários, convites, edições e exclusões de equipamentos, arquivamentos e importações. Retiradas e devoluções ficam no histórico de movimentações. Os registros não podem ser alterados nem apagados.</p></div>
+            <div class="actions"><button id="refreshAuditBtn" class="secondary" type="button">↻ Atualizar</button><button id="exportAuditBtn" class="secondary" type="button">⇩ Exportar CSV</button></div>
+          </div>
+          <div class="filters"><input id="searchAudit" placeholder="Pesquisar por pessoa, ação ou item…"><select id="auditEntityFilter"><option value="">Todos os tipos</option><option value="usuario">Usuários</option><option value="convite">Convites</option><option value="equipamento">Equipamentos</option><option value="movimentacao">Movimentações</option><option value="ciclo">Arquivamentos</option><option value="planilha">Importações</option></select></div>
+          <p id="auditMessage" class="message" aria-live="polite"></p>
+          <div class="table-wrap"><table><thead><tr><th>Data/hora</th><th>Quem</th><th>Ação</th><th>Item</th><th>Detalhes</th></tr></thead><tbody id="auditBody"><tr><td colspan="5" class="empty">Nenhum registro carregado.</td></tr></tbody></table></div>
+        </div>
+      </section>
       <section id="archivesPage" class="page hidden">
         <div class="panel archive-panel">
           <div class="panel-head">
@@ -154,7 +166,7 @@
       <footer class="site-footer" aria-label="Propriedade e versão do sistema">
         <span>&copy; 2026 <strong>Fbiol</strong> · Todos os direitos reservados</span>
         <span class="site-footer-separator" aria-hidden="true">•</span>
-        <span>Versão 1.4.5</span>
+        <span>Versão 1.5.0</span>
       </footer>
     </main>
   </div>
@@ -227,5 +239,5 @@
   <script src="importar-planilha.js?v=1.4.0"></script>
   <script src="qr-etiquetas.js?v=1.4.0"></script>
   <script src="termos.js?v=1.4.0"></script>
-  <script src="app.js?v=1.4.3"></script>
+  <script src="app.js?v=1.5.0"></script>
 </body></html>
