@@ -20,7 +20,9 @@ const {chromium}=require('playwright'),fs=require('node:fs'),path=require('node:
    if(url.includes('cdn.jsdelivr'))return route.fulfill({contentType:'text/javascript',body:''});
    const pathname=new URL(url).pathname;const file=path.join(root,pathname==='/'?'index.html':pathname);
    if(!fs.existsSync(file))return route.fulfill({status:404,body:''});
-   return route.fulfill({contentType:file.endsWith('.js')?'text/javascript':file.endsWith('.css')?'text/css':'text/html',body:fs.readFileSync(file)});
+   // O teste troca a biblioteca do Supabase por um simulador; so a integridade (SRI) dessa tag e removida.
+   const body=file.endsWith('.html')?fs.readFileSync(file,'utf8').replace(/(<script src="[^"]*@supabase\/[^"]*") integrity="[^"]*"/,'$1'):fs.readFileSync(file);
+   return route.fulfill({contentType:file.endsWith('.js')?'text/javascript':file.endsWith('.css')?'text/css':'text/html',body});
  });
  await page.goto('http://inventario.test/');
  await page.evaluate(async()=>{await showApp({user:testUser});goto('movements');});

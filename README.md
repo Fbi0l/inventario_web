@@ -1,6 +1,19 @@
 # inventario_web
 Sistema de inventário patrimonial
 
+### Revisão de segurança do site (1.5.5)
+
+- **Bibliotecas externas com verificação de integridade:** as seis bibliotecas carregadas de CDN (Supabase, QR Code, leitor de QR, PDF, fontes e planilhas) só rodam se forem exatamente os arquivos conferidos. Uma cópia adulterada no CDN é bloqueada pelo navegador.
+- **Política de segurança (CSP):** o site só aceita scripts dele mesmo e desses CDNs, e só se conecta ao Supabase do projeto.
+- **Exportações CSV sem fórmulas:** texto que começa com `=`, `+`, `-` ou `@` recebe um apóstrofo e é aberto no Excel como texto, sem virar fórmula.
+- **Cadastro por convite** não informa mais se um e-mail já tem conta.
+
+Para atualizar uma biblioteca, troque a versão **e** a integridade (`integrity`) juntas; o teste `tests/seguranca-site.cjs` acusa o que ficar diferente. Para aplicar esta versão: publique o site (automático pelo GitHub Pages) e republique a função de cadastro:
+
+```bat
+npx.cmd supabase@latest functions deploy register-user --no-verify-jwt
+```
+
 ### Convites de administrador excluído são cancelados (1.5.4)
 
 Ao excluir a conta de um administrador, os convites que ele gerou e que ainda não foram usados **vencem na hora**, como se tivessem sido cancelados. Antes, eles continuavam válidos por até 48 horas. Vale também para exclusões feitas direto no painel do Supabase. Convites já usados continuam no histórico, sem alteração.

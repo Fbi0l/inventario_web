@@ -59,7 +59,11 @@ Deno.serve(async(req:Request)=>{
   const {data:created,error:createError}=await admin.auth.admin.createUser({
    email,password,email_confirm:true,user_metadata:{full_name:name}
   });
-  if(createError||!created.user)return response({error:createError?.message||"Não foi possível criar a conta."},400);
+  // Mensagem generica (1.5.5): o erro do Auth revelaria se o e-mail ja tem conta.
+  if(createError||!created.user){
+   console.error("Falha ao criar conta por convite",createError?.message||"sem usuario");
+   return response({error:"Não foi possível criar a conta com estes dados. Confira o e-mail ou fale com o administrador."},400);
+  }
   createdUser=created.user.id;
   const {error:roleError}=await admin.from("perfis_usuarios").insert({usuario_id:createdUser,perfil:"consulta"});
   if(roleError)throw roleError;

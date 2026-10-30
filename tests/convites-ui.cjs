@@ -23,7 +23,9 @@ const shots=process.env.AUDIT_SHOTS||'';
    if(url.includes('cdn.jsdelivr')||url.includes('cdn.sheetjs'))return route.fulfill({contentType:'text/javascript',body:''});
    const pathname=new URL(url).pathname;const file=path.join(root,pathname==='/'?'index.html':pathname);
    if(!fs.existsSync(file))return route.fulfill({status:404,body:''});
-   return route.fulfill({contentType:file.endsWith('.js')?'text/javascript':file.endsWith('.css')?'text/css':'text/html',body:fs.readFileSync(file)});
+   // O teste troca a biblioteca do Supabase por um simulador; so a integridade (SRI) dessa tag e removida.
+   const body=file.endsWith('.html')?fs.readFileSync(file,'utf8').replace(/(<script src="[^"]*@supabase\/[^"]*") integrity="[^"]*"/,'$1'):fs.readFileSync(file);
+   return route.fulfill({contentType:file.endsWith('.js')?'text/javascript':file.endsWith('.css')?'text/css':'text/html',body});
  };
  const page=await browser.newPage({viewport:{width:1366,height:900}});page.on('pageerror',e=>errors.push(e.message));
  let dialogs=[];page.on('dialog',d=>{dialogs.push(d.message());d.accept();});
