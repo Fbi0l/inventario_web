@@ -10,6 +10,28 @@ type Perfil = "administrador" | "operador" | "consulta";
 const validProfiles: Perfil[] = ["administrador", "operador", "consulta"];
 const isPerfil = (x: string): x is Perfil => validProfiles.includes(x as Perfil);
 
+// Senhas (1.5.3): de 12 a 128 caracteres e fora de vazamentos conhecidos.
+// Have I Been Pwned por k-anonimato: so os 5 primeiros caracteres do SHA-1 da senha
+// saem do servidor; a comparacao do restante e feita aqui. Se o servico nao responder,
+// a senha e aceita (a verificacao nunca impede o uso do sistema).
+const SENHA_MIN=12,SENHA_MAX=128;
+async function senhaVazada(password:string):Promise<boolean>{
+ try{
+  const digest=await crypto.subtle.digest("SHA-1",new TextEncoder().encode(password));
+  const hex=Array.from(new Uint8Array(digest)).map(x=>x.toString(16).padStart(2,"0")).join("").toUpperCase();
+  const res=await fetch(`https://api.pwnedpasswords.com/range/${hex.slice(0,5)}`,{
+   headers:{"Add-Padding":"true","User-Agent":"inventario-web"},signal:AbortSignal.timeout(3000)});
+  if(!res.ok)return false;
+  const sufixo=hex.slice(5);
+  return (await res.text()).split("\n").some(linha=>{const [s,n]=linha.trim().split(":");return s===sufixo&&Number(n)>0;});
+ }catch(error){
+  console.error("Verificacao de senha vazada indisponivel",error instanceof Error?error.message:String(error));
+  return false;
+ }
+}
+const MSG_SENHA_TAMANHO=`A senha deve ter de ${SENHA_MIN} a ${SENHA_MAX} caracteres.`;
+const MSG_SENHA_VAZADA="Esta senha aparece em vazamentos de dados conhecidos. Escolha outra.";
+
 function cpfValido(cpf: string): boolean {
   if (!/^\d{11}$/.test(cpf) || /^(\d)\1{10}$/.test(cpf)) return false;
   for (let j=9;j<11;j++) {
@@ -149,7 +171,8 @@ Deno.serve(async (req: Request) => {
       const name = details.nome;
       const perfil = String(body.perfil || "consulta");
       if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return response({ error: "E-mail inválido." }, 400);
-      if (password.length < 8) return response({ error: "Senha deve ter no mínimo 8 caracteres." }, 400);
+      if (password.length < SENHA_MIN || password.length > SENHA_MAX) return response({ error: MSG_SENHA_TAMANHO }, 400);
+      if (await senhaVazada(password)) return response({ error: MSG_SENHA_VAZADA }, 400);
       if (!isPerfil(perfil)) return response({ error: "Perfil inválido." }, 400);
       const { data, error } = await admin.auth.admin.createUser({
         email, password, email_confirm: true,
@@ -239,7 +262,8 @@ Deno.serve(async (req: Request) => {
       const userId = String(body.userId || "");
       const password = String(body.password || "");
       if (!userId) return response({ error: "Informe o usuário." }, 400);
-      if (password.length < 8) return response({ error: "Senha deve ter no mínimo 8 caracteres." }, 400);
+      if (password.length < SENHA_MIN || password.length > SENHA_MAX) return response({ error: MSG_SENHA_TAMANHO }, 400);
+      if (await senhaVazada(password)) return response({ error: MSG_SENHA_VAZADA }, 400);
       const { data: target, error: targetError } = await admin.auth.admin.getUserById(userId);
       if (targetError || !target.user) return response({ error: "Usuário não encontrado." }, 404);
       const { error } = await admin.auth.admin.updateUserById(userId, { password });

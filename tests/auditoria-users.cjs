@@ -1,5 +1,7 @@
 // Testa os registros de auditoria da funcao Edge manage-users, sem acessar o Supabase real.
 const fs=require('fs'),assert=require('node:assert/strict');
+// Consulta de senhas vazadas simulada: nenhum teste acessa a internet.
+globalThis.fetch=async()=>new Response('',{status:200});
 const src=fs.readFileSync('supabase/functions/manage-users/index.ts','utf8').replace(/^import .*\n/,'');
 let code;
 try{

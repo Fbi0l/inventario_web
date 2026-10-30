@@ -1,5 +1,7 @@
 // Testa a funcao Edge sem acessar o Supabase real. Requer TypeScript.
 const ts=require('typescript'),fs=require('fs'),assert=require('node:assert/strict');
+// Consulta de senhas vazadas simulada: nenhum teste acessa a internet.
+globalThis.fetch=async()=>new Response('',{status:200});
 const src=fs.readFileSync('supabase/functions/manage-users/index.ts','utf8').replace(/^import .*\n/,'');
 const js=ts.transpileModule(src,{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ES2022},reportDiagnostics:true});
 assert.equal(js.diagnostics.length,0);
@@ -9,7 +11,7 @@ const createClient=()=>({from:table,auth:{getUser:async()=>({data:{user:{id:'adm
 new Function('createClient','Deno',js.outputText)(createClient,{env:{get:()=> 'test-env'},serve:fn=>handler=fn});
 const call=async body=>{const r=await handler(new Request('https://example.invalid',{method:'POST',headers:{Authorization:'Bearer test','Content-Type':'application/json'},body:JSON.stringify(body)}));return{status:r.status,body:await r.json()}};
 (async()=>{
- const input={action:'create',email:'teste@example.invalid',password:'test-password',name:'Pessoa Teste',cpf:'529.982.247-25',phone:'(00) 0000-0000',perfil:'consulta'};
+ const input={action:'create',email:'teste@example.invalid',password:'senha-de-teste-longa',name:'Pessoa Teste',cpf:'529.982.247-25',phone:'(00) 0000-0000',perfil:'consulta'};
  let r=await call(input);assert.equal(r.status,201);assert.equal(saved.find(x=>x.table==='dados_retirantes').data.cpf,'52998224725');
  r=await call({...input,cpf:'11111111111'});assert.equal(r.status,400);
  r=await call({...input,name:''});assert.equal(r.status,400);
