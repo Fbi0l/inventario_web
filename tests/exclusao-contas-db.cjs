@@ -23,7 +23,8 @@ const sql=f=>fs.readFileSync(f+'.sql','utf8');
  await db.exec('GRANT SELECT,INSERT,UPDATE,DELETE ON public.equipamentos,public.movimentacoes TO authenticated;');
  // Estado anterior a migracao de privacidade: termos ainda sem retirante_usuario_id.
  for(const f of ['ATUALIZACAO_ARQUIVAMENTO_CICLOS','ATUALIZACAO_EXCLUSAO_CICLOS','ATUALIZACAO_TERMOS_PDF',
-  'ATUALIZACAO_CONVITES_CADASTRO','ATUALIZACAO_1_4_1_EXCLUSAO_USUARIOS','ATUALIZACAO_1_4_4_INTEGRIDADE'])
+  'ATUALIZACAO_CONVITES_CADASTRO','ATUALIZACAO_1_4_1_EXCLUSAO_USUARIOS','ATUALIZACAO_1_4_4_INTEGRIDADE',
+  'ATUALIZACAO_1_5_4_CONVITES_ADMIN_EXCLUIDO'])
   await db.exec(sql(f));
 
  const id=n=>`60000000-0000-0000-0000-${String(n).padStart(12,'0')}`;
@@ -72,13 +73,25 @@ const sql=f=>fs.readFileSync(f+'.sql','utf8');
  await as(null,'service_role');
  assert.equal(await val("SELECT reservar_convite_cadastro('hash-usado',gen_random_uuid())"),false,'convite usado nao pode ser reutilizado');
 
- // Excluir o administrador que GEROU convites (usado e pendente): exclusao funciona, convites preservados.
+ // Excluir o administrador que GEROU convites (usado e pendente): exclusao funciona, convites preservados
+ // e os pendentes dele vencem na hora (1.5.4).
  await root();
  await db.query('DELETE FROM auth.users WHERE id=$1',[ADM]);
  assert.equal((await db.query('SELECT count(*)::int AS n FROM convites_cadastro')).rows[0].n,3,'nenhum convite apagado');
  assert.equal(await val('SELECT criado_por FROM convites_cadastro WHERE id=$1',[usado]),null);
  assert.equal(await val('SELECT criado_por FROM convites_cadastro WHERE id=$1',[pendenteAdm]),null);
  assert.equal(await val('SELECT criado_por FROM convites_cadastro WHERE id=$1',[pendenteAdm2]),ADM2,'convite de outro administrador nao e afetado');
+ const valido=async cid=>val('SELECT expira_em>now() FROM convites_cadastro WHERE id=$1',[cid]);
+ assert.equal(await valido(pendenteAdm),false,'convite pendente do administrador excluido venceu');
+ assert.equal(await valido(usado),true,'convite ja usado nao e alterado');
+ assert.equal(await valido(pendenteAdm2),true,'convite de outro administrador continua valido');
+ await as(null,'service_role');
+ assert.equal(await val("SELECT reservar_convite_cadastro('hash-pendente-adm',gen_random_uuid())"),false,'link do administrador excluido nao funciona mais');
+ await root();
+ // Outras alteracoes do convite nao disparam o vencimento.
+ await db.query("UPDATE convites_cadastro SET reservado_em=now() WHERE id=$1",[pendenteAdm2]);
+ await db.query("UPDATE convites_cadastro SET reservado_em=NULL WHERE id=$1",[pendenteAdm2]);
+ assert.equal(await valido(pendenteAdm2),true);
 
  // Ciclo completo de um convite pendente com reserva: reserva unica, finalizacao e exclusao posterior.
  await as(null,'service_role');
@@ -94,6 +107,7 @@ const sql=f=>fs.readFileSync(f+'.sql','utf8');
  await db.query('DELETE FROM auth.users WHERE id=ANY($1)',[[NOVO,ADM2]]);
  c=(await db.query('SELECT usado_em,usado_por,criado_por FROM convites_cadastro WHERE id=$1',[pendenteAdm2])).rows[0];
  assert.ok(c.usado_em&&c.usado_por===null&&c.criado_por===null,'convite fica como historico anonimo');
+ assert.equal(await val('SELECT expira_em>now() FROM convites_cadastro WHERE id=$1',[pendenteAdm2]),true,'convite usado mantem a validade original');
 
  // ---------- Parte 2: migracao de privacidade dos termos ----------
  // Termos antigos, criados ANTES da migracao (sem titular registrado).
@@ -153,5 +167,5 @@ const sql=f=>fs.readFileSync(f+'.sql','utf8');
  await assert.rejects(()=>db.query(out,[eqLivre,UNICO]),/sem cadastro completo/);
 
  await db.close();
- console.log('Exclusao de contas aprovada: convites (usado, pendente, reservado) e migracao de privacidade dos termos (titularidade, reaplicacao, acesso e exclusao do titular).');
+ console.log('Exclusao de contas aprovada: convites (usado, pendente vencido ao excluir o autor, reservado) e migracao de privacidade dos termos (titularidade, reaplicacao, acesso e exclusao do titular).');
 })().catch(e=>{console.error(e);process.exit(1)});

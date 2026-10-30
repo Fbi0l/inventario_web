@@ -1,6 +1,12 @@
 # inventario_web
 Sistema de inventário patrimonial
 
+### Convites de administrador excluído são cancelados (1.5.4)
+
+Ao excluir a conta de um administrador, os convites que ele gerou e que ainda não foram usados **vencem na hora**, como se tivessem sido cancelados. Antes, eles continuavam válidos por até 48 horas. Vale também para exclusões feitas direto no painel do Supabase. Convites já usados continuam no histórico, sem alteração.
+
+Para aplicar, execute `ATUALIZACAO_1_5_4_CONVITES_ADMIN_EXCLUIDO.sql` no SQL Editor, após backup. Não é preciso republicar o site nem as funções.
+
 ### Senhas vazadas recusadas (1.5.3)
 
 Senhas novas e trocas de senha (mínimo de 8 caracteres, como antes) agora são **recusadas se já apareceram em vazamentos de dados conhecidos** (base Have I Been Pwned, a mesma usada pelo Supabase no plano Pro). A senha nunca sai do servidor: só os 5 primeiros caracteres do seu hash SHA-1 são consultados, e a comparação final é feita na função. Se o serviço de consulta não responder, a senha é aceita, para não travar cadastros. Quem já tem conta continua entrando com a senha atual.

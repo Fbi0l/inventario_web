@@ -1,5 +1,5 @@
 # Foto APROVADA da configuracao de seguranca do Supabase (scripts/auditoria-supabase.sh).
-# Gerada em 29/10/2026 a partir do projeto oficial, ja considerando ATUALIZACAO_1_5_2_AUDITORIA_LEITURA.sql.
+# Gerada em 29/10/2026 a partir do projeto oficial, ja considerando ATUALIZACAO_1_5_2_AUDITORIA_LEITURA.sql e ATUALIZACAO_1_5_4_CONVITES_ADMIN_EXCLUIDO.sql.
 # Se uma mudanca de seguranca for INTENCIONAL, atualize este arquivo no mesmo PR:
 #   bash scripts/auditoria-supabase.sh --gerar > docs/auditoria-supabase-esperado.txt
 # (e recoloque este cabecalho). Linhas iniciadas por # sao ignoradas.
@@ -22,6 +22,7 @@ funcao | auditoria_diferencas(p_antes jsonb, p_depois jsonb) | definer=false con
 funcao | auditoria_somente_inclusao() | definer=false config=search_path="" executa=service_role
 funcao | cpf_valido(p_cpf text) | definer=false config=search_path="" executa=PUBLIC,anon,authenticated,service_role
 funcao | excluir_ciclo_arquivado(p_ciclo_id uuid) | definer=true config=search_path="" executa=authenticated,service_role
+funcao | expirar_convites_autor_excluido() | definer=false config=search_path="" executa=service_role
 funcao | finalizar_convite_cadastro(p_hash text, p_reserva uuid, p_user uuid) | definer=true config=search_path="" executa=service_role
 funcao | importar_equipamentos(p_lote uuid, p_itens jsonb) | definer=true config=search_path="" executa=authenticated,service_role
 funcao | liberar_convite_cadastro(p_hash text, p_reserva uuid) | definer=true config=search_path="" executa=service_role
@@ -45,6 +46,7 @@ funcao | validar_movimentacao_ciclo() | definer=false config=search_path="" exec
 gatilho | auditoria :: trg_auditoria_sem_truncate | ativo=true funcao=auditoria_somente_inclusao
 gatilho | auditoria :: trg_auditoria_somente_inclusao | ativo=true funcao=auditoria_somente_inclusao
 gatilho | ciclos_arquivados :: trg_auditar_ciclos | ativo=true funcao=auditar_ciclo
+gatilho | convites_cadastro :: trg_expirar_convites_autor_excluido | ativo=true funcao=expirar_convites_autor_excluido
 gatilho | equipamentos :: trg_auditar_equipamentos | ativo=true funcao=auditar_edicao_direta
 gatilho | equipamentos :: trg_proteger_situacao_em_uso | ativo=true funcao=proteger_situacao_em_uso
 gatilho | importacoes_equipamentos :: trg_auditar_importacoes | ativo=true funcao=auditar_importacao
