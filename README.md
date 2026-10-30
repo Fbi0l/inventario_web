@@ -1,9 +1,9 @@
 # inventario_web
 Sistema de inventário patrimonial
 
-### Senhas mais fortes (1.5.3)
+### Senhas vazadas recusadas (1.5.3)
 
-Senhas novas e trocas de senha agora exigem **no mínimo 12 caracteres** e são **recusadas se já apareceram em vazamentos de dados conhecidos** (base Have I Been Pwned, a mesma usada pelo Supabase no plano Pro). A senha nunca sai do servidor: só os 5 primeiros caracteres do seu hash SHA-1 são consultados, e a comparação final é feita na função. Se o serviço de consulta não responder, a senha é aceita, para não travar cadastros. Quem já tem conta continua entrando com a senha atual.
+Senhas novas e trocas de senha (mínimo de 8 caracteres, como antes) agora são **recusadas se já apareceram em vazamentos de dados conhecidos** (base Have I Been Pwned, a mesma usada pelo Supabase no plano Pro). A senha nunca sai do servidor: só os 5 primeiros caracteres do seu hash SHA-1 são consultados, e a comparação final é feita na função. Se o serviço de consulta não responder, a senha é aceita, para não travar cadastros. Quem já tem conta continua entrando com a senha atual.
 
 Vale para o cadastro por convite, a criação de usuário e a troca de senha pelo administrador. Não há SQL nesta versão. Para aplicar, republique as duas funções e o site:
 

@@ -1,5 +1,5 @@
 // Testa a regra de senhas (1.5.3) nas funcoes Edge register-user e manage-users,
-// sem acessar o Supabase nem a internet: tamanho minimo de 12 caracteres e recusa
+// sem acessar o Supabase nem a internet: tamanho minimo de 8 caracteres e recusa
 // de senhas vazadas via Have I Been Pwned (k-anonimato).
 const fs=require('fs'),crypto=require('node:crypto'),assert=require('node:assert/strict');
 const carregar=(arquivo,createClient)=>{
@@ -63,8 +63,8 @@ const novo={action:'create',email:'novo@example.invalid',name:'Pessoa Nova',cpf:
  assert.equal(pedidos[0].headers['Add-Padding'],'true');
  // Senha nao vazada e aceita, mesmo que apareca como linha de preenchimento (contagem 0).
  reset();r=await cadastro({...convite,password:SEGURA});assert.equal(r.status,201);assert.deepEqual(criados,['convite@example.invalid']);
- // Tamanho: 11 caracteres recusado sem consultar o servico; 129 tambem.
- reset();r=await cadastro({...convite,password:'a'.repeat(11)});assert.equal(r.status,400);assert.match(r.body.error,/12 a 128/);assert.equal(pedidos.length,0);
+ // Tamanho: 7 caracteres recusado sem consultar o servico; 129 tambem.
+ reset();r=await cadastro({...convite,password:'a'.repeat(7)});assert.equal(r.status,400);assert.match(r.body.error,/8 a 128/);assert.equal(pedidos.length,0);
  reset();r=await cadastro({...convite,password:'a'.repeat(129)});assert.equal(r.status,400);
  // Servico fora do ar ou com erro: o cadastro segue (a verificacao nunca trava o sistema).
  for(const m of ['fora','erro']){reset();modo=m;const err=console.error;console.error=()=>{};
@@ -72,12 +72,12 @@ const novo={action:'create',email:'novo@example.invalid',name:'Pessoa Nova',cpf:
 
  // Administrador criando conta.
  reset();r=await gestao({...novo,password:VAZADA});assert.equal(r.status,400);assert.match(r.body.error,/vazamentos/);assert.equal(criados.length,0);
- reset();r=await gestao({...novo,password:'curta-11ch'});assert.equal(r.status,400);assert.match(r.body.error,/12 a 128/);
+ reset();r=await gestao({...novo,password:'curta-7'});assert.equal(r.status,400);assert.match(r.body.error,/8 a 128/);
  reset();r=await gestao({...novo,password:SEGURA});assert.equal(r.status,201);
  // Administrador trocando senha.
  reset();r=await gestao({action:'password',userId:ALVO,password:VAZADA});assert.equal(r.status,400);assert.equal(senhasAlteradas.length,0);
- reset();r=await gestao({action:'password',userId:ALVO,password:'a'.repeat(11)});assert.equal(r.status,400);assert.equal(senhasAlteradas.length,0);
+ reset();r=await gestao({action:'password',userId:ALVO,password:'a'.repeat(7)});assert.equal(r.status,400);assert.equal(senhasAlteradas.length,0);
  reset();r=await gestao({action:'password',userId:ALVO,password:SEGURA});assert.equal(r.status,200);assert.deepEqual(senhasAlteradas,[SEGURA]);
 
- console.log('Senhas aprovadas: minimo de 12, recusa de senhas vazadas (k-anonimato, so 5 caracteres do hash) e servico fora do ar nao trava.');
+ console.log('Senhas aprovadas: minimo de 8, recusa de senhas vazadas (k-anonimato, so 5 caracteres do hash) e servico fora do ar nao trava.');
 })().catch(e=>{console.error(e);process.exit(1)});
