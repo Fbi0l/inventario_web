@@ -1,13 +1,15 @@
 <!doctype html>
 <html lang="pt-BR">
 <head>
-  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta charset="utf-8">
+  <!-- Seguranca (1.5.5): so scripts do proprio site e dos CDNs abaixo, cada um com integridade (SRI) conferida. -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net https://cdn.sheetjs.com; connect-src 'self' https://meqpwvdisjuoacepkljs.supabase.co wss://meqpwvdisjuoacepkljs.supabase.co; img-src 'self' data: blob:; media-src 'self' blob: mediastream:; style-src 'self' 'unsafe-inline'; font-src 'self' data:; frame-src 'self' blob:; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'"><meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Inventário | Controle de equipamentos</title>
   <link rel="icon" type="image/png" href="assets/logo-inventario.png?v=1.4.0">
   <link rel="stylesheet" href="styles.css?v=1.4.0">
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0"></script>
-  <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0/dist/umd/supabase.js" integrity="sha384-TcHRA3zBbn+Lexh5n+Oil4guNPOS3rjNDpGRAN46u/s/mB2IZ50ceC6TYDU2yvgK" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js" integrity="sha384-3zSEDfvllQohrq0PHL1fOXJuC/jSOO34H46t6UQfobFOmxE5BpjjaIJY5F2/bMnU" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/html5-qrcode.min.js" integrity="sha384-c9d8RFSL+u3exBOJ4Yp3HUJXS4znl9f+z66d1y54ig+ea249SpqR+w1wyvXz/lk+" crossorigin="anonymous"></script>
 </head>
 <body>
   <div id="loginView" class="login-wrap">
@@ -22,7 +24,7 @@
       <footer class="site-footer" aria-label="Propriedade e versão do sistema">
         <span>&copy; 2026 <strong>Fbiol</strong> · Todos os direitos reservados</span>
         <span class="site-footer-separator" aria-hidden="true">•</span>
-        <span>Versão 1.5.4</span>
+        <span>Versão 1.5.5</span>
       </footer>
   </div>
 
@@ -169,7 +171,7 @@
       <footer class="site-footer" aria-label="Propriedade e versão do sistema">
         <span>&copy; 2026 <strong>Fbiol</strong> · Todos os direitos reservados</span>
         <span class="site-footer-separator" aria-hidden="true">•</span>
-        <span>Versão 1.5.4</span>
+        <span>Versão 1.5.5</span>
       </footer>
     </main>
   </div>
@@ -218,8 +220,8 @@
     <p class="muted">Documento preenchido com os dados registrados na retirada e na devolução. As assinaturas devem ser feitas após imprimir.</p>
     <div class="dialog-actions"><button id="downloadTermBtn" type="button" class="primary" disabled>Baixar PDF</button><button type="button" class="secondary" data-close="termDialog">Fechar</button></div>
   </div></dialog>
-  <script src="https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@pdf-lib/fontkit@1.1.1/dist/fontkit.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/dist/pdf-lib.min.js" integrity="sha384-weMABwrltA6jWR8DDe9Jp5blk+tZQh7ugpCsF3JwSA53WZM9/14PjS5LAJNHNjAI" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@pdf-lib/fontkit@1.1.1/dist/fontkit.umd.min.js" integrity="sha384-2p6U+1mmqF10USehFeRiyG2ESG9FwIqN+jxULn5w9jjQIihSn9Pt13dVCn/Hawjn" crossorigin="anonymous"></script>
   <script src="termo-fontes.js?v=1.4.0"></script>
   <dialog id="qrLabelsDialog" aria-labelledby="qrLabelsTitle"><div class="dialog-form">
     <div class="dialog-head"><div><h2 id="qrLabelsTitle">Etiquetas QR Code em A4</h2><p class="muted">Todos os equipamentos do ciclo atual, com 12 etiquetas por folha.</p></div><button type="button" class="icon-button" data-close="qrLabelsDialog" aria-label="Fechar etiquetas">×</button></div>
@@ -239,8 +241,8 @@
     <p id="importMessage" class="message" role="status" aria-live="polite"></p>
     <div class="dialog-actions"><button type="button" class="secondary" data-close="importDialog">Fechar</button><button id="confirmImportBtn" type="button" class="primary" disabled>Importar equipamentos</button></div>
   </div></dialog>
-  <script src="importar-planilha.js?v=1.4.0"></script>
+  <script src="importar-planilha.js?v=1.5.5"></script>
   <script src="qr-etiquetas.js?v=1.4.0"></script>
   <script src="termos.js?v=1.4.0"></script>
-  <script src="app.js?v=1.5.4"></script>
+  <script src="app.js?v=1.5.5"></script>
 </body></html>

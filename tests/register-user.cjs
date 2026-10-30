@@ -13,13 +13,13 @@ try{
  if(e.code!=='MODULE_NOT_FOUND')throw e;
  code=require('node:module').stripTypeScriptTypes(src);
 }
-let handler,reserveOk,failOn,inserted,deleted,rpcs;
-const reset=()=>{reserveOk=true;failOn=null;inserted=[];deleted=[];rpcs=[];};
+let handler,reserveOk,failOn,inserted,deleted,rpcs,createFails;
+const reset=()=>{reserveOk=true;failOn=null;inserted=[];deleted=[];rpcs=[];createFails=false;};
 const createClient=()=>({
  rpc:async(name,args)=>{rpcs.push(name);return{data:name==='reservar_convite_cadastro'?reserveOk:true,error:null};},
  from:table=>({insert:async data=>{inserted.push({table,data});return{error:failOn===table?{message:'Falha simulada'}:null};}}),
  auth:{admin:{
-  createUser:async({email})=>({data:{user:{id:'novo-usuario',email}},error:null}),
+  createUser:async({email})=>createFails?{data:{user:null},error:{message:'A user with this email address has already been registered'}}:({data:{user:{id:'novo-usuario',email}},error:null}),
   deleteUser:async id=>{deleted.push(id);return{error:null};}
  }}
 });
@@ -27,6 +27,10 @@ new Function('createClient','Deno',code)(createClient,{env:{get:()=>'test-env'},
 const call=async body=>{const r=await handler(new Request('https://example.invalid',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}));return{status:r.status,body:await r.json()};};
 const valid={token:'A'.repeat(43),name:'Pessoa Convidada',cpf:'529.982.247-25',phone:'',email:'convite@example.invalid',password:'senha-teste-123'};
 (async()=>{
+ // E-mail ja cadastrado: resposta generica, sem repassar o erro do Auth, e o convite e liberado.
+ {reset();createFails=true;const err=console.error;console.error=()=>{};const r=await call(valid);console.error=err;
+  assert.equal(r.status,400);assert.ok(!/already|registered|cadastrad/i.test(r.body.error),'nao revela se o e-mail existe');
+  assert.ok(rpcs.includes('liberar_convite_cadastro'),'convite liberado para nova tentativa');}
  // Cadastro valido: perfil Consulta, dados do retirante salvos e convite finalizado.
  reset();let r=await call(valid);
  assert.equal(r.status,201);

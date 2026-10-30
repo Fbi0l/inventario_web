@@ -89,7 +89,7 @@ let sheetJsPromise;
 function loadSheetJs(){
  if(window.XLSX)return Promise.resolve(window.XLSX);
  if(!sheetJsPromise)sheetJsPromise=new Promise((resolve,reject)=>{
-  const script=document.createElement('script');script.src='https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js';
+  const script=document.createElement('script');script.src='https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js';script.integrity='sha384-EnyY0/GSHQGSxSgMwaIPzSESbqoOLSexfnSMN2AP+39Ckmn92stwABZynq1JyzdT';script.crossOrigin='anonymous';
   script.onload=()=>window.XLSX?resolve(window.XLSX):reject(Error('Leitor de planilha indisponível'));
   script.onerror=()=>{script.remove();reject(Error('Não foi possível carregar o leitor. Confira sua conexão e tente novamente.'));};document.head.appendChild(script);
  }).catch(e=>{sheetJsPromise=null;throw e;});return sheetJsPromise;
