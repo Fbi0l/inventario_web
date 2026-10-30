@@ -10,11 +10,11 @@ type Perfil = "administrador" | "operador" | "consulta";
 const validProfiles: Perfil[] = ["administrador", "operador", "consulta"];
 const isPerfil = (x: string): x is Perfil => validProfiles.includes(x as Perfil);
 
-// Senhas (1.5.3): de 12 a 128 caracteres e fora de vazamentos conhecidos.
+// Senhas (1.5.3): de 8 a 128 caracteres e fora de vazamentos conhecidos.
 // Have I Been Pwned por k-anonimato: so os 5 primeiros caracteres do SHA-1 da senha
 // saem do servidor; a comparacao do restante e feita aqui. Se o servico nao responder,
 // a senha e aceita (a verificacao nunca impede o uso do sistema).
-const SENHA_MIN=12,SENHA_MAX=128;
+const SENHA_MIN=8,SENHA_MAX=128;
 async function senhaVazada(password:string):Promise<boolean>{
  try{
   const digest=await crypto.subtle.digest("SHA-1",new TextEncoder().encode(password));

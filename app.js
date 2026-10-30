@@ -302,7 +302,7 @@ async function loadUsers(){
 }
 async function createUser(e){
   e.preventDefault();if(!canManageUsers()){denyAction();return;}const email=$('newUserEmail').value.trim().toLowerCase(),password=$('newUserPassword').value,name=$('newUserName').value.trim(),perfil=$('newUserRole').value;
-  if(password.length<12){message('usersMessage','A senha deve ter pelo menos 12 caracteres.');return;}
+  if(password.length<8){message('usersMessage','A senha deve ter pelo menos 8 caracteres.');return;}
   message('usersMessage','Criando usuário…',true);
   try{await callUserAdmin('create',{email,password,name,perfil,cpf:$('newUserCpf').value,phone:$('newUserPhone').value});$('createUserForm').reset();message('usersMessage',`Usuário ${email} criado com sucesso.`,true);await loadUsers();}
   catch(err){message('usersMessage',`Não foi possível criar o usuário: ${err.message}`);}
@@ -335,9 +335,9 @@ async function userAction(action,id,email,blockedFlag){if(!canManageUsers()){den
     return;
   }
   if(action==='password'){
-    const password=prompt(`Digite a nova senha para ${email} (mínimo de 12 caracteres):`);
+    const password=prompt(`Digite a nova senha para ${email} (mínimo de 8 caracteres):`);
     if(password===null)return;
-    if(password.length<12){message('usersMessage','A senha deve ter pelo menos 12 caracteres.');return;}
+    if(password.length<8){message('usersMessage','A senha deve ter pelo menos 8 caracteres.');return;}
     message('usersMessage','Atualizando senha…',true);
     try{await callUserAdmin('password',{userId:id,password});message('usersMessage',`Senha de ${email} alterada com sucesso.`,true);}
     catch(err){message('usersMessage',`Não foi possível alterar a senha: ${err.message}`);}
