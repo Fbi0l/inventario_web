@@ -1,6 +1,6 @@
 {
   "name": "inventario-web-checkup",
-  "version": "1.5.1",
+  "version": "1.5.4",
   "private": true,
   "description": "Testes automatizados locais e de CI; nao utiliza credenciais do Supabase oficial.",
   "scripts": {

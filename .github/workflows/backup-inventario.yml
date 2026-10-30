@@ -23,7 +23,7 @@ jobs:
     timeout-minutes: 30
     steps:
       - name: Checkout da branch principal
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           persist-credentials: false
 
@@ -46,7 +46,7 @@ jobs:
         run: bash scripts/backup-inventario.sh
 
       - name: Guardar somente arquivos criptografados por 14 dias
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: backup-inventario-${{ github.run_id }}
           path: |
@@ -127,7 +127,7 @@ jobs:
 
       - name: Guardar backup criptografado das contas por 14 dias
         if: steps.auth.outcome == 'success'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: backup-inventario-auth-${{ github.run_id }}
           path: |
