@@ -33,7 +33,7 @@
       <label>CPF *<input id="registerCpf" required inputmode="numeric" maxlength="14"></label>
       <label>Telefone (opcional)<input id="registerPhone" type="tel" maxlength="30"></label>
       <label>E-mail *<input id="registerEmail" type="email" required autocomplete="email"></label>
-      <label>Senha (mínimo 8 caracteres) *<input id="registerPassword" type="password" required minlength="8" autocomplete="new-password"></label>
+      <label>Senha (mínimo 12 caracteres) *<input id="registerPassword" type="password" required minlength="12" autocomplete="new-password"></label>
       <button class="primary full" type="submit">Concluir cadastro</button>
       <p id="registerMessage" class="message" aria-live="polite"></p>
     </form>
@@ -117,7 +117,7 @@
               <label>Nome completo *<input id="newUserName" required minlength="3" maxlength="150" placeholder="Nome do usuário"></label>
               <label>CPF *<input id="newUserCpf" required inputmode="numeric" maxlength="14" placeholder="000.000.000-00"></label><label>Telefone (opcional)<input id="newUserPhone" type="tel" maxlength="30"></label>
               <label>E-mail *<input id="newUserEmail" type="email" required autocomplete="off" placeholder="usuario@empresa.com"></label>
-              <label>Senha inicial *<input id="newUserPassword" type="password" required minlength="8" autocomplete="new-password" placeholder="Mínimo de 8 caracteres"></label>
+              <label>Senha inicial *<input id="newUserPassword" type="password" required minlength="12" autocomplete="new-password" placeholder="Mínimo de 12 caracteres"></label>
               <label>Perfil de acesso *<select id="newUserRole" required><option value="consulta">Consulta (somente leitura)</option><option value="operador">Operador (retiradas/devoluções)</option><option value="administrador">Administrador (acesso completo)</option></select></label>
               <button class="primary" type="submit">＋ Criar usuário</button>
             </form>

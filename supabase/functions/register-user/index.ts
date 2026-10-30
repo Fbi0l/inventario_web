@@ -12,6 +12,27 @@ function cpfValido(cpf:string){
  for(let j=9;j<11;j++){let sum=0;for(let i=0;i<j;i++)sum+=Number(cpf[i])*(j+1-i);const d=sum*10%11;if((d===10?0:d)!==Number(cpf[j]))return false;}
  return true;
 }
+// Senhas (1.5.3): de 12 a 128 caracteres e fora de vazamentos conhecidos.
+// Have I Been Pwned por k-anonimato: so os 5 primeiros caracteres do SHA-1 da senha
+// saem do servidor; a comparacao do restante e feita aqui. Se o servico nao responder,
+// a senha e aceita (a verificacao nunca impede o uso do sistema).
+const SENHA_MIN=12,SENHA_MAX=128;
+async function senhaVazada(password:string):Promise<boolean>{
+ try{
+  const digest=await crypto.subtle.digest("SHA-1",new TextEncoder().encode(password));
+  const hex=Array.from(new Uint8Array(digest)).map(x=>x.toString(16).padStart(2,"0")).join("").toUpperCase();
+  const res=await fetch(`https://api.pwnedpasswords.com/range/${hex.slice(0,5)}`,{
+   headers:{"Add-Padding":"true","User-Agent":"inventario-web"},signal:AbortSignal.timeout(3000)});
+  if(!res.ok)return false;
+  const sufixo=hex.slice(5);
+  return (await res.text()).split("\n").some(linha=>{const [s,n]=linha.trim().split(":");return s===sufixo&&Number(n)>0;});
+ }catch(error){
+  console.error("Verificacao de senha vazada indisponivel",error instanceof Error?error.message:String(error));
+  return false;
+ }
+}
+const MSG_SENHA_TAMANHO=`A senha deve ter de ${SENHA_MIN} a ${SENHA_MAX} caracteres.`;
+const MSG_SENHA_VAZADA="Esta senha aparece em vazamentos de dados conhecidos. Escolha outra.";
 Deno.serve(async(req:Request)=>{
  if(req.method==="OPTIONS")return new Response("ok",{headers:corsHeaders});
  if(req.method!=="POST")return response({error:"Método não permitido."},405);
@@ -26,8 +47,9 @@ Deno.serve(async(req:Request)=>{
   const name=String(body.name||"").trim(),cpf=String(body.cpf||"").replace(/\D/g,""),phone=String(body.phone||"").trim();
   const email=String(body.email||"").trim().toLowerCase(),password=String(body.password||"");
   if(!/^[A-Za-z0-9_-]{43}$/.test(token))return response({error:"Convite inválido."},400);
-  if(name.length<3||name.length>150||!cpfValido(cpf)||phone.length>30||!email||!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)||password.length<8||password.length>128)
-   return response({error:"Confira nome, CPF, e-mail, telefone e senha (8 a 128 caracteres)."},400);
+  if(name.length<3||name.length>150||!cpfValido(cpf)||phone.length>30||!email||!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)||password.length<SENHA_MIN||password.length>SENHA_MAX)
+   return response({error:`Confira nome, CPF, e-mail, telefone e senha (${SENHA_MIN} a ${SENHA_MAX} caracteres).`},400);
+  if(await senhaVazada(password))return response({error:MSG_SENHA_VAZADA},400);
   const digest=await crypto.subtle.digest("SHA-256",new TextEncoder().encode(token));
   hash=Array.from(new Uint8Array(digest)).map(x=>x.toString(16).padStart(2,"0")).join("");
   reservation=crypto.randomUUID();

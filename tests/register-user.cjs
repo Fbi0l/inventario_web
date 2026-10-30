@@ -1,6 +1,8 @@
 // Testa a funcao Edge register-user sem acessar o Supabase real.
 // Usa TypeScript quando instalado; senao, o removedor de tipos nativo do Node (22.13+).
 const fs=require('fs'),assert=require('node:assert/strict');
+// Consulta de senhas vazadas simulada: nenhum teste acessa a internet.
+globalThis.fetch=async()=>new Response('',{status:200});
 const src=fs.readFileSync('supabase/functions/register-user/index.ts','utf8').replace(/^import .*\n/,'');
 let code;
 try{
