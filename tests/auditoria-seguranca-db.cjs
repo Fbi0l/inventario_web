@@ -18,7 +18,7 @@ const sql=f=>fs.readFileSync(f,'utf8');
  for(const f of ['supabase_schema','ATUALIZACAO_PERFIS','ATUALIZACAO_ARQUIVAMENTO_CICLOS','ATUALIZACAO_EXCLUSAO_CICLOS',
   'ATUALIZACAO_TERMOS_PDF','ATUALIZACAO_PRIVACIDADE_TERMOS','ATUALIZACAO_CONVITES_CADASTRO','ATUALIZACAO_1_4_1_EXCLUSAO_USUARIOS',
   'ATUALIZACAO_1_4_2_SEGURANCA_RPCS','ATUALIZACAO_IMPORTACAO_PLANILHA','ATUALIZACAO_IMPORTACAO_EM_USO',
-  'ATUALIZACAO_1_4_4_INTEGRIDADE','ATUALIZACAO_1_5_0_AUDITORIA'])
+  'ATUALIZACAO_1_4_4_INTEGRIDADE','ATUALIZACAO_1_5_0_AUDITORIA','ATUALIZACAO_1_5_4_CONVITES_ADMIN_EXCLUIDO'])
   await db.exec(sql(f+'.sql').replace('create extension if not exists pgcrypto;',''));
  // Como no Supabase: anon/authenticated recebem todas as permissoes nas tabelas criadas.
  await db.exec('GRANT ALL ON public.equipamentos,public.movimentacoes TO anon,authenticated;');
