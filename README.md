@@ -1,6 +1,15 @@
 # inventario_web
 Sistema de inventário patrimonial
 
+### App instalável (1.6.0)
+
+O Inventário pode ser **instalado** na área de trabalho (Windows, com Edge ou Chrome) e na tela inicial do celular (Android e iPhone). Ele abre em janela própria, com ícone e nome "Inventário". No **Painel geral** aparece o aviso **Instalar**; o ✕ esconde o aviso para sempre naquele navegador. No iPhone, o aviso explica o caminho: *Compartilhar → Adicionar à Tela de Início*.
+
+- O service worker (`sw.js`) guarda só arquivos do próprio site e das bibliotecas dos CDNs, para abrir rápido. Ele **nunca guarda nada do Supabase** (login, equipamentos, movimentações, termos em PDF). Com internet, sempre busca a versão publicada mais nova. O teste `tests/seguranca-site.cjs` confere isso nas duas cópias do site.
+- Arquivos novos: `manifest.webmanifest`, `sw.js`, `instalar.js` e os ícones em `assets/`, também na pasta `SITE_PUBLICAR`.
+
+Não há SQL nem função para republicar nesta versão. Para aplicar, basta publicar o site (automático pelo GitHub Pages).
+
 ### Revisão de segurança do site (1.5.5)
 
 - **Bibliotecas externas com verificação de integridade:** as seis bibliotecas carregadas de CDN (Supabase, QR Code, leitor de QR, PDF, fontes e planilhas) só rodam se forem exatamente os arquivos conferidos. Uma cópia adulterada no CDN é bloqueada pelo navegador.

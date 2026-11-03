@@ -6,7 +6,15 @@
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net https://cdn.sheetjs.com; connect-src 'self' https://meqpwvdisjuoacepkljs.supabase.co wss://meqpwvdisjuoacepkljs.supabase.co; img-src 'self' data: blob:; media-src 'self' blob: mediastream:; style-src 'self' 'unsafe-inline'; font-src 'self' data:; frame-src 'self' blob:; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'"><meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Inventário | Controle de equipamentos</title>
   <link rel="icon" type="image/png" href="assets/logo-inventario.png?v=1.4.0">
-  <link rel="stylesheet" href="styles.css?v=1.4.0">
+  <!-- App instalavel (1.6.0): area de trabalho e tela inicial do celular. -->
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+  <meta name="theme-color" content="#14243a">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Inventário">
+  <meta name="application-name" content="Inventário">
+  <link rel="stylesheet" href="styles.css?v=1.6.0">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0/dist/umd/supabase.js" integrity="sha384-TcHRA3zBbn+Lexh5n+Oil4guNPOS3rjNDpGRAN46u/s/mB2IZ50ceC6TYDU2yvgK" crossorigin="anonymous"></script>
   <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js" integrity="sha384-3zSEDfvllQohrq0PHL1fOXJuC/jSOO34H46t6UQfobFOmxE5BpjjaIJY5F2/bMnU" crossorigin="anonymous"></script>
   <script src="https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/html5-qrcode.min.js" integrity="sha384-c9d8RFSL+u3exBOJ4Yp3HUJXS4znl9f+z66d1y54ig+ea249SpqR+w1wyvXz/lk+" crossorigin="anonymous"></script>
@@ -24,7 +32,7 @@
       <footer class="site-footer" aria-label="Propriedade e versão do sistema">
         <span>&copy; 2026 <strong>Fbiol</strong> · Todos os direitos reservados</span>
         <span class="site-footer-separator" aria-hidden="true">•</span>
-        <span>Versão 1.5.5</span>
+        <span>Versão 1.6.0</span>
       </footer>
   </div>
 
@@ -58,6 +66,7 @@
       <header class="topbar"><div><p class="eyebrow">GESTÃO PATRIMONIAL</p><h1 id="pageTitle">Painel geral</h1></div><button id="refreshBtn" class="secondary">↻ Atualizar</button></header>
       <p id="globalMessage" class="message" aria-live="polite"></p>
       <section id="dashboardPage" class="page">
+        <div id="installCard" class="panel install-card hidden"><img src="assets/icone-192.png" alt="" width="44" height="44"><div class="install-text"><strong>Instale o Inventário</strong><small id="installText">Abra direto da área de trabalho ou da tela inicial do celular, em janela própria.</small></div><button id="installBtn" class="primary hidden" type="button">Instalar</button><button id="installClose" class="secondary install-close" type="button" aria-label="Não mostrar de novo">✕</button></div>
         <div class="stats"><article class="stat-card"><span>Total de equipamentos</span><strong id="statTotal">—</strong><small>Itens cadastrados</small></article><article class="stat-card"><span>Disponíveis</span><strong id="statAvailable">—</strong><small>Prontos para uso</small></article><article class="stat-card"><span>Em uso</span><strong id="statInUse">—</strong><small>Retiradas em aberto</small></article><article class="stat-card"><span>Manutenção</span><strong id="statMaintenance">—</strong><small>Itens indisponíveis</small></article></div>
         <div class="panel"><div class="panel-head"><div><h2>Movimentações recentes</h2><p class="muted">Últimas retiradas e devoluções registradas</p></div><button class="secondary" data-goto="movements">Ver todas</button></div><div class="table-wrap"><table><thead><tr><th>Data/hora</th><th>Equipamento</th><th>Tipo</th><th>Responsável</th><th>Observação</th></tr></thead><tbody id="recentBody"><tr><td colspan="5" class="empty">Carregando…</td></tr></tbody></table></div></div>
       </section>
@@ -171,7 +180,7 @@
       <footer class="site-footer" aria-label="Propriedade e versão do sistema">
         <span>&copy; 2026 <strong>Fbiol</strong> · Todos os direitos reservados</span>
         <span class="site-footer-separator" aria-hidden="true">•</span>
-        <span>Versão 1.5.5</span>
+        <span>Versão 1.6.0</span>
       </footer>
     </main>
   </div>
@@ -245,4 +254,5 @@
   <script src="qr-etiquetas.js?v=1.4.0"></script>
   <script src="termos.js?v=1.4.0"></script>
   <script src="app.js?v=1.5.5"></script>
+  <script src="instalar.js?v=1.6.0"></script>
 </body></html>

@@ -45,4 +45,21 @@ assert.equal(csvCell('Notebook'),'"Notebook"');assert.equal(csvCell('a=b'),'"a=b
 assert.equal(csvCell(-5),'"-5"');assert.equal(csvCell(null),'""');assert.equal(csvCell('aspas "x"'),'"aspas ""x"""');
 assert.ok(/r\.map\(csvCell\)/.test(app),'csvDownload usa csvCell');
 
-console.log('Site aprovado: integridade (SRI) em todos os scripts externos, politica CSP restrita e CSV sem formulas.');
+// App instalavel (1.6.0): manifesto e icones validos nas duas copias; o service worker nunca guarda dados do Supabase.
+for(const dir of ['.','SITE_PUBLICAR']){
+ const html=fs.readFileSync(`${dir}/index.html`,'utf8');
+ assert.match(html,/<link rel="manifest" href="manifest.webmanifest">/,`${dir}: manifesto ligado`);
+ assert.match(html,/<script src="instalar\.js\?v=[\d.]+"><\/script>/,`${dir}: instalar.js carregado`);
+ const m=JSON.parse(fs.readFileSync(`${dir}/manifest.webmanifest`,'utf8'));
+ assert.equal(m.display,'standalone');assert.equal(m.scope,'./');assert.equal(m.start_url,'./');
+ for(const i of m.icons)assert.ok(fs.existsSync(`${dir}/${i.src}`),`${dir}: icone ${i.src}`);
+ assert.ok(m.icons.some(i=>i.sizes==='192x192')&&m.icons.some(i=>i.sizes==='512x512')&&m.icons.some(i=>i.purpose==='maskable'));
+ assert.ok(fs.existsSync(`${dir}/assets/apple-touch-icon.png`));
+ const sw=fs.readFileSync(`${dir}/sw.js`,'utf8');
+ assert.ok(!/supabase\.co/.test(sw),`${dir}: service worker nao menciona o Supabase`);
+ assert.match(sw,/const PERMITIDOS = \[self\.location\.origin, 'https:\/\/cdn\.jsdelivr\.net', 'https:\/\/cdn\.sheetjs\.com'\];/);
+ assert.match(sw,/req\.method !== 'GET' \|\| !PERMITIDOS\.includes\(url\.origin\)\) return;/,`${dir}: so GET do proprio site e dos CDNs`);
+ assert.ok(!/innerHTML|outerHTML|insertAdjacentHTML|document\.write|eval\(/.test(fs.readFileSync(`${dir}/instalar.js`,'utf8')),`${dir}: instalar.js sem HTML a partir de texto`);
+}
+for(const f of ['index.html','styles.css','instalar.js','sw.js','manifest.webmanifest'])assert.equal(fs.readFileSync(f,'utf8'),fs.readFileSync(`SITE_PUBLICAR/${f}`,'utf8'),`SITE_PUBLICAR/${f} igual ao da raiz`);
+console.log('Site aprovado: integridade (SRI) em todos os scripts externos, politica CSP restrita, CSV sem formulas e app instalavel seguro.');
