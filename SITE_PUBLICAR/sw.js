@@ -3,7 +3,7 @@
    - NUNCA guarda nada do Supabase (login, equipamentos, movimentações, termos em PDF): esses pedidos passam direto.
    - Rede primeiro: com internet, sempre usa a versão publicada mais nova; a cópia só é usada sem conexão. */
 'use strict';
-const CACHE = 'inventario-app-v1';
+const CACHE = 'inventario-app-v2';
 const PERMITIDOS = [self.location.origin, 'https://cdn.jsdelivr.net', 'https://cdn.sheetjs.com'];
 
 self.addEventListener('install', ev => {

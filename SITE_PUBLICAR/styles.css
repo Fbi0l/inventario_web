@@ -157,3 +157,67 @@ tbody tr:hover td{background:#fafcff}
 .sidebar .side-nav{display:flex;flex-direction:column;gap:18px}
 .pill{align-items:center}
 .quick-actions button{text-align:left}
+
+/* Interface 1.7.0 — celular: navegação inferior e listas em cartões */
+@media (max-width:680px){
+  .app .sidebar{position:sticky;top:0;z-index:20;width:100%;flex-direction:row;align-items:center;gap:10px;padding:10px 14px;padding-top:calc(10px + env(safe-area-inset-top))}
+  .app .brand{padding:0;flex:1;min-width:0}
+  .app .brand small{display:none}
+  .app .brand .brand-mark{width:36px;height:36px;border-radius:10px}
+  .app .sidebar-bottom.user-card{margin:0;padding:4px;background:transparent;gap:4px}
+  .user-card .user-info{display:none}
+  .sidebar .side-nav{position:fixed;left:0;right:0;bottom:0;z-index:30;gap:0;background:#fff;border-top:1px solid var(--line);box-shadow:0 -6px 20px #14243a14;padding:0 6px env(safe-area-inset-bottom)}
+  .side-nav .nav-label{display:none}
+  .side-nav .nav-primary{display:flex;align-items:flex-end;grid-template-columns:none;gap:0}
+  .side-nav .nav-primary .nav-item{flex:1 1 0;min-width:0;flex-direction:column;justify-content:center;gap:3px;min-height:60px;padding:6px 2px;border-radius:10px;background:transparent;color:#5b6b80;font-size:11px;font-weight:500;text-align:center;box-shadow:none}
+  .side-nav .nav-primary .nav-item .i{width:22px;height:22px}
+  .side-nav .nav-primary .nav-item.active{background:transparent;color:var(--use);font-weight:600}
+  .side-nav .nav-primary .nav-item:not(.active):hover{background:#f4f7fb}
+  .nav-long{display:none}
+  .side-nav .nav-primary .nav-qr{display:flex;flex:0 0 64px;width:64px;height:64px;min-height:64px;margin:-20px 4px 8px;border-radius:50%;border:4px solid #fff;background:var(--primary);color:#fff;box-shadow:0 6px 16px #2764e759}
+  .side-nav .nav-primary .nav-qr span{display:none}
+  .side-nav .nav-primary .nav-qr .i{width:26px;height:26px}
+  .side-nav .nav-primary .nav-qr:hover{background:#174fcb}
+  .side-nav .nav-more{display:flex}
+  .side-nav .nav-secondary{display:none;position:fixed;left:12px;right:12px;bottom:calc(76px + env(safe-area-inset-bottom));grid-template-columns:none;gap:4px;padding:12px;background:#fff;border:1px solid var(--line);border-radius:16px;box-shadow:0 18px 50px #0b1a2f40}
+  .side-nav.more-open .nav-secondary{display:grid}
+  .side-nav.more-open .nav-primary .nav-more{color:var(--use);font-weight:600}
+  .side-nav .nav-secondary .nav-label{display:block;color:#5b6b80;padding:2px 12px 6px}
+  .side-nav .nav-secondary .nav-item{justify-content:flex-start;padding:0 12px;color:#27384d;font-size:15px;background:transparent}
+  .side-nav .nav-secondary .nav-item:not(.active):hover{background:#eef3fb}
+  .side-nav .nav-secondary .nav-item.active{background:var(--primary);color:#fff}
+  .main{padding:18px 12px calc(96px + env(safe-area-inset-bottom))}
+  .topbar{margin-bottom:14px}
+  .topbar-actions{width:100%}
+  .topbar-actions .search-field{flex:1 1 200px;width:auto}
+  #topScanBtn{display:none}
+  #refreshBtn{width:44px;padding:0}
+  #refreshBtn span{display:none}
+  .panel-head .actions{gap:8px}
+  .panel-head .actions button{flex:1 1 auto;min-width:0;padding:0 12px;font-size:13px;white-space:nowrap}
+  #newEquipmentBtn,#newMovementBtn{order:-1;flex-basis:100%;font-size:15px}
+  .stats{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .stat-card strong{font-size:26px}
+  .stat-card span{font-size:13px}
+  .quick-actions{flex-basis:100%}
+  .chips{flex-wrap:nowrap;overflow-x:auto;margin:0 -15px 12px;padding:0 15px 2px;scrollbar-width:none}
+  .chip{flex:none}
+  .filters-2{grid-template-columns:1fr}
+  /* Tabelas viram cartões */
+  .card-table,.card-table tbody{display:block;white-space:normal}
+  .card-table thead{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+  .card-table tr{display:flex;flex-wrap:wrap;align-items:flex-start;gap:6px 12px;padding:14px;margin-bottom:10px;background:#fff;border:1px solid var(--line);border-radius:12px}
+  .card-table tbody tr:hover td{background:transparent}
+  .card-table td{display:flex;justify-content:space-between;gap:12px;flex:1 1 100%;order:3;padding:0;border:0;font-size:13px;color:#3b4a5e}
+  .card-table td[data-label]::before{content:attr(data-label);color:#5b6b80;font-weight:500}
+  .card-table td.cell-code{order:0;justify-content:flex-start;align-items:baseline;gap:8px}
+  .card-table td.cell-title{order:1;flex:1 1 0;min-width:0;display:block;font-size:15px;color:#172234}
+  .card-table td.cell-status{order:2;flex:0 0 auto;display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+  .card-table td.cell-actions{order:4;padding-top:6px;justify-content:flex-start}
+  .card-table td.cell-code::before,.card-table td.cell-title::before,.card-table td.cell-status::before,.card-table td.cell-actions::before{content:none}
+  .card-table td.cell-actions .table-actions{justify-content:flex-start;flex-wrap:wrap;width:100%}
+  .card-table td.cell-actions .primary,.card-table td.cell-actions>.secondary{flex:1}
+  .card-table td.empty{justify-content:center;padding:18px 0}
+  .dash-recent .table-wrap,.panel .card-table{overflow:visible}
+  #equipmentPage>.panel,#movementsPage>.panel:first-child,.dash-recent{padding:15px}
+}

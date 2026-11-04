@@ -14,7 +14,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-title" content="Inventário">
   <meta name="application-name" content="Inventário">
-  <link rel="stylesheet" href="styles.css?v=1.6.0">
+  <link rel="stylesheet" href="styles.css?v=1.7.0">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0/dist/umd/supabase.js" integrity="sha384-TcHRA3zBbn+Lexh5n+Oil4guNPOS3rjNDpGRAN46u/s/mB2IZ50ceC6TYDU2yvgK" crossorigin="anonymous"></script>
   <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js" integrity="sha384-3zSEDfvllQohrq0PHL1fOXJuC/jSOO34H46t6UQfobFOmxE5BpjjaIJY5F2/bMnU" crossorigin="anonymous"></script>
   <script src="https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/html5-qrcode.min.js" integrity="sha384-c9d8RFSL+u3exBOJ4Yp3HUJXS4znl9f+z66d1y54ig+ea249SpqR+w1wyvXz/lk+" crossorigin="anonymous"></script>
@@ -59,7 +59,7 @@
       <footer class="site-footer" aria-label="Propriedade e versão do sistema">
         <span>&copy; 2026 <strong>Fbiol</strong> · Todos os direitos reservados</span>
         <span class="site-footer-separator" aria-hidden="true">•</span>
-        <span>Versão 1.6.0</span>
+        <span>Versão 1.7.0</span>
       </footer>
   </div>
 
@@ -101,7 +101,7 @@
       <header class="topbar"><div><p class="eyebrow">GESTÃO PATRIMONIAL</p><h1 id="pageTitle">Painel geral</h1></div>
         <div class="topbar-actions">
           <label class="search-field"><svg class="i" aria-hidden="true" focusable="false"><use href="#i-search"></use></svg><input id="globalSearch" type="search" aria-label="Buscar equipamento por TAG, patrimônio ou nome" placeholder="Buscar TAG, patrimônio ou nome…" autocomplete="off" spellcheck="false"></label>
-          <button id="refreshBtn" class="secondary" type="button"><svg class="i" aria-hidden="true" focusable="false"><use href="#i-refresh"></use></svg><span>Atualizar</span></button>
+          <button id="refreshBtn" class="secondary" type="button" aria-label="Atualizar dados" title="Atualizar"><svg class="i" aria-hidden="true" focusable="false"><use href="#i-refresh"></use></svg><span>Atualizar</span></button>
           <button id="topScanBtn" class="primary" type="button"><svg class="i" aria-hidden="true" focusable="false"><use href="#i-scan"></use></svg><span>Ler QR Code</span></button>
         </div>
       </header>
@@ -140,7 +140,7 @@
       </section>
       <section id="movementsPage" class="page hidden">
         <div class="panel"><div class="panel-head"><div><h2>Retiradas e devoluções</h2><p class="muted">Registre cada retirada e finalize com a devolução do equipamento.</p></div><div class="actions"><button id="scanMovementBtn" class="secondary" type="button"><svg class="i" aria-hidden="true" focusable="false"><use href="#i-scan"></use></svg><span>Ler QR Code</span></button><button id="newMovementBtn" class="primary" type="button"><svg class="i" aria-hidden="true" focusable="false"><use href="#i-out"></use></svg><span>Registrar retirada</span></button></div></div>
-          <div class="filters"><input id="searchMovement" type="search" autocomplete="off" aria-label="Pesquisar movimentações" placeholder="Pesquisar equipamento ou responsável…"><select id="movementFilter" aria-label="Tipo de movimentação"><option value="">Todas as movimentações</option><option value="Retirada">Retiradas</option><option value="Devolução">Devoluções</option><option value="open">Retiradas em aberto</option><option value="overdue">Devolução atrasada</option></select></div>
+          <div class="filters filters-2"><input id="searchMovement" type="search" autocomplete="off" aria-label="Pesquisar movimentações" placeholder="Pesquisar equipamento ou responsável…"><select id="movementFilter" aria-label="Tipo de movimentação"><option value="">Todas as movimentações</option><option value="Retirada">Retiradas</option><option value="Devolução">Devoluções</option><option value="open">Retiradas em aberto</option><option value="overdue">Devolução atrasada</option></select></div>
           <div class="table-wrap"><table class="card-table"><thead><tr><th>Data/hora</th><th>Equipamento</th><th>Tipo</th><th>Responsável</th><th>Retirada</th><th>Devolução</th><th>Ação</th></tr></thead><tbody id="movementBody"><tr><td colspan="7" class="empty">Carregando…</td></tr></tbody></table></div>
         </div>
         <div id="termsSearchPanel" class="panel">
@@ -242,7 +242,7 @@
       <footer class="site-footer" aria-label="Propriedade e versão do sistema">
         <span>&copy; 2026 <strong>Fbiol</strong> · Todos os direitos reservados</span>
         <span class="site-footer-separator" aria-hidden="true">•</span>
-        <span>Versão 1.6.0</span>
+        <span>Versão 1.7.0</span>
       </footer>
     </main>
   </div>
@@ -315,6 +315,6 @@
   <script src="importar-planilha.js?v=1.5.5"></script>
   <script src="qr-etiquetas.js?v=1.4.0"></script>
   <script src="termos.js?v=1.4.0"></script>
-  <script src="app.js?v=1.5.5"></script>
+  <script src="app.js?v=1.7.0"></script>
   <script src="instalar.js?v=1.6.0"></script>
 </body></html>
