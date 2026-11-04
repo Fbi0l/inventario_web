@@ -169,7 +169,7 @@ tbody tr:hover td{background:#fafcff}
   .app .logout-btn{width:36px;height:36px}
   .app .sidebar-bottom.user-card{margin:0;padding:0;background:transparent;gap:2px}
   .user-card .user-info{display:none}
-  .sidebar .side-nav{position:fixed;left:0;right:0;bottom:0;z-index:30;gap:0;background:#fff;border-top:1px solid var(--line);box-shadow:0 -6px 20px #14243a14;padding:0 6px env(safe-area-inset-bottom)}
+  .sidebar .side-nav{position:fixed;left:0;right:0;bottom:0;z-index:30;gap:0;background:#fff;border-top:1px solid var(--line);box-shadow:0 -6px 20px #14243a14;padding:0 max(6px,env(safe-area-inset-right)) max(4px,calc(env(safe-area-inset-bottom) - 8px)) max(6px,env(safe-area-inset-left))}
   .side-nav .nav-label{display:none}
   .side-nav .nav-primary{display:flex;align-items:flex-end;grid-template-columns:none;gap:0}
   .side-nav .nav-primary .nav-item{flex:1 1 0;min-width:0;flex-direction:column;justify-content:center;gap:2px;min-height:50px;padding:4px 2px;border-radius:10px;background:transparent;color:#5b6b80;font-size:10.5px;font-weight:500;line-height:1.2;text-align:center;box-shadow:none}
@@ -177,19 +177,19 @@ tbody tr:hover td{background:#fafcff}
   .side-nav .nav-primary .nav-item.active{background:transparent;color:var(--use);font-weight:600}
   .side-nav .nav-primary .nav-item:not(.active):hover{background:#f4f7fb}
   .nav-long{display:none}
-  .side-nav .nav-primary .nav-qr{display:flex;flex:0 0 52px;width:52px;height:52px;min-height:52px;margin:-10px 6px 4px;padding:0;border-radius:50%;border:3px solid #fff;background:var(--primary);color:#fff;box-shadow:0 4px 12px #2764e74d}
+  .side-nav .nav-primary .nav-qr{display:flex;flex:0 0 52px;width:52px;height:52px;min-height:52px;margin:-10px 2px 4px;padding:0;border-radius:50%;border:3px solid #fff;background:var(--primary);color:#fff;box-shadow:0 4px 12px #2764e74d}
   .side-nav .nav-primary .nav-qr span{display:none}
   .side-nav .nav-primary .nav-qr .i{width:22px;height:22px}
   .side-nav .nav-primary .nav-qr:hover{background:#174fcb}
   .side-nav .nav-more{display:flex}
-  .side-nav .nav-secondary{display:none;position:fixed;left:12px;right:12px;bottom:calc(64px + env(safe-area-inset-bottom));grid-template-columns:none;gap:4px;padding:12px;background:#fff;border:1px solid var(--line);border-radius:16px;box-shadow:0 18px 50px #0b1a2f40}
+  .side-nav .nav-secondary{display:none;position:fixed;left:12px;right:12px;bottom:calc(64px + max(0px,env(safe-area-inset-bottom) - 8px));grid-template-columns:none;gap:4px;padding:12px;background:#fff;border:1px solid var(--line);border-radius:16px;box-shadow:0 18px 50px #0b1a2f40}
   .side-nav.more-open .nav-secondary{display:grid}
   .side-nav.more-open .nav-primary .nav-more{color:var(--use);font-weight:600}
   .side-nav .nav-secondary .nav-label{display:block;color:#5b6b80;padding:2px 12px 6px}
   .side-nav .nav-secondary .nav-item{justify-content:flex-start;padding:0 12px;color:#27384d;font-size:15px;background:transparent}
   .side-nav .nav-secondary .nav-item:not(.active):hover{background:#eef3fb}
   .side-nav .nav-secondary .nav-item.active{background:var(--primary);color:#fff}
-  .main{padding:16px 12px calc(76px + env(safe-area-inset-bottom))}
+  .main{padding:16px max(12px,env(safe-area-inset-right)) calc(80px + env(safe-area-inset-bottom)) max(12px,env(safe-area-inset-left))}
   .topbar{margin-bottom:14px}
   .topbar-actions{width:100%}
   .topbar-actions .search-field{flex:1 1 200px;width:auto}
@@ -200,8 +200,11 @@ tbody tr:hover td{background:#fafcff}
   .panel-head .actions button{flex:1 1 auto;min-width:0;padding:0 12px;font-size:13px;white-space:nowrap}
   #newEquipmentBtn,#newMovementBtn{order:-1;flex-basis:100%;font-size:15px}
   .stats{grid-template-columns:repeat(2,minmax(0,1fr))}
-  .stat-card strong{font-size:26px}
-  .stat-card span{font-size:13px}
+  .stats{gap:10px;margin-bottom:16px}
+  .stat-card{padding:14px;gap:8px}
+  .stat-card strong{font-size:28px}
+  .stat-card span{font-size:13px;gap:6px}
+  .stat-card small,.stat-card .stat-long{display:none}
   .quick-actions{flex-basis:100%}
   .chips{flex-wrap:nowrap;overflow-x:auto;margin:0 -15px 12px;padding:0 15px 2px;scrollbar-width:none}
   .chip{flex:none}

@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <!-- Seguranca (1.5.5): so scripts do proprio site e dos CDNs abaixo, cada um com integridade (SRI) conferida. -->
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net https://cdn.sheetjs.com; connect-src 'self' https://meqpwvdisjuoacepkljs.supabase.co wss://meqpwvdisjuoacepkljs.supabase.co; img-src 'self' data: blob:; media-src 'self' blob: mediastream:; style-src 'self' 'unsafe-inline'; font-src 'self' data:; frame-src 'self' blob:; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net https://cdn.sheetjs.com; connect-src 'self' https://meqpwvdisjuoacepkljs.supabase.co wss://meqpwvdisjuoacepkljs.supabase.co; img-src 'self' data: blob:; media-src 'self' blob: mediastream:; style-src 'self' 'unsafe-inline'; font-src 'self' data:; frame-src 'self' blob:; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <title>Inventário | Controle de equipamentos</title>
   <link rel="icon" type="image/png" href="assets/logo-inventario.png?v=1.4.0">
   <!-- App instalavel (1.6.0): area de trabalho e tela inicial do celular. -->
@@ -81,7 +81,7 @@
       <nav id="mainNav" class="side-nav" aria-label="Principal">
         <div class="nav-group nav-primary">
           <p class="nav-label">Operação</p>
-          <button class="nav-item active" type="button" data-page="dashboard"><svg class="i" aria-hidden="true" focusable="false"><use href="#i-dashboard"></use></svg><span>Painel geral</span></button>
+          <button class="nav-item active" type="button" data-page="dashboard"><svg class="i" aria-hidden="true" focusable="false"><use href="#i-dashboard"></use></svg><span>Painel<span class="nav-long"> geral</span></span></button>
           <button class="nav-item" type="button" data-page="equipment"><svg class="i" aria-hidden="true" focusable="false"><use href="#i-box"></use></svg><span>Equipamentos</span></button>
           <button id="navQrBtn" class="nav-item nav-qr" type="button" aria-label="Ler QR Code"><svg class="i" aria-hidden="true" focusable="false"><use href="#i-scan"></use></svg><span>Ler QR</span></button>
           <button class="nav-item" type="button" data-page="movements"><svg class="i" aria-hidden="true" focusable="false"><use href="#i-swap"></use></svg><span>Retiradas<span class="nav-long"> e devoluções</span></span></button>
@@ -109,7 +109,7 @@
       <section id="dashboardPage" class="page">
         <div id="installCard" class="panel install-card hidden"><img src="assets/icone-192.png" alt="" width="44" height="44"><div class="install-text"><strong>Instale o Inventário</strong><small id="installText">Abra direto da área de trabalho ou da tela inicial do celular, em janela própria.</small></div><button id="installBtn" class="primary hidden" type="button">Instalar</button><button id="installClose" class="secondary install-close" type="button" aria-label="Não mostrar de novo">✕</button></div>
         <div class="stats">
-          <article class="stat-card tone-total"><span><i class="dot" aria-hidden="true"></i>Total de equipamentos</span><strong id="statTotal">—</strong><div class="stat-bar" aria-hidden="true"><i style="width:100%"></i></div><small>Itens cadastrados no ciclo atual</small></article>
+          <article class="stat-card tone-total"><span><i class="dot" aria-hidden="true"></i>Total<span class="stat-long"> de equipamentos</span></span><strong id="statTotal">—</strong><div class="stat-bar" aria-hidden="true"><i style="width:100%"></i></div><small>Itens cadastrados no ciclo atual</small></article>
           <article class="stat-card tone-ok"><span><i class="dot" aria-hidden="true"></i>Disponíveis<em id="statAvailableShare" class="stat-share"></em></span><strong id="statAvailable">—</strong><div class="stat-bar" aria-hidden="true"><i id="statAvailableBar"></i></div><small>Prontos para retirada</small></article>
           <article class="stat-card tone-use"><span><i class="dot" aria-hidden="true"></i>Em uso<em id="statInUseShare" class="stat-share"></em></span><strong id="statInUse">—</strong><div class="stat-bar" aria-hidden="true"><i id="statInUseBar"></i></div><small>Retiradas em aberto</small></article>
           <article class="stat-card tone-warn"><span><i class="dot" aria-hidden="true"></i>Manutenção<em id="statMaintenanceShare" class="stat-share"></em></span><strong id="statMaintenance">—</strong><div class="stat-bar" aria-hidden="true"><i id="statMaintenanceBar"></i></div><small>Indisponíveis no momento</small></article>
