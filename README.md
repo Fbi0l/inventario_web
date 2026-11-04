@@ -1,6 +1,19 @@
 # inventario_web
 Sistema de inventário patrimonial
 
+### Interface renovada (1.7.0)
+
+Visual novo no computador e no celular, sem mudar regras, permissões nem dados.
+
+- **Painel geral:** cartões com barra e percentual, aviso de **devoluções que passaram da previsão** (com atalho para a lista filtrada) e bloco de **ações rápidas**. No topo há busca por TAG, patrimônio ou nome e o botão **Ler QR Code**.
+- **Equipamentos:** filtro por situação com a contagem de cada uma, TAG em fonte de código e ações com ícone (Excluir em vermelho).
+- **Retiradas e devoluções:** novos filtros *Retiradas em aberto* e *Devolução atrasada*; retiradas atrasadas ganham o selo **Atrasada**.
+- **Celular:** barra de navegação embaixo com botão central para ler QR Code; Relatórios, Usuários, Arquivos e Auditoria ficam em **Mais**. As listas de equipamentos e movimentações aparecem em cartões.
+- **Acessibilidade:** contraste de texto acima de 4,5:1, rótulos em todos os campos de busca e filtro, nome nos botões de fechar, link para pular ao conteúdo, alvos de toque maiores e respeito à opção de reduzir movimento.
+- Fontes **Fira Sans** e **Fira Code** hospedadas no próprio site (`assets/fonts/`, licença OFL), porque a política de segurança só aceita fontes locais.
+
+Não há SQL nem função para republicar. Para aplicar, basta publicar o site (automático pelo GitHub Pages). O `sw.js` troca o nome do cache para descartar a cópia antiga.
+
 ### App instalável (1.6.0)
 
 O Inventário pode ser **instalado** na área de trabalho (Windows, com Edge ou Chrome) e na tela inicial do celular (Android e iPhone). Ele abre em janela própria, com ícone e nome "Inventário". No **Painel geral** aparece o aviso **Instalar**; o ✕ esconde o aviso para sempre naquele navegador. No iPhone, o aviso explica o caminho: *Compartilhar → Adicionar à Tela de Início*.

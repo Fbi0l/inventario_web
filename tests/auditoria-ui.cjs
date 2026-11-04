@@ -29,6 +29,8 @@ const shots=process.env.AUDIT_SHOTS||'';
   const page=await browser.newPage({viewport,acceptDownloads:true});page.on('pageerror',e=>errors.push(e.message));
   await page.route('**/*',route);await page.goto('http://inventario.test/');
   await page.evaluate(async()=>{await showApp({user:testUser});});
+  // No celular (1.7.0) Auditoria fica no menu "Mais" da barra inferior.
+  if(await page.locator('#navMoreBtn').isVisible())await page.click('#navMoreBtn');
   assert.equal(await page.locator('[data-page=audit]').isVisible(),true,'administrador ve o menu Auditoria');
   await page.click('[data-page=audit]');await page.waitForFunction(()=>document.querySelectorAll('#auditBody tr').length===6);
   const text=await page.locator('#auditBody').innerText();
