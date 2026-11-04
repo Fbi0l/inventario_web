@@ -71,3 +71,89 @@ button.danger-btn{color:#b42318;border-color:#f1c4bf}
 button.danger-btn:hover{background:#feeceb;border-color:#e8a29a}
 dialog{overscroll-behavior:contain}
 @media (prefers-reduced-motion: reduce){*,*::before,*::after{transition:none!important;animation:none!important;scroll-behavior:auto!important}}
+
+/* Interface 1.7.0 — PC */
+:root{--primary:#2764e7;--ok:#146c43;--ok-bg:#e5f5ec;--use:#1d4fbf;--use-bg:#e8effd;--warn:#a8360b;--warn-bg:#fdeee6;--off:#4b5563;--off-bg:#eef0f3;--danger:#b42318}
+.i{width:18px;height:18px;flex:none;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.primary,.secondary{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px}
+.code{font-family:"Fira Code",ui-monospace,Consolas,monospace;font-weight:600;font-size:13px;color:#172234}
+/* Menu lateral */
+.side-nav{display:flex;flex-direction:column;gap:18px}
+.nav-group{display:grid;gap:4px}
+.nav-label{margin:0;padding:0 14px 4px;font-size:11px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:#8ea0b9}
+.nav-item{font-weight:500;min-height:44px;padding:0 14px}
+.nav-item .i{width:20px;height:20px}
+.nav-item.active{background:var(--primary);color:#fff;box-shadow:none}
+.nav-item:not(.active):hover{background:#21364f}
+.nav-qr,.nav-more{display:none}
+.user-card{display:flex;align-items:center;gap:10px;padding:10px;border-radius:10px;background:#1b2f49}
+.avatar{width:36px;height:36px;border-radius:50%;background:#3b5579;color:#fff;display:grid;place-items:center;font-weight:700;font-size:13px;flex:none}
+.user-info{flex:1;min-width:0;display:flex;flex-direction:column}
+.user-card .user-email{padding:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#dbe4f1;font-size:13px}
+.sidebar-bottom.user-card #userProfile{margin:0;padding:0;color:#a9b8ce;font-weight:500;font-size:12px}
+.logout-btn{background:transparent;color:#c3cede;padding:0;width:40px;height:40px;display:grid;place-items:center;flex:none}
+.logout-btn:hover{background:#2a4262;color:#fff}
+/* Topo */
+.topbar{flex-wrap:wrap;align-items:flex-end}
+.topbar-actions{display:flex;flex-wrap:wrap;align-items:center;gap:10px}
+.search-field{position:relative;display:block;min-width:0}
+.search-field .i{position:absolute;left:13px;top:50%;transform:translateY(-50%);color:#5b6b80;pointer-events:none}
+.search-field input{width:100%;min-height:44px;padding:0 14px 0 40px;border:1px solid #d3dbe7;border-radius:8px;background:#fff;color:#172234;font:inherit;font-size:14px}
+.topbar-actions .search-field{width:300px;max-width:100%}
+.topbar-actions .secondary{background:#fff;border-color:#d3dbe7}
+/* Cartões de resumo */
+.stat-card{display:flex;flex-direction:column;gap:10px}
+.stat-card span{display:flex;align-items:center;gap:8px;font-weight:500;font-size:14px}
+.stat-card .dot{width:10px;height:10px;border-radius:3px;background:var(--tone,#14243a)}
+.stat-share{margin-left:auto;font-style:normal;font-size:12px;color:#5b6b80;font-variant-numeric:tabular-nums}
+.stat-card strong{margin:0;font-size:34px;line-height:1}
+.stat-bar{height:6px;border-radius:99px;background:#eef2f7;overflow:hidden}
+.stat-bar i{display:block;height:100%;width:0;border-radius:99px;background:var(--tone,#14243a);transition:width .3s}
+.stat-card small{font-size:13px}
+.tone-total{--tone:#14243a}.tone-ok{--tone:#1a8a55}.tone-use{--tone:var(--primary)}.tone-warn{--tone:#c2410c}.tone-off{--tone:#6b7280}
+/* Alerta de devoluções atrasadas */
+.alert-card{display:flex;flex-wrap:wrap;align-items:center;gap:14px;padding:16px 20px;margin-bottom:22px;background:#fff8eb;border:1px solid #f3d9a4;border-radius:12px;color:#6b4600}
+.alert-card>.i{width:22px;height:22px}
+.alert-text{flex:1 1 320px;display:flex;flex-direction:column;gap:2px}
+.alert-text strong{font-size:15px}
+.alert-text small{color:#6b4600;font-size:13px}
+.alert-card .secondary{background:#fff;color:#6b4600;border-color:#e7c27a}
+/* Painel: recentes + ações rápidas */
+.dash-grid{display:flex;flex-wrap:wrap;gap:22px;align-items:flex-start}
+.dash-recent{flex:999 1 560px;min-width:0}
+.quick-actions{flex:1 1 260px;display:flex;flex-direction:column;gap:10px}
+.quick-actions h2{margin:0 0 6px;font-size:18px}
+.quick-actions button{justify-content:flex-start;width:100%}
+.quick-actions .secondary{background:#eef3fb;color:#1f3a5f}
+.link-btn{background:transparent;color:#1f56d1;padding:8px 4px;min-height:40px}
+.link-btn:hover{color:#163f9c;text-decoration:underline}
+/* Tabelas */
+.cell-title strong,.cell-code .code{display:block}
+.cell-title small,.cell-code small{display:block;margin-top:2px;font-size:12px;color:#5b6b80}
+.cell-title small.code{font-weight:500}
+.pill{gap:6px;padding:4px 10px;font-size:12px;font-weight:600}
+.pill::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+.pill.available{background:var(--ok-bg);color:var(--ok)}
+.pill.use{background:var(--use-bg);color:var(--use)}
+.pill.maintenance{background:var(--warn-bg);color:var(--warn)}
+.pill.retired{background:var(--off-bg);color:var(--off)}
+.pill.out{background:var(--use-bg);color:var(--use)}
+.pill.in{background:var(--ok-bg);color:var(--ok)}
+.pill.late{background:#fff3d6;color:#8a5a00}
+tbody tr:hover td{background:#fafcff}
+.cell-actions .table-actions{justify-content:flex-end}
+.icon-only{width:40px;padding:0;background:#fff;border:1px solid #d3dbe7;color:#3b4a5e}
+.icon-only:hover{background:#eef3fb}
+.icon-only.danger-btn{color:#3b4a5e}
+.icon-only.danger-btn:hover{background:#feeceb;border-color:#f5b5ae;color:var(--danger)}
+/* Filtro por situação */
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
+.chip{display:inline-flex;align-items:center;gap:8px;min-height:40px;padding:0 14px;border-radius:999px;border:1px solid #d3dbe7;background:#fff;color:#3b4a5e;font-weight:500}
+.chip .dot{width:8px;height:8px;border-radius:50%;background:var(--tone,#94a3b8)}
+.chip b{font-weight:600;font-variant-numeric:tabular-nums}
+.chip:hover{background:#f4f7fb}
+.chip[aria-pressed="true"]{background:#14243a;border-color:#14243a;color:#fff}
+.filters-2{grid-template-columns:minmax(220px,1fr) minmax(180px,260px)}
+.sidebar .side-nav{display:flex;flex-direction:column;gap:18px}
+.pill{align-items:center}
+.quick-actions button{text-align:left}
