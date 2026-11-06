@@ -215,13 +215,96 @@ async function saveReturn(e){
 /* Texto que comeca com = + - @ ou tabulacao vira formula no Excel; o apostrofo o mantem como texto (1.5.5). */
 const csvCell=v=>{let t=String(v??'');if(typeof v==='string'&&/^[=+\-@\t\r]/.test(t))t="'"+t;return `"${t.replace(/"/g,'""')}"`;};
 function csvDownload(headers, rows, filename){const all=[headers,...rows];const csv='\ufeff'+all.map(r=>r.map(csvCell).join(';')).join('\r\n');const url=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8;'}));const a=document.createElement('a');a.href=url;a.download=filename;a.style.display='none';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);}
-function exportCsv(){const headers=['id','tag','patrimonio','descricao','categoria','marca','modelo','numero_serie','pertencimento','responsavel','localizacao','estado','situacao','valor','observacoes','codigo_origem','data_aquisicao'];csvDownload(headers,state.equipment.map(x=>headers.map(h=>x[h]??'')),`inventario_${new Date().toISOString().slice(0,10)}.csv`);}
+/* Padrão de exportação (1.8.0): as mesmas colunas e formatos na prévia, no CSV, no Excel e no PDF.
+   "pdf" é o peso da coluna na largura do PDF; colunas sem peso saem só nas planilhas. */
+const EQUIPMENT_COLUMNS=[
+ {key:'tag',label:'TAG',width:14,pdf:5},
+ {key:'patrimonio',label:'Patrimônio',width:14,pdf:6},
+ {key:'descricao',label:'Descrição',width:34,pdf:14,wrap:true},
+ {key:'categoria',label:'Categoria',width:16,pdf:7},
+ {key:'marca',label:'Marca',width:14,pdf:6},
+ {key:'modelo',label:'Modelo',width:16,pdf:7},
+ {key:'numero_serie',label:'Número de série',width:18,pdf:8},
+ {key:'pertencimento',label:'Setor',width:16,pdf:7},
+ {key:'responsavel',label:'Responsável habitual',width:22,pdf:9},
+ {key:'localizacao',label:'Localização',width:18,pdf:8},
+ {key:'estado',label:'Estado',width:12,pdf:5},
+ {key:'situacao',label:'Situação',width:13,pdf:6},
+ {key:'valor',label:'Valor (R$)',type:'money',width:14,pdf:6},
+ {key:'data_aquisicao',label:'Data de aquisição',type:'date',width:15},
+ {key:'codigo_origem',label:'Código de origem',width:16},
+ {key:'observacoes',label:'Observações',width:40,pdf:12,wrap:true}];
+const movementSituation=m=>m.devolucao_em?'Devolvido':isOverdue(m)?'Atrasada':m.tipo==='Retirada'?'Em aberto':'—';
+function movementColumns(equipment=state.equipment){
+ const eq=m=>m.equipamentos||equipment.find(e=>e.id===m.equipamento_id)||{};
+ return [
+ {key:'tag',label:'TAG',get:m=>eq(m).tag,width:14,pdf:5},
+ {key:'patrimonio',label:'Patrimônio',get:m=>eq(m).patrimonio,width:14,pdf:6},
+ {key:'equipamento',label:'Equipamento',get:m=>eq(m).descricao||'Equipamento removido',width:32,pdf:12,wrap:true},
+ {key:'tipo',label:'Tipo',width:11,pdf:5},
+ {key:'situacao',label:'Situação',get:movementSituation,width:12,pdf:5},
+ {key:'responsavel',label:'Responsável',width:24,pdf:10},
+ {key:'destino',label:'Setor/destino',width:18,pdf:8},
+ {key:'retirada_em',label:'Retirada em',type:'datetime',width:17,pdf:7},
+ {key:'previsao_devolucao',label:'Previsão de devolução',type:'datetime',width:17,pdf:7},
+ {key:'devolucao_em',label:'Devolução em',type:'datetime',width:17,pdf:7},
+ {key:'estado_retirada',label:'Estado na retirada',width:13,pdf:5},
+ {key:'estado_devolucao',label:'Estado na devolução',width:13,pdf:5},
+ {key:'observacoes',label:'Observações',width:36,pdf:9,wrap:true},
+ {key:'observacoes_devolucao',label:'Observações da devolução',width:36,pdf:9,wrap:true},
+ {key:'created_at',label:'Registrado em',type:'datetime',width:17}];
+}
+const AUDIT_COLUMNS=[
+ {key:'ocorrido_em',label:'Data/hora',type:'datetime',width:17,pdf:8},
+ {key:'autor',label:'Quem',get:a=>a.autor_email||'Conta excluída',width:28,pdf:14},
+ {key:'acao',label:'Ação',get:a=>auditActionLabel[a.acao]||a.acao,width:24,pdf:11},
+ {key:'entidade',label:'Tipo',get:a=>auditEntityLabel[a.entidade]||a.entidade,width:16,pdf:8},
+ {key:'descricao',label:'Item',width:34,pdf:17,wrap:true},
+ {key:'detalhes',label:'Detalhes',get:a=>auditDetail(a),width:60,pdf:32,wrap:true}];
+const byDescription=list=>[...list].sort((a,b)=>String(a.descricao||'').localeCompare(String(b.descricao||''),'pt-BR'));
+const brDate=v=>v?v.split('-').reverse().join('/'):'';
+const periodText=(start,end)=>start&&end?`${brDate(start)} a ${brDate(end)}`:start?`a partir de ${brDate(start)}`:end?`até ${brDate(end)}`:'todo o período';
+function equipmentSummary(rows){const total=rows.reduce((s,x)=>s+(Number(x.valor)||0),0);return `Valor total: R$ ${InventoryExport.money(total)}`;}
+function movementSummary(rows){const open=rows.filter(m=>m.tipo==='Retirada'&&!m.devolucao_em).length,late=rows.filter(isOverdue).length;return `${open} em aberto · ${late} atrasada${late===1?'':'s'}`;}
+const issuer=()=>state.user?.email||'';
+function reportDoc(){
+ const type=$('reportType').value,rows=reportRows(),status=$('reportStatus'),statusText=status.options[status.selectedIndex]?.text||'Todas';
+ if(type==='equipment')return {subject:'relatorio-equipamentos',title:'Relatório de equipamentos',sheet:'Equipamentos',columns:EQUIPMENT_COLUMNS,rows,issuer:issuer(),
+  filters:[['Cadastrados em',periodText($('reportStart').value,$('reportEnd').value)],['Situação',statusText]],summary:equipmentSummary(rows)};
+ return {subject:'relatorio-movimentacoes',title:'Relatório de retiradas e devoluções',sheet:'Movimentações',columns:movementColumns(),rows,issuer:issuer(),
+  filters:[['Retiradas em',periodText($('reportStart').value,$('reportEnd').value)],['Tipo/situação',statusText]],summary:movementSummary(rows)};
+}
+function equipmentDoc(){const rows=byDescription(state.equipment);return {subject:'cadastro-equipamentos',title:'Cadastro de equipamentos',sheet:'Equipamentos',columns:EQUIPMENT_COLUMNS,rows,issuer:issuer(),filters:[['Abrangência','todos os equipamentos do ciclo atual']],summary:equipmentSummary(rows)};}
+function auditDoc(){
+ const q=$('searchAudit').value.trim(),ent=$('auditEntityFilter'),rows=auditRows();
+ return {subject:'auditoria',title:'Trilha de auditoria',sheet:'Auditoria',columns:AUDIT_COLUMNS,rows,issuer:issuer(),
+  filters:[['Tipo de registro',ent.options[ent.selectedIndex]?.text||'Todos os tipos'],['Pesquisa',q||'nenhuma']]};
+}
+function archiveDoc(kind){
+ const a=state.archives.find(x=>x.id===state.selectedArchive)||{};
+ const filters=[['Arquivo',a.nome||'—'],['Arquivado em',InventoryExport.dateTime(a.criado_em)||'—']];
+ if(kind==='equipment'){const rows=byDescription(state.archiveEquipment);return {subject:`arquivo-${a.nome||'ciclo'}-equipamentos`,title:'Arquivo — equipamentos',sheet:'Equipamentos',columns:EQUIPMENT_COLUMNS,rows,issuer:issuer(),filters,summary:equipmentSummary(rows)};}
+ const rows=[...state.archiveMovements].sort((x,y)=>new Date(y.retirada_em||y.created_at||0)-new Date(x.retirada_em||x.created_at||0));
+ return {subject:`arquivo-${a.nome||'ciclo'}-movimentacoes`,title:'Arquivo — retiradas e devoluções',sheet:'Movimentações',columns:movementColumns(state.archiveEquipment),rows,issuer:issuer(),filters,summary:movementSummary(rows)};
+}
+const EXPORTS={
+ cadastro:{doc:equipmentDoc,msg:'globalMessage',allowed:()=>true},
+ relatorio:{doc:reportDoc,msg:'reportMessage',allowed:()=>true},
+ auditoria:{doc:auditDoc,msg:'auditMessage',allowed:()=>canManageUsers()},
+ 'arquivo-equipamentos':{doc:()=>archiveDoc('equipment'),msg:'archivesMessage',allowed:()=>archiveCanManage()&&!!state.selectedArchive},
+ 'arquivo-movimentacoes':{doc:()=>archiveDoc('movements'),msg:'archivesMessage',allowed:()=>archiveCanManage()&&!!state.selectedArchive}};
+async function runExport(name,format){
+ const def=EXPORTS[name];if(!def)return;
+ if(!def.allowed()){denyAction();return;}
+ const doc=def.doc();
+ if(!doc.rows.length){message(def.msg,'Nenhum registro para exportar.');return;}
+ try{const file=await InventoryExport.save(format,doc,csvDownload);message(def.msg,`Arquivo gerado: ${file}`,true);}
+ catch(err){message(def.msg,'Não foi possível gerar o arquivo: '+(err?.message||err));}
+}
 function reportDateValue(value){if(!value)return '';const d=new Date(value);if(Number.isNaN(d.getTime()))return '';return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;}
 function reportRows(){const type=$('reportType').value,start=$('reportStart').value,end=$('reportEnd').value,status=$('reportStatus').value;if(type==='equipment'){return state.equipment.filter(x=>{const date=reportDateValue(x.created_at);return(!start||!date||date>=start)&&(!end||!date||date<=end)&&(!status||x.situacao===status);}).sort((a,b)=>String(a.descricao||'').localeCompare(String(b.descricao||''),'pt-BR'));}return state.movements.filter(m=>{const date=reportDateValue(m.retirada_em||m.created_at);const situation=m.tipo||'';const stateFilter=status==='Em aberto'?!m.devolucao_em:status==='Devolvidos'?!!m.devolucao_em:!status||situation===status;return(!start||!date||date>=start)&&(!end||!date||date<=end)&&stateFilter;}).sort((a,b)=>new Date(b.retirada_em||b.created_at||0)-new Date(a.retirada_em||a.created_at||0));}
 function updateReportStatusOptions(){const type=$('reportType').value,select=$('reportStatus'),current=select.value;const options=type==='equipment'?[['','Todas as situações'],['Disponível','Disponível'],['Em uso','Em uso'],['Manutenção','Manutenção'],['Baixado','Baixado']]:[['','Todos os tipos/situações'],['Retirada','Retiradas'],['Devolução','Devoluções'],['Em aberto','Somente retiradas em aberto'],['Devolvidos','Somente equipamentos devolvidos']];select.innerHTML=options.map(([v,l])=>`<option value="${esc(v)}">${esc(l)}</option>`).join('');if(options.some(([v])=>v===current))select.value=current;}
-function renderReport(){if(!$('reportType'))return;updateReportStatusOptions();const type=$('reportType').value,rows=reportRows();if(type==='equipment'){const headers=['TAG','Patrimônio','Descrição','Categoria','Marca','Modelo','Nº de série','Setor','Responsável habitual','Localização','Estado','Situação','Valor (R$)','Observações'];$('reportHead').innerHTML='<tr>'+headers.map(h=>`<th>${esc(h)}</th>`).join('')+'</tr>';$('reportBody').innerHTML=rows.length?rows.map(x=>`<tr><td>${esc(x.tag||'—')}</td><td>${esc(x.patrimonio||'—')}</td><td>${esc(x.descricao||'—')}</td><td>${esc(x.categoria||'—')}</td><td>${esc(x.marca||'—')}</td><td>${esc(x.modelo||'—')}</td><td>${esc(x.numero_serie||'—')}</td><td>${esc(x.pertencimento||'—')}</td><td>${esc(x.responsavel||'—')}</td><td>${esc(x.localizacao||'—')}</td><td>${esc(x.estado||'—')}</td><td>${esc(x.situacao||'—')}</td><td>${x.valor==null?'':Number(x.valor).toLocaleString('pt-BR',{minimumFractionDigits:2})}</td><td>${esc(x.observacoes||'—')}</td></tr>`).join(''):'<tr><td colspan="14" class="empty">Nenhum equipamento corresponde aos filtros.</td></tr>';}else{const headers=['Data da retirada','TAG','Patrimônio','Equipamento','Tipo','Responsável','Setor/destino','Retirada em','Previsão de devolução','Devolução em','Estado na retirada','Estado na devolução','Observações','Observações da devolução','Situação'];$('reportHead').innerHTML='<tr>'+headers.map(h=>`<th>${esc(h)}</th>`).join('')+'</tr>';$('reportBody').innerHTML=rows.length?rows.map(m=>{const eq=m.equipamentos||state.equipment.find(e=>e.id===m.equipamento_id)||{};return `<tr><td>${esc(fmt(m.created_at||m.retirada_em))}</td><td>${esc(eq.tag||'—')}</td><td>${esc(eq.patrimonio||'—')}</td><td>${esc(eq.descricao||movementName(m))}</td><td>${esc(m.tipo||'—')}</td><td>${esc(m.responsavel||'—')}</td><td>${esc(m.destino||'—')}</td><td>${esc(fmt(m.retirada_em))}</td><td>${esc(fmt(m.previsao_devolucao))}</td><td>${esc(fmt(m.devolucao_em))}</td><td>${esc(m.estado_retirada||'—')}</td><td>${esc(m.estado_devolucao||'—')}</td><td>${esc(m.observacoes||'—')}</td><td>${esc(m.observacoes_devolucao||'—')}</td><td>${m.devolucao_em?'Devolvido':'Em aberto'}</td></tr>`;}).join(''):'<tr><td colspan="15" class="empty">Nenhuma movimentação corresponde aos filtros.</td></tr>';}$('reportSummary').textContent=`${rows.length} registro(s) encontrado(s) • Gerado em ${new Date().toLocaleString('pt-BR')}`;}
-function exportReport(){const type=$('reportType').value,rows=reportRows();if(type==='equipment'){const headers=['TAG','Patrimônio','Descrição','Categoria','Marca','Modelo','Número de série','Setor','Responsável habitual','Localização','Estado','Situação','Valor (R$)','Observações'];csvDownload(headers,rows.map(x=>[x.tag,x.patrimonio,x.descricao,x.categoria,x.marca,x.modelo,x.numero_serie,x.pertencimento,x.responsavel,x.localizacao,x.estado,x.situacao,x.valor,x.observacoes]),`relatorio_equipamentos_${new Date().toISOString().slice(0,10)}.csv`);}else{const headers=['Data da retirada','TAG','Patrimônio','Equipamento','Tipo','Responsável','Setor/destino','Retirada em','Previsão de devolução','Devolução em','Estado na retirada','Estado na devolução','Observações','Observações da devolução','Situação'];csvDownload(headers,rows.map(m=>{const eq=m.equipamentos||state.equipment.find(e=>e.id===m.equipamento_id)||{};return [fmt(m.created_at||m.retirada_em),eq.tag,eq.patrimonio,eq.descricao||movementName(m),m.tipo,m.responsavel,m.destino,fmt(m.retirada_em),fmt(m.previsao_devolucao),fmt(m.devolucao_em),m.estado_retirada,m.estado_devolucao,m.observacoes,m.observacoes_devolucao,m.devolucao_em?'Devolvido':'Em aberto'];}),`relatorio_movimentacoes_${new Date().toISOString().slice(0,10)}.csv`);}}
-function printReport(){document.body.classList.add('report-print');window.print();}
+function renderReport(){if(!$('reportType'))return;updateReportStatusOptions();const doc=reportDoc(),cells=InventoryExport.cells(doc);$('reportHead').innerHTML='<tr>'+doc.columns.map(c=>`<th${c.type==='money'?' class="num"':''}>${esc(c.label)}</th>`).join('')+'</tr>';$('reportBody').innerHTML=cells.length?cells.map(r=>'<tr>'+r.map((v,i)=>`<td${doc.columns[i].type==='money'?' class="num"':''}>${esc(v)}</td>`).join('')+'</tr>').join(''):`<tr><td colspan="${doc.columns.length}" class="empty">${$('reportType').value==='equipment'?'Nenhum equipamento':'Nenhuma movimentação'} corresponde aos filtros.</td></tr>`;$('reportSummary').textContent=[`${doc.rows.length} registro(s) encontrado(s)`,doc.summary].filter(Boolean).join(' • ');}
 async function callUserAdmin(action, payload={}){
   const {data,error}=await db.functions.invoke('manage-users',{body:{action,...payload}});
   if(error){let detail=error.message||'Falha ao chamar a função de usuários.';try{const ctx=error.context;if(ctx&&typeof ctx.json==='function'){const body=await ctx.json();detail=body.error||body.message||detail;}}catch(_){}throw new Error(detail);}
@@ -463,13 +546,6 @@ async function viewArchivedCycle(id){
     message('archivesMessage','Arquivo carregado para consulta e exportação.',true);
   }catch(err){message('archivesMessage','Não foi possível carregar arquivo: '+err.message);}
 }
-function exportArchivedData(type){
-  if(!archiveCanManage()||!state.selectedArchive)return;
-  const rows=type==='equipment'?state.archiveEquipment:state.archiveMovements;
-  if(!rows.length){message('archivesMessage','Este arquivo não contém registros desse tipo.');return;}
-  const headers=Object.keys(rows[0]);
-  csvDownload(headers,rows.map(x=>headers.map(h=>x[h]??'')),`arquivo_${type}_${state.selectedArchive.slice(0,8)}.csv`);
-}
 let archiveDeletionBusy=false;
 async function deleteArchivedCycle(id){
   if(!archiveCanManage()){denyAction();return;}
@@ -547,12 +623,7 @@ async function loadAudit(){
   state.audit=data||[];renderAudit();
   message('auditMessage',`${state.audit.length} registro(s) mais recente(s)${state.audit.length===1000?' (limite de exibição: exporte ou filtre para refinar)':''}.`,true);
 }
-function exportAudit(){
-  if(!canManageUsers())return;
-  const rows=auditRows();if(!rows.length){message('auditMessage','Nenhum registro para exportar.');return;}
-  csvDownload(['Data/hora','Quem','Ação','Tipo','Item','Detalhes'],rows.map(a=>[fmt(a.ocorrido_em),a.autor_email||'Conta excluída',auditActionLabel[a.acao]||a.acao,auditEntityLabel[a.entidade]||a.entidade,a.descricao,auditDetail(a)]),`auditoria_${new Date().toISOString().slice(0,10)}.csv`);
-}
-$('refreshAuditBtn').addEventListener('click',loadAudit);$('exportAuditBtn').addEventListener('click',exportAudit);
+$('refreshAuditBtn').addEventListener('click',loadAudit);
 ['searchAudit','auditEntityFilter'].forEach(id=>$(id).addEventListener('input',renderAudit));
 
 document.addEventListener('change',e=>{
@@ -650,8 +721,8 @@ $('qrScanDialog').addEventListener('close',()=>{stopQrReader();});
 
 function openQr(item){$('qrcode').innerHTML='';$('qrLabel').textContent=`${item.tag||item.patrimonio||''} — ${item.descricao}`;new QRCode($('qrcode'),{text:JSON.stringify({id:item.id,tag:item.tag,patrimonio:item.patrimonio,descricao:item.descricao}),width:220,height:220,correctLevel:QRCode.CorrectLevel.M});$('qrDialog').showModal();}
 document.addEventListener('click',e=>{const nav=e.target.closest('[data-page]');if(nav)goto(nav.dataset.page);const go=e.target.closest('[data-goto]');if(go)goto(go.dataset.goto);const close=e.target.closest('[data-close]');if(close)$(close.dataset.close).close();const action=e.target.closest('[data-action]');if(action){const item=state.equipment.find(x=>x.id===action.dataset.id);if(action.dataset.action==='edit')openEquipment(item);if(action.dataset.action==='delete')deleteEquipment(action.dataset.id);if(action.dataset.action==='qr')openQr(item);if(action.dataset.action==='return'){const m=state.movements.find(x=>x.id===action.dataset.id);if(m)openReturn(m);}}const archiveAction=e.target.closest('[data-archive-action]');if(archiveAction){const id=archiveAction.dataset.archiveId;if(archiveAction.dataset.archiveAction==='view')viewArchivedCycle(id);if(archiveAction.dataset.archiveAction==='restore')restoreArchivedCycle(id);if(archiveAction.dataset.archiveAction==='delete')deleteArchivedCycle(id);}const userActionBtn=e.target.closest('[data-user-action]');if(userActionBtn)userAction(userActionBtn.dataset.userAction,userActionBtn.dataset.userId,userActionBtn.dataset.userEmail||'este usuário',userActionBtn.dataset.blocked);});
-$('archiveNowBtn').addEventListener('click',archiveInventory);$('refreshArchivesBtn').addEventListener('click',loadArchives);$('exportArchiveEquipmentBtn').addEventListener('click',()=>exportArchivedData('equipment'));$('exportArchiveMovementsBtn').addEventListener('click',()=>exportArchivedData('movements'));
-$('createUserForm').addEventListener('submit',createUser);$('createInvitationBtn').addEventListener('click',generateRegistrationInvite);$('copyInvitationBtn').addEventListener('click',copyRegistrationInvite);$('registerForm').addEventListener('submit',registerFromInvite);$('searchTermsBtn').addEventListener('click',searchIssuedTerms);$('refreshUsersBtn').addEventListener('click',loadUsers);$('loginForm').addEventListener('submit',login);$('logoutBtn').addEventListener('click',logout);$('refreshBtn').addEventListener('click',loadAll);$('newEquipmentBtn').addEventListener('click',()=>openEquipment());$('equipmentForm').addEventListener('submit',saveEquipment);$('newMovementBtn').addEventListener('click',openMovement);$('movementForm').addEventListener('submit',saveMovement);$('returnForm').addEventListener('submit',saveReturn);$('exportBtn').addEventListener('click',exportCsv);$('exportReportBtn').addEventListener('click',exportReport);$('printReportBtn').addEventListener('click',printReport);$('applyReportBtn').addEventListener('click',renderReport);['reportType','reportStatus','reportStart','reportEnd'].forEach(id=>$(id).addEventListener('change',renderReport));window.addEventListener('afterprint',()=>document.body.classList.remove('report-print'));$('printQrBtn').addEventListener('click',()=>window.print());['searchEquipment','categoryFilter'].forEach(id=>$(id).addEventListener('input',renderEquipment));['searchMovement','movementFilter'].forEach(id=>$(id).addEventListener('input',renderMovements));
+$('archiveNowBtn').addEventListener('click',archiveInventory);$('refreshArchivesBtn').addEventListener('click',loadArchives);
+$('createUserForm').addEventListener('submit',createUser);$('createInvitationBtn').addEventListener('click',generateRegistrationInvite);$('copyInvitationBtn').addEventListener('click',copyRegistrationInvite);$('registerForm').addEventListener('submit',registerFromInvite);$('searchTermsBtn').addEventListener('click',searchIssuedTerms);$('refreshUsersBtn').addEventListener('click',loadUsers);$('loginForm').addEventListener('submit',login);$('logoutBtn').addEventListener('click',logout);$('refreshBtn').addEventListener('click',loadAll);$('newEquipmentBtn').addEventListener('click',()=>openEquipment());$('equipmentForm').addEventListener('submit',saveEquipment);$('newMovementBtn').addEventListener('click',openMovement);$('movementForm').addEventListener('submit',saveMovement);$('returnForm').addEventListener('submit',saveReturn);InventoryExport.bindMenus(runExport);$('applyReportBtn').addEventListener('click',renderReport);['reportType','reportStatus','reportStart','reportEnd'].forEach(id=>$(id).addEventListener('change',renderReport));$('printQrBtn').addEventListener('click',()=>window.print());['searchEquipment','categoryFilter'].forEach(id=>$(id).addEventListener('input',renderEquipment));['searchMovement','movementFilter'].forEach(id=>$(id).addEventListener('input',renderMovements));
 if(!configured){message('loginMessage','Antes de entrar, configure a URL e a chave pública do Supabase no arquivo app.js.');}else{db.auth.getSession().then(({data})=>data.session?showApp(data.session):showLogin());db.auth.onAuthStateChange((_event,session)=>{if(session&&!state.user)showApp(session);else if(!session){state.user=null;state.perfil=null;showLogin();}});}
 
 $('borrowerForm').addEventListener('submit',saveBorrowerDetails);

@@ -7,7 +7,7 @@ w.HTMLDialogElement.prototype.showModal=function(){this.open=true};w.HTMLDialogE
 w.URL.createObjectURL=()=> 'blob:test';w.URL.revokeObjectURL=()=>{};w.HTMLAnchorElement.prototype.click=function(){w.downloaded=this.download};
 w.PDFLib=require('pdf-lib');w.fontkit=require('@pdf-lib/fontkit');
 const testSource=fs.readFileSync('tests/termos-ui.cjs','utf8');run(testSource.slice(testSource.indexOf(' const stub=`')+13,testSource.indexOf('`;\n await page.route')).replace(/\$\{JSON.stringify\(Array.from\(template\)\)\}/g,'[]'));
-for(const file of ['termo-fontes.js','termos.js','app.js'])run(fs.readFileSync(file,'utf8'));
+for(const file of ['termo-fontes.js','termos.js','exportacoes.js','app.js'])run(fs.readFileSync(file,'utf8'));
 const $=id=>w.document.getElementById(id),submit=id=>$(id).dispatchEvent(new w.Event('submit',{bubbles:true,cancelable:true}));
 (async()=>{
  const pdf=await w.PDFLib.PDFDocument.create();pdf.addPage([612,792]);const template=await pdf.save();

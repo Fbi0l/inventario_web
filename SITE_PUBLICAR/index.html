@@ -14,7 +14,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-title" content="Inventário">
   <meta name="application-name" content="Inventário">
-  <link rel="stylesheet" href="styles.css?v=1.7.0">
+  <link rel="stylesheet" href="styles.css?v=1.8.0">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0/dist/umd/supabase.js" integrity="sha384-TcHRA3zBbn+Lexh5n+Oil4guNPOS3rjNDpGRAN46u/s/mB2IZ50ceC6TYDU2yvgK" crossorigin="anonymous"></script>
   <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js" integrity="sha384-3zSEDfvllQohrq0PHL1fOXJuC/jSOO34H46t6UQfobFOmxE5BpjjaIJY5F2/bMnU" crossorigin="anonymous"></script>
   <script src="https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/html5-qrcode.min.js" integrity="sha384-c9d8RFSL+u3exBOJ4Yp3HUJXS4znl9f+z66d1y54ig+ea249SpqR+w1wyvXz/lk+" crossorigin="anonymous"></script>
@@ -59,7 +59,7 @@
       <footer class="site-footer" aria-label="Propriedade e versão do sistema">
         <span>&copy; 2026 <strong>Fbiol</strong> · Todos os direitos reservados</span>
         <span class="site-footer-separator" aria-hidden="true">•</span>
-        <span>Versão 1.7.0</span>
+        <span>Versão 1.8.0</span>
       </footer>
   </div>
 
@@ -126,7 +126,7 @@
         </div>
       </section>
       <section id="equipmentPage" class="page hidden">
-        <div class="panel"><div class="panel-head"><div><h2>Cadastro de equipamentos</h2><p class="muted">Cadastre, edite, consulte e exporte seu inventário.</p></div><div class="actions"><button id="importEquipmentBtn" class="secondary hidden" type="button"><svg class="i" aria-hidden="true" focusable="false"><use href="#i-upload"></use></svg><span>Importar planilha</span></button><button id="printAllQrBtn" class="secondary" type="button"><svg class="i" aria-hidden="true" focusable="false"><use href="#i-print"></use></svg><span>Etiquetas QR (A4)</span></button><button id="exportBtn" class="secondary" type="button"><svg class="i" aria-hidden="true" focusable="false"><use href="#i-download"></use></svg><span>Exportar CSV</span></button><button id="newEquipmentBtn" class="primary" type="button"><svg class="i" aria-hidden="true" focusable="false"><use href="#i-plus"></use></svg><span>Novo equipamento</span></button></div></div>
+        <div class="panel"><div class="panel-head"><div><h2>Cadastro de equipamentos</h2><p class="muted">Cadastre, edite, consulte e exporte seu inventário.</p></div><div class="actions"><button id="importEquipmentBtn" class="secondary hidden" type="button"><svg class="i" aria-hidden="true" focusable="false"><use href="#i-upload"></use></svg><span>Importar planilha</span></button><button id="printAllQrBtn" class="secondary" type="button"><svg class="i" aria-hidden="true" focusable="false"><use href="#i-print"></use></svg><span>Etiquetas QR (A4)</span></button><div class="export-menu" data-export="cadastro"><button id="exportBtn" class="secondary export-toggle" type="button" aria-haspopup="true" aria-expanded="false" aria-controls="exportBtnOptions"><svg class="i" aria-hidden="true" focusable="false"><use href="#i-download"></use></svg><span>Exportar</span></button><div id="exportBtnOptions" class="export-options" role="menu" aria-label="Formato do arquivo" hidden><button type="button" role="menuitem" data-format="pdf"><strong>PDF</strong><small>Documento para imprimir ou enviar</small></button><button type="button" role="menuitem" data-format="xlsx"><strong>Excel (.xlsx)</strong><small>Planilha formatada</small></button><button type="button" role="menuitem" data-format="csv"><strong>CSV</strong><small>Texto simples, para outros sistemas</small></button></div></div><button id="newEquipmentBtn" class="primary" type="button"><svg class="i" aria-hidden="true" focusable="false"><use href="#i-plus"></use></svg><span>Novo equipamento</span></button></div></div>
           <div id="statusChips" class="chips" role="group" aria-label="Filtrar por situação">
             <button class="chip" type="button" data-status="" aria-pressed="true"><i class="dot" aria-hidden="true"></i>Todos <b data-count=""></b></button>
             <button class="chip tone-ok" type="button" data-status="Disponível" aria-pressed="false"><i class="dot" aria-hidden="true"></i>Disponível <b data-count="Disponível"></b></button>
@@ -155,7 +155,7 @@
       </section>
       <section id="reportsPage" class="page hidden">
         <div class="panel report-panel">
-          <div class="panel-head"><div><h2>Relatórios do inventário</h2><p class="muted">Filtre os dados, confira a prévia e exporte para Excel ou impressão/PDF.</p></div><div class="actions"><button id="exportReportBtn" class="primary" type="button"><svg class="i" aria-hidden="true" focusable="false"><use href="#i-download"></use></svg><span>Exportar CSV para Excel</span></button><button id="printReportBtn" class="secondary">Imprimir / Salvar PDF</button></div></div>
+          <div class="panel-head"><div><h2>Relatórios do inventário</h2><p class="muted">Filtre os dados, confira a prévia e exporte em PDF, Excel ou CSV.</p></div><div class="actions"><div class="export-menu" data-export="relatorio"><button id="exportReportBtn" class="primary export-toggle" type="button" aria-haspopup="true" aria-expanded="false" aria-controls="exportReportBtnOptions"><svg class="i" aria-hidden="true" focusable="false"><use href="#i-download"></use></svg><span>Exportar relatório</span></button><div id="exportReportBtnOptions" class="export-options" role="menu" aria-label="Formato do arquivo" hidden><button type="button" role="menuitem" data-format="pdf"><strong>PDF</strong><small>Documento para imprimir ou enviar</small></button><button type="button" role="menuitem" data-format="xlsx"><strong>Excel (.xlsx)</strong><small>Planilha formatada</small></button><button type="button" role="menuitem" data-format="csv"><strong>CSV</strong><small>Texto simples, para outros sistemas</small></button></div></div></div></div>
           <div class="filters report-filters">
             <select id="reportType" aria-label="Tipo de relatório"><option value="equipment">Inventário de equipamentos</option><option value="movements">Retiradas e devoluções</option></select>
             <input id="reportStart" type="date" aria-label="Data inicial">
@@ -163,6 +163,7 @@
             <select id="reportStatus" aria-label="Situação ou tipo"><option value="">Todas as situações/tipos</option></select>
             <button id="applyReportBtn" class="secondary">Aplicar filtros</button>
           </div>
+          <p id="reportMessage" class="message" aria-live="polite"></p>
           <p id="reportSummary" class="muted report-summary">Carregando dados do relatório…</p>
           <div class="table-wrap"><table><thead id="reportHead"></thead><tbody id="reportBody"><tr><td class="empty">Carregando…</td></tr></tbody></table></div>
         </div>
@@ -204,7 +205,7 @@
         <div class="panel">
           <div class="panel-head">
             <div><h2>Trilha de auditoria</h2><p class="muted">Ações administrativas registradas pelo sistema: usuários, convites, edições e exclusões de equipamentos, arquivamentos e importações. Retiradas e devoluções ficam no histórico de movimentações. Os registros não podem ser alterados nem apagados.</p></div>
-            <div class="actions"><button id="refreshAuditBtn" class="secondary" type="button"><svg class="i" aria-hidden="true" focusable="false"><use href="#i-refresh"></use></svg><span>Atualizar</span></button><button id="exportAuditBtn" class="secondary" type="button"><svg class="i" aria-hidden="true" focusable="false"><use href="#i-download"></use></svg><span>Exportar CSV</span></button></div>
+            <div class="actions"><button id="refreshAuditBtn" class="secondary" type="button"><svg class="i" aria-hidden="true" focusable="false"><use href="#i-refresh"></use></svg><span>Atualizar</span></button><div class="export-menu" data-export="auditoria"><button id="exportAuditBtn" class="secondary export-toggle" type="button" aria-haspopup="true" aria-expanded="false" aria-controls="exportAuditBtnOptions"><svg class="i" aria-hidden="true" focusable="false"><use href="#i-download"></use></svg><span>Exportar</span></button><div id="exportAuditBtnOptions" class="export-options" role="menu" aria-label="Formato do arquivo" hidden><button type="button" role="menuitem" data-format="pdf"><strong>PDF</strong><small>Documento para imprimir ou enviar</small></button><button type="button" role="menuitem" data-format="xlsx"><strong>Excel (.xlsx)</strong><small>Planilha formatada</small></button><button type="button" role="menuitem" data-format="csv"><strong>CSV</strong><small>Texto simples, para outros sistemas</small></button></div></div></div>
           </div>
           <div class="filters"><input id="searchAudit" type="search" aria-label="Pesquisar na auditoria" placeholder="Pesquisar por pessoa, ação ou item…"><select id="auditEntityFilter" aria-label="Tipo de registro"><option value="">Todos os tipos</option><option value="usuario">Usuários</option><option value="convite">Convites</option><option value="equipamento">Equipamentos</option><option value="movimentacao">Movimentações</option><option value="ciclo">Arquivamentos</option><option value="planilha">Importações</option></select></div>
           <p id="auditMessage" class="message" aria-live="polite"></p>
@@ -229,8 +230,8 @@
           <div id="archiveDetails" class="archive-details hidden">
             <h3 id="archiveDetailsTitle">Detalhes do arquivo</h3>
             <div class="actions">
-              <button id="exportArchiveEquipmentBtn" type="button" class="secondary">Exportar equipamentos CSV</button>
-              <button id="exportArchiveMovementsBtn" type="button" class="secondary">Exportar movimentações CSV</button>
+              <div class="export-menu" data-export="arquivo-equipamentos"><button id="exportArchiveEquipmentBtn" class="secondary export-toggle" type="button" aria-haspopup="true" aria-expanded="false" aria-controls="exportArchiveEquipmentBtnOptions"><svg class="i" aria-hidden="true" focusable="false"><use href="#i-download"></use></svg><span>Exportar equipamentos</span></button><div id="exportArchiveEquipmentBtnOptions" class="export-options" role="menu" aria-label="Formato do arquivo" hidden><button type="button" role="menuitem" data-format="pdf"><strong>PDF</strong><small>Documento para imprimir ou enviar</small></button><button type="button" role="menuitem" data-format="xlsx"><strong>Excel (.xlsx)</strong><small>Planilha formatada</small></button><button type="button" role="menuitem" data-format="csv"><strong>CSV</strong><small>Texto simples, para outros sistemas</small></button></div></div>
+              <div class="export-menu" data-export="arquivo-movimentacoes"><button id="exportArchiveMovementsBtn" class="secondary export-toggle" type="button" aria-haspopup="true" aria-expanded="false" aria-controls="exportArchiveMovementsBtnOptions"><svg class="i" aria-hidden="true" focusable="false"><use href="#i-download"></use></svg><span>Exportar movimentações</span></button><div id="exportArchiveMovementsBtnOptions" class="export-options" role="menu" aria-label="Formato do arquivo" hidden><button type="button" role="menuitem" data-format="pdf"><strong>PDF</strong><small>Documento para imprimir ou enviar</small></button><button type="button" role="menuitem" data-format="xlsx"><strong>Excel (.xlsx)</strong><small>Planilha formatada</small></button><button type="button" role="menuitem" data-format="csv"><strong>CSV</strong><small>Texto simples, para outros sistemas</small></button></div></div>
             </div>
             <h4>Equipamentos arquivados</h4>
             <div class="table-wrap"><table><thead><tr><th>TAG</th><th>Patrimônio</th><th>Descrição</th><th>Situação</th></tr></thead><tbody id="archiveEquipmentBody"></tbody></table></div>
@@ -242,7 +243,7 @@
       <footer class="site-footer" aria-label="Propriedade e versão do sistema">
         <span>&copy; 2026 <strong>Fbiol</strong> · Todos os direitos reservados</span>
         <span class="site-footer-separator" aria-hidden="true">•</span>
-        <span>Versão 1.7.0</span>
+        <span>Versão 1.8.0</span>
       </footer>
     </main>
   </div>
@@ -315,6 +316,7 @@
   <script src="importar-planilha.js?v=1.5.5"></script>
   <script src="qr-etiquetas.js?v=1.4.0"></script>
   <script src="termos.js?v=1.4.0"></script>
-  <script src="app.js?v=1.7.0"></script>
+  <script src="exportacoes.js?v=1.8.0"></script>
+  <script src="app.js?v=1.8.0"></script>
   <script src="instalar.js?v=1.6.0"></script>
 </body></html>

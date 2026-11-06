@@ -40,7 +40,7 @@ const shots=process.env.AUDIT_SHOTS||'';
   if(shots)await page.screenshot({path:`${shots}/auditoria-${viewport.width}.png`,fullPage:true});
   await page.fill('#searchAudit','perfil');assert.equal(await page.locator('#auditBody tr').count(),1);
   await page.fill('#searchAudit','');await page.selectOption('#auditEntityFilter','usuario');assert.equal(await page.locator('#auditBody tr').count(),2);
-  const dl=page.waitForEvent('download');await page.click('#exportAuditBtn');const file=await dl;assert.match(file.suggestedFilename(),/^auditoria_.*\.csv$/);
+  await page.click('#exportAuditBtn');const dl=page.waitForEvent('download');await page.click('#exportAuditBtnOptions [data-format=csv]');const file=await dl;assert.match(file.suggestedFilename(),/^inventario_auditoria_\d{4}-\d{2}-\d{2}_\d{2}h\d{2}\.csv$/);
   const csv=fs.readFileSync(await file.path(),'utf8');assert.ok(csv.includes('Alterou perfil')&&csv.split('\r\n').length===3,'CSV com os registros filtrados');
   await page.evaluate(()=>{state.perfil='operador';applyPermissions();});
   assert.equal(await page.locator('[data-page=audit]').isVisible(),false,'operador nao ve Auditoria');
