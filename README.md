@@ -1,6 +1,22 @@
 # inventario_web
 Sistema de inventário patrimonial
 
+### Relatórios e planilhas padronizados (1.8.0)
+
+Tudo que o sistema emite segue um padrão único: **Relatórios**, **Exportar** do cadastro de equipamentos, **Auditoria** e **Arquivos anteriores**.
+
+- **Três formatos no mesmo menu Exportar:** **PDF** (documento para imprimir ou enviar), **Excel (.xlsx)** e **CSV**.
+- **Mesmas colunas em tudo**, com nomes legíveis (sem nomes técnicos do banco nem ids internos). A prévia da tela de Relatórios mostra exatamente as colunas exportadas. A planilha de equipamentos exportada pode ser reimportada.
+- **Mesmos formatos:** datas `dd/mm/aaaa hh:mm` no horário de Belém (o mesmo dos termos), datas sem hora sem mudar de dia, valores com vírgula decimal.
+- **Nome de arquivo padrão:** `inventario_<assunto>_<aaaa-mm-dd>_<hh>h<mm>.<pdf|xlsx|csv>`, por exemplo `inventario_relatorio-equipamentos_2026-11-06_11h07.pdf`.
+- **PDF:** A4 deitado, com logo, título, filtros usados, total de registros e resumo (valor total ou retiradas em aberto/atrasadas), data e autor da emissão, cabeçalho da tabela repetido e “Página X de Y”. Substitui o antigo *Imprimir / Salvar PDF*, que variava de navegador para navegador.
+- **Excel:** cabeçalho destacado, fixo e com filtro; datas e valores gravados como data e número (somam e ordenam no Excel); aba **Informações** com documento, filtros, emissão e autor. Texto nunca vira fórmula.
+- **CSV:** continua com `;`, acentos para o Excel e neutralização de fórmulas (1.5.5).
+- Tudo é gerado no próprio aparelho; nenhum dado vai para outro serviço. O gerador de Excel (ExcelJS 4.4.0) é carregado só quando usado, do CDN já permitido, com verificação de integridade.
+- Arquivos novos: `exportacoes.js` e `assets/logo-relatorio.png` (logo leve para o PDF), também na pasta `SITE_PUBLICAR`. Testes novos: `tests/exportacoes.cjs` e `tests/exportacoes-ui.cjs`.
+
+Não há SQL nem função para republicar. Para aplicar, basta publicar o site (automático pelo GitHub Pages).
+
 ### Interface renovada (1.7.0)
 
 Visual novo no computador e no celular, sem mudar regras, permissões nem dados.

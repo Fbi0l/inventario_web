@@ -34,6 +34,12 @@ for(const dir of ['.','SITE_PUBLICAR']){
  const imp=fs.readFileSync(`${dir}/importar-planilha.js`,'utf8');
  assert.ok(imp.includes(`script.integrity='${sri('node_modules/xlsx/dist/xlsx.full.min.js')}'`),`${dir}: integridade da SheetJS`);
  assert.ok(imp.includes("script.crossOrigin='anonymous'"));
+ // Gerador de Excel (1.8.0), tambem sob demanda e com integridade do mesmo arquivo do pacote de testes.
+ const exp=fs.readFileSync(`${dir}/exportacoes.js`,'utf8');
+ assert.ok(exp.includes(`integrity:'${sri('node_modules/exceljs/dist/exceljs.min.js')}'`),`${dir}: integridade da ExcelJS`);
+ assert.match(exp,/src:'https:\/\/cdn\.jsdelivr\.net\/npm\/exceljs@\d+\.\d+\.\d+\//,`${dir}: versao exata da ExcelJS`);
+ assert.ok(exp.includes("script.crossOrigin='anonymous'"));
+ assert.ok(!/\.formula|\bformula:/.test(exp),`${dir}: exportacao nunca grava formulas`);
 }
 
 // CSV: texto que vira formula no Excel e neutralizado; numeros continuam numeros.
@@ -61,5 +67,5 @@ for(const dir of ['.','SITE_PUBLICAR']){
  assert.match(sw,/req\.method !== 'GET' \|\| !PERMITIDOS\.includes\(url\.origin\)\) return;/,`${dir}: so GET do proprio site e dos CDNs`);
  assert.ok(!/innerHTML|outerHTML|insertAdjacentHTML|document\.write|eval\(/.test(fs.readFileSync(`${dir}/instalar.js`,'utf8')),`${dir}: instalar.js sem HTML a partir de texto`);
 }
-for(const f of ['index.html','styles.css','instalar.js','sw.js','manifest.webmanifest'])assert.equal(fs.readFileSync(f,'utf8'),fs.readFileSync(`SITE_PUBLICAR/${f}`,'utf8'),`SITE_PUBLICAR/${f} igual ao da raiz`);
+for(const f of ['index.html','styles.css','instalar.js','sw.js','manifest.webmanifest','exportacoes.js','app.js'])assert.equal(fs.readFileSync(f,'utf8'),fs.readFileSync(`SITE_PUBLICAR/${f}`,'utf8'),`SITE_PUBLICAR/${f} igual ao da raiz`);
 console.log('Site aprovado: integridade (SRI) em todos os scripts externos, politica CSP restrita, CSV sem formulas e app instalavel seguro.');

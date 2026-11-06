@@ -8,7 +8,7 @@ w.TextDecoder=TextDecoder;w.confirm=()=>true;w.XLSX=X;let calls=[],fail=true;
 const user={id:'10000000-0000-0000-0000-000000000001',email:'teste@example.invalid'};
 const db={auth:{getSession:async()=>({data:{session:null}}),onAuthStateChange:()=>{}},from:table=>{const q={select:()=>q,is:()=>q,eq:()=>q,order:()=>q,limit:()=>q,range:async()=>({data:table==='equipamentos'?[{tag:'TI-DUP',patrimonio:'00123'}]:[]}),maybeSingle:async()=>({data:{perfil:'administrador'}}),then:r=>Promise.resolve({data:[]}).then(r)};return q},rpc:async(name,args)=>{if(name==='listar_retirantes')return{data:[{usuario_id:user.id,nome:'Pessoa Exemplo'}]};calls.push({name,args});if(fail)return{error:{message:'Erro de conexão simulado'}};return{data:{importados:1,ignorados:[]}}}};
 w.supabase={createClient:()=>db};w.user=user;
-for(const f of ['importar-planilha.js','app.js'])run(fs.readFileSync(f,'utf8'));
+for(const f of ['importar-planilha.js','exportacoes.js','app.js'])run(fs.readFileSync(f,'utf8'));
 (async()=>{
  await new Promise(r=>setTimeout(r,0));await run('showApp({user})');run('openImport()');
  const csv='TAG;Patrimônio;Descrição;Estado;Situação\nTI-NOVO;111;Equipamento de teste;Bom;Disponível\nTI-DUP;123;Repetido;Bom;Disponível\nTI-USO;222;Em uso;Bom;Em uso';const bytes=Buffer.from(csv);
