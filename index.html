@@ -14,7 +14,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-title" content="Inventário">
   <meta name="application-name" content="Inventário">
-  <link rel="stylesheet" href="styles.css?v=1.8.0">
+  <link rel="stylesheet" href="styles.css?v=1.9.0">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0/dist/umd/supabase.js" integrity="sha384-TcHRA3zBbn+Lexh5n+Oil4guNPOS3rjNDpGRAN46u/s/mB2IZ50ceC6TYDU2yvgK" crossorigin="anonymous"></script>
   <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js" integrity="sha384-3zSEDfvllQohrq0PHL1fOXJuC/jSOO34H46t6UQfobFOmxE5BpjjaIJY5F2/bMnU" crossorigin="anonymous"></script>
   <script src="https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/html5-qrcode.min.js" integrity="sha384-c9d8RFSL+u3exBOJ4Yp3HUJXS4znl9f+z66d1y54ig+ea249SpqR+w1wyvXz/lk+" crossorigin="anonymous"></script>
@@ -43,7 +43,7 @@
       <symbol id="i-qr" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 14h3v3h-3zM20 14v.01M14 20h.01M17 20h4v-3"/></symbol>
       <symbol id="i-trash" viewBox="0 0 24 24"><path d="M4 7h16"/><path d="M10 11v6M14 11v6"/><path d="M6 7l1 13h10l1-13"/><path d="M9 7V4h6v3"/></symbol>
       <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
-      <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></symbol>
+      <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></symbol><symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></symbol>
     </defs>
   </svg>
   <a class="skip-link" href="#mainContent">Pular para o conteúdo</a>
@@ -59,7 +59,7 @@
       <footer class="site-footer" aria-label="Propriedade e versão do sistema">
         <span>&copy; 2026 <strong>Fbiol</strong> · Todos os direitos reservados</span>
         <span class="site-footer-separator" aria-hidden="true">•</span>
-        <span>Versão 1.8.0</span>
+        <span>Versão 1.9.0</span>
       </footer>
   </div>
 
@@ -93,6 +93,7 @@
           <button class="nav-item" type="button" data-page="users"><svg class="i" aria-hidden="true" focusable="false"><use href="#i-users"></use></svg><span>Usuários</span></button>
           <button class="nav-item hidden" type="button" data-page="archives"><svg class="i" aria-hidden="true" focusable="false"><use href="#i-archive"></use></svg><span>Arquivos anteriores</span></button>
           <button class="nav-item hidden" type="button" data-page="audit"><svg class="i" aria-hidden="true" focusable="false"><use href="#i-shield"></use></svg><span>Auditoria</span></button>
+          <button class="nav-item" type="button" data-page="about"><svg class="i" aria-hidden="true" focusable="false"><use href="#i-info"></use></svg><span>Sobre o sistema</span></button>
         </div>
       </nav>
       <div class="sidebar-bottom user-card"><span id="userAvatar" class="avatar" aria-hidden="true"></span><div class="user-info"><span id="userEmail" class="user-email"></span><small id="userProfile" class="user-email"></small></div><button id="logoutBtn" class="logout-btn" type="button" aria-label="Sair" title="Sair"><svg class="i" aria-hidden="true" focusable="false"><use href="#i-logout"></use></svg></button></div>
@@ -240,10 +241,47 @@
           </div>
         </div>
       </section>
+      <section id="aboutPage" class="page hidden">
+        <article class="panel about">
+          <h2>1 Introdução</h2>
+          <p>Este texto apresenta as razões que levaram ao desenvolvimento do Inventário Web, sistema de controle patrimonial dos equipamentos usados pela equipe. Ele descreve como o controle era feito antes, o que o sistema passou a oferecer e por que ele é útil para a rotina.</p>
+          <p>O Inventário Web reúne o cadastro dos equipamentos, o registro de cada retirada e devolução e a emissão do termo de responsabilidade. Funciona no navegador e pode ser instalado no computador e no celular. Foi desenvolvido internamente e é atualizado em versões, indicadas no rodapé.</p>
+          <h2>2 Desenvolvimento</h2>
+          <h3>2.1 Como o controle era feito</h3>
+          <p>Os equipamentos saem para as ações e voltam depois, muitas vezes nas mãos de pessoas diferentes. Sem um registro central, saber onde cada item está, quem ficou responsável por ele e em que estado voltou dependia de planilhas e de termos preenchidos à mão.</p>
+          <p>Esse modelo tinha limites claros. A planilha não mostrava se um equipamento estava fora havia mais tempo que o previsto, e o termo precisava ser redigido a cada retirada, com nome e CPF digitados de novo. Quando algo sumia ou voltava danificado, era difícil reconstruir o histórico.</p>
+          <h3>2.2 Finalidade do sistema</h3>
+          <p>O Inventário Web foi criado para que cada equipamento tenha um registro único, com a situação atual e todo o histórico de uso. Com isso, pretende-se:</p>
+          <ol class="about-alineas">
+            <li>saber, a qualquer momento, quais equipamentos estão disponíveis, em uso, em manutenção ou baixados;</li>
+            <li>registrar quem retirou cada item, para qual ação e em que estado ele foi devolvido;</li>
+            <li>emitir o termo de responsabilidade sem redigitação;</li>
+            <li>identificar as devoluções atrasadas;</li>
+            <li>manter registro das ações administrativas para conferência.</li>
+          </ol>
+          <h3>2.3 Funcionamento</h3>
+          <p>O acesso é feito com e-mail e senha, e as contas novas entram por convite. Há três perfis. O administrador cadastra e edita equipamentos, gera relatórios e gerencia os usuários. O operador registra retiradas e devoluções. O perfil de consulta apenas visualiza as informações.</p>
+          <p>Cada equipamento recebe uma etiqueta com QR Code, impressa em folha A4. Ao ler o código pelo celular, o sistema abre a ficha do item, o que agiliza a retirada e a devolução. Na retirada, informam-se o retirante, o local da ação e o estado do equipamento; nome e CPF vêm do cadastro. Na devolução, registram-se o horário, a conservação e eventuais ocorrências, e o sistema gera o termo de responsabilidade em PDF a partir do modelo oficial, pronto para assinatura.</p>
+          <p>O painel geral mostra os totais por situação e avisa quando há devoluções atrasadas. Os relatórios podem ser exportados em PDF, Excel ou CSV, sempre com as mesmas colunas e o mesmo formato de data. Também é possível importar uma planilha de equipamentos já existente e arquivar o inventário ao fim de cada ciclo, sem apagar nenhum registro.</p>
+          <h3>2.4 Benefícios para a rotina</h3>
+          <p>O primeiro ganho é a visibilidade. Qualquer pessoa autorizada sabe onde está cada equipamento e com quem, sem depender de quem fez a última anotação.</p>
+          <p>A retirada e a devolução também ficam mais rápidas. A leitura do QR Code localiza o item, e o termo sai pronto, com os dados do retirante já preenchidos. Isso reduz erros de digitação em um documento que serve para responsabilizar quem ficou com o equipamento.</p>
+          <p>Por fim, os relatórios padronizados facilitam a prestação de contas, e o arquivamento por ciclos permite começar um novo período sem perder o histórico do anterior.</p>
+          <h3>2.5 Responsabilização e proteção de dados</h3>
+          <p>O termo de responsabilidade registra quem estava com cada equipamento e em que condições ele voltou. Com o histórico completo no sistema, fica mais fácil apurar perdas e danos e cobrar a reposição quando for o caso.</p>
+          <p>O cadastro dos retirantes inclui dados pessoais, como CPF e telefone, sujeitos à Lei Geral de Proteção de Dados Pessoais (Lei nº 13.709/2018). Por isso, cada perfil acessa apenas o que precisa, as contas podem ser bloqueadas imediatamente e o modelo do termo fica guardado em área privada. A trilha de auditoria registra as ações administrativas, como convites, mudanças de perfil e edições de equipamentos, sem gravar senhas, CPF ou telefone. O sistema conta ainda com rotina de backup diário criptografado e com uma verificação semanal automática da configuração de segurança.</p>
+          <h3>2.6 Custos</h3>
+          <p>O sistema foi desenvolvido internamente e usa serviços gratuitos para hospedar o site e o banco de dados. Não há licença, mensalidade ou contrato com fornecedor.</p>
+          <h2>3 Considerações finais</h2>
+          <p>O Inventário Web substitui o controle em planilha e os termos preenchidos à mão por um registro único, em que cada movimento do equipamento fica documentado. Para quem opera, isso significa retiradas e devoluções mais rápidas. Para a administração, informação atualizada e relatórios prontos. Para a instituição, mais segurança no controle do patrimônio e no tratamento dos dados de quem retira os equipamentos.</p>
+        </article>
+      </section>
       <footer class="site-footer" aria-label="Propriedade e versão do sistema">
         <span>&copy; 2026 <strong>Fbiol</strong> · Todos os direitos reservados</span>
         <span class="site-footer-separator" aria-hidden="true">•</span>
-        <span>Versão 1.8.0</span>
+        <button class="footer-link" type="button" data-page="about">Sobre o sistema</button>
+        <span class="site-footer-separator" aria-hidden="true">•</span>
+        <span>Versão 1.9.0</span>
       </footer>
     </main>
   </div>
@@ -316,7 +354,7 @@
   <script src="importar-planilha.js?v=1.5.5"></script>
   <script src="qr-etiquetas.js?v=1.4.0"></script>
   <script src="termos.js?v=1.4.0"></script>
-  <script src="exportacoes.js?v=1.8.0"></script>
-  <script src="app.js?v=1.8.0"></script>
+  <script src="exportacoes.js?v=1.9.0"></script>
+  <script src="app.js?v=1.9.0"></script>
   <script src="instalar.js?v=1.6.0"></script>
 </body></html>

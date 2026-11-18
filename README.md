@@ -1,6 +1,12 @@
 # inventario_web
 Sistema de inventário patrimonial
 
+### Página "Sobre o sistema" (1.9.0)
+
+Nova página **Sobre o sistema**, aberta pelo menu (em **Mais**, no celular) ou pelo link no rodapé, para todos os perfis. Ela traz a justificativa do Inventário: por que foi criado, para que serve, como funciona, benefícios e cuidados com os dados, no padrão de numeração da ABNT. O texto é fixo, sem nenhum dado do banco.
+
+Não há SQL nem função para republicar. Para aplicar, basta publicar o site (automático pelo GitHub Pages). O `sw.js` troca o nome do cache.
+
 ### Relatórios e planilhas padronizados (1.8.0)
 
 Tudo que o sistema emite segue um padrão único: **Relatórios**, **Exportar** do cadastro de equipamentos, **Auditoria** e **Arquivos anteriores**.
