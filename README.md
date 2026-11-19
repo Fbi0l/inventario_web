@@ -1,6 +1,17 @@
 # inventario_web
 Sistema de inventário patrimonial
 
+### Visual das duas empresas (1.10.0)
+
+Cores e logo novas, a partir das marcas da Embrag e da ASBRAS:
+
+- menu lateral em azul-marinho (Embrag), com o item ativo em verde-água;
+- botões principais em petróleo (ASBRAS);
+- faixa fina com as cores das duas empresas no alto do menu e do cartão de login;
+- logo nova de leitura de QR Code (cantos em verde-água em volta da "lua" da Embrag), também no ícone do app, na aba do navegador e nos relatórios exportados.
+
+Sem SQL nem função para republicar. O `sw.js` troca o nome do cache e os ícones ganharam `?v=1.10.0` para o navegador buscar os novos.
+
 ### Página "Sobre o sistema" (1.9.0)
 
 Nova página **Sobre o sistema**, aberta pelo menu (em **Mais**, no celular) ou pelo link no rodapé, para todos os perfis. Ela traz a justificativa do Inventário: por que foi criado, para que serve, como funciona, benefícios e cuidados com os dados, no padrão de numeração da ABNT. O texto é fixo, sem nenhum dado do banco.

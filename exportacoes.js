@@ -7,7 +7,7 @@ window.InventoryExport=(()=>{
  const TZ='America/Belem';
  const BRAND={name:'Inventário',tagline:'Gestão de equipamentos'};
  const EXCELJS={src:'https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js',integrity:'sha384-Pqp51FUN2/qzfxZxBCtF0stpc9ONI6MYZpVqmo8m20SoaQCzf+arZvACkLkirlPz'};
- const LOGO='assets/logo-relatorio.png?v=1.8.0';
+ const LOGO='assets/logo-relatorio.png?v=1.10.0';
  const pad=n=>String(n).padStart(2,'0');
 
  /* ---------- Valores: um formato só para tela, CSV, Excel e PDF ---------- */
