@@ -12,6 +12,11 @@ updates:
       time: "07:00"
       timezone: America/Fortaleza
     open-pull-requests-limit: 5
+    ignore:
+      # TypeScript 7 é a reescrita nativa, com outra API: tests/termos-users.cjs usa a API da 5.x
+      # para transpilar as funções. Atualizações dentro da 5.x continuam vindo.
+      - dependency-name: typescript
+        update-types: ["version-update:semver-major"]
     groups:
       testes:
         patterns: ["*"]

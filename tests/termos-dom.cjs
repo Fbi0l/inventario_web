@@ -8,6 +8,9 @@ w.URL.createObjectURL=()=> 'blob:test';w.URL.revokeObjectURL=()=>{};w.HTMLAnchor
 w.PDFLib=require('pdf-lib');w.fontkit=require('@pdf-lib/fontkit');
 const testSource=fs.readFileSync('tests/termos-ui.cjs','utf8');run(testSource.slice(testSource.indexOf(' const stub=`')+13,testSource.indexOf('`;\n await page.route')).replace(/\$\{JSON.stringify\(Array.from\(template\)\)\}/g,'[]'));
 for(const file of ['termo-fontes.js','termos.js','exportacoes.js','app.js'])run(fs.readFileSync(file,'utf8'));
+// jsdom 31 termina de montar a página antes de os scripts rodarem: o DOMContentLoaded já passou.
+// No navegador os scripts vêm no fim do <body> e o evento ainda acontece; aqui ele é disparado de novo.
+if(w.document.readyState!=='loading')w.document.dispatchEvent(new w.Event('DOMContentLoaded'));
 const $=id=>w.document.getElementById(id),submit=id=>$(id).dispatchEvent(new w.Event('submit',{bubbles:true,cancelable:true}));
 (async()=>{
  const pdf=await w.PDFLib.PDFDocument.create();pdf.addPage([612,792]);const template=await pdf.save();
