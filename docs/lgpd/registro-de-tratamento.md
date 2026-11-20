@@ -35,6 +35,13 @@ O sistema **não usa** cookies de rastreamento, analytics, pixels nem inteligên
 - **Aviso de privacidade** na tela de entrada, no formulário de cadastro (onde o CPF é pedido), na tela do termo e na página Privacidade (menu e rodapé). Texto único em `#privacyNoticeTpl` no `index.html`.
 - **Termo de uso do sistema** aceito por cada usuário no primeiro acesso e a cada versão (`TERMO_USO_VERSAO` no `app.js`; registro em `perfis_usuarios`). Não substitui o termo de responsabilidade dos equipamentos.
 
+## Segurança (art. 46)
+
+- RLS em todas as tabelas; CPF e telefone só para administradores; termo de responsabilidade só por função do servidor.
+- Check-up automático a cada envio (banco fictício, interface, termo PDF, acessibilidade no navegador) e backup diário criptografado com restauração ensaiada.
+- Auditoria semanal da configuração do Supabase com o usuário `auditoria_leitura`, que não lê nenhum dado (`AUDITORIA_SUPABASE.md`).
+- Dependabot avisa de atualizações e falhas conhecidas nas bibliotecas de teste e nas ações do GitHub.
+
 ## Direitos dos titulares (art. 18)
 
 - **Acesso e cópia:** o administrador vê e exporta os dados do usuário; o retirante vê os próprios termos no sistema.
