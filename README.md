@@ -1,6 +1,13 @@
 # inventario_web
 Sistema de inventário patrimonial
 
+### Acessibilidade conferida a cada versão (1.11.1)
+
+- **Teste novo `tests/acessibilidade-ui.cjs`** (Playwright + axe, no job do navegador do Check-up): abre no Chromium, com Supabase simulado e dados fictícios, a entrada, o cadastro por convite, o termo de uso, as 9 páginas e as janelas de novo equipamento e de retirada, no computador e no celular. Falha com problema de acessibilidade sério ou crítico (WCAG 2.2 AA), erro de JavaScript ou rolagem lateral no celular. Os prints das telas ficam nos artefatos do workflow por 14 dias.
+- **Corrigido (achado pelo teste):** as 12 tabelas com rolagem lateral agora rolam pelo teclado, e os links do rodapé ganharam área de toque de 24px no celular.
+
+Sem SQL nem função para republicar. O `sw.js` troca o nome do cache.
+
 ### Privacidade e termo de uso (1.11.0)
 
 LGPD: o sistema passa a dizer, para quem usa, quais dados guarda e por quê.
