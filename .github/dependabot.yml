@@ -1,0 +1,31 @@
+# Dependabot: confere toda segunda-feira se há versão nova (e correção de segurança) das bibliotecas
+# de teste (npm) e das ações do GitHub, e abre um pull request com a atualização para revisão.
+# As bibliotecas que o site carrega do CDN (com integrity/SRI) não entram aqui: atualizar à mão,
+# junto com o hash de integridade, e rodar os testes.
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: "07:00"
+      timezone: America/Fortaleza
+    open-pull-requests-limit: 5
+    groups:
+      testes:
+        patterns: ["*"]
+    commit-message:
+      prefix: "deps"
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: "07:00"
+      timezone: America/Fortaleza
+    groups:
+      acoes:
+        patterns: ["*"]
+    commit-message:
+      prefix: "ci"
