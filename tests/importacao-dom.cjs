@@ -9,6 +9,9 @@ const user={id:'10000000-0000-0000-0000-000000000001',email:'teste@example.inval
 const db={auth:{getSession:async()=>({data:{session:null}}),onAuthStateChange:()=>{}},from:table=>{const q={select:()=>q,is:()=>q,eq:()=>q,order:()=>q,limit:()=>q,range:async()=>({data:table==='equipamentos'?[{tag:'TI-DUP',patrimonio:'00123'}]:[]}),maybeSingle:async()=>({data:{perfil:'administrador',termo_uso_versao:'2026-11-20'}}),then:r=>Promise.resolve({data:[]}).then(r)};return q},rpc:async(name,args)=>{if(name==='listar_retirantes')return{data:[{usuario_id:user.id,nome:'Pessoa Exemplo'}]};calls.push({name,args});if(fail)return{error:{message:'Erro de conexão simulado'}};return{data:{importados:1,ignorados:[]}}}};
 w.supabase={createClient:()=>db};w.user=user;
 for(const f of ['importar-planilha.js','exportacoes.js','app.js'])run(fs.readFileSync(f,'utf8'));
+// jsdom 31 termina de montar a página antes de os scripts rodarem: o DOMContentLoaded já passou.
+// No navegador os scripts vêm no fim do <body> e o evento ainda acontece; aqui ele é disparado de novo.
+if(w.document.readyState!=='loading')w.document.dispatchEvent(new w.Event('DOMContentLoaded'));
 (async()=>{
  await new Promise(r=>setTimeout(r,0));await run('showApp({user})');run('openImport()');
  const csv='TAG;Patrimônio;Descrição;Estado;Situação\nTI-NOVO;111;Equipamento de teste;Bom;Disponível\nTI-DUP;123;Repetido;Bom;Disponível\nTI-USO;222;Em uso;Bom;Em uso';const bytes=Buffer.from(csv);
