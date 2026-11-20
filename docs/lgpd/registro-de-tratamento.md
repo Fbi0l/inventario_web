@@ -22,7 +22,7 @@
 
 | Fornecedor | O que faz | Onde | Observação |
 |---|---|---|---|
-| Supabase | banco de dados, login, armazenamento do modelo do termo e funções `register-user` e `manage-users` | conferir a região no painel do projeto | dados principais |
+| Supabase | banco de dados, login, armazenamento do modelo do termo e funções `register-user` e `manage-users` | **Estados Unidos (Oregon, us-west-2)** | dados principais, inclusive CPF: **transferência internacional** (art. 33) |
 | GitHub (Pages e Actions) | hospeda o site; roda o backup diário, a auditoria semanal e o check-up | Estados Unidos | o site não guarda dados; o backup sai criptografado (age) e fica 14 dias (transferência internacional, art. 33) |
 | Cloudflare R2 (opcional) | cópia externa do backup, se configurada | conforme a conta | só arquivos criptografados |
 | jsDelivr e SheetJS (CDN) | entregam bibliotecas ao navegador | global | recebem só o pedido do arquivo (IP e navegador); integridade conferida (SRI) |
@@ -44,6 +44,7 @@ O sistema **não usa** cookies de rastreamento, analytics, pixels nem inteligên
 
 ## Pendências
 
+- [ ] **Transferência internacional:** o banco fica nos Estados Unidos. Escolher entre (a) migrar o projeto para São Paulo (sa-east-1), como o Carreta+ e o Avaliação Física, o que elimina a transferência; ou (b) manter e garantir a base do art. 33, com as cláusulas-padrão da Resolução CD/ANPD nº 19/2024 no contrato com o fornecedor.
 - [ ] Indicar o encarregado (DPO) ou um canal de contato sobre dados da Embrag e da ASBRAS. Até lá, o canal é o administrador do sistema.
 - [ ] Rotina de exclusão após 5 anos (hoje manual, pelo administrador).
 - [ ] Avaliar pedir o CPF só na primeira retirada, e não no cadastro de quem tem só o perfil Consulta.

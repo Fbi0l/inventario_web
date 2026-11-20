@@ -18,7 +18,7 @@ for(const f of ['exportacoes.js','app.js'])run(fs.readFileSync(f,'utf8'));
  // Aviso de privacidade: o mesmo texto em todos os lugares, vindo de um só modelo.
  const avisos=[...w.document.querySelectorAll('[data-privacy-notice]')];
  assert.equal(avisos.length,4,'entrada, cadastro, termo de uso e página Privacidade');
- for(const a of avisos){assert.match(a.textContent,/Embrag e a ASBRAS/);assert.match(a.textContent,/CPF e telefone, só administradores/);assert.match(a.textContent,/5 anos/);}
+ for(const a of avisos){assert.match(a.textContent,/Embrag e a ASBRAS/);assert.match(a.textContent,/CPF e telefone, só administradores/);assert.match(a.textContent,/5 anos/);assert.match(a.textContent,/Estados Unidos/);}
  assert.match($('registerForm').textContent,/Seu CPF identifica você no termo de responsabilidade/,'o cadastro explica para que serve o CPF');
 
  // Primeiro acesso: o termo aparece antes do sistema.
