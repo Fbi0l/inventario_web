@@ -5,16 +5,16 @@
   <!-- Seguranca (1.5.5): so scripts do proprio site e dos CDNs abaixo, cada um com integridade (SRI) conferida. -->
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net https://cdn.sheetjs.com; connect-src 'self' https://meqpwvdisjuoacepkljs.supabase.co wss://meqpwvdisjuoacepkljs.supabase.co; img-src 'self' data: blob:; media-src 'self' blob: mediastream:; style-src 'self' 'unsafe-inline'; font-src 'self' data:; frame-src 'self' blob:; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <title>Inventário | Controle de equipamentos</title>
-  <link rel="icon" type="image/png" href="assets/logo-inventario.png?v=1.10.0">
+  <link rel="icon" type="image/png" href="assets/logo-inventario.png?v=1.11.0">
   <!-- App instalavel (1.6.0): area de trabalho e tela inicial do celular. -->
   <link rel="manifest" href="manifest.webmanifest">
-  <link rel="apple-touch-icon" href="assets/apple-touch-icon.png?v=1.10.0">
+  <link rel="apple-touch-icon" href="assets/apple-touch-icon.png?v=1.11.0">
   <meta name="theme-color" content="#142033">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-title" content="Inventário">
   <meta name="application-name" content="Inventário">
-  <link rel="stylesheet" href="styles.css?v=1.10.0">
+  <link rel="stylesheet" href="styles.css?v=1.11.0">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0/dist/umd/supabase.js" integrity="sha384-TcHRA3zBbn+Lexh5n+Oil4guNPOS3rjNDpGRAN46u/s/mB2IZ50ceC6TYDU2yvgK" crossorigin="anonymous"></script>
   <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js" integrity="sha384-3zSEDfvllQohrq0PHL1fOXJuC/jSOO34H46t6UQfobFOmxE5BpjjaIJY5F2/bMnU" crossorigin="anonymous"></script>
   <script src="https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/html5-qrcode.min.js" integrity="sha384-c9d8RFSL+u3exBOJ4Yp3HUJXS4znl9f+z66d1y54ig+ea249SpqR+w1wyvXz/lk+" crossorigin="anonymous"></script>
@@ -49,17 +49,18 @@
   <a class="skip-link" href="#mainContent">Pular para o conteúdo</a>
   <div id="loginView" class="login-wrap">
     <form id="loginForm" class="login-card">
-      <div class="brand-mark brand-mark-logo"><img class="app-logo" src="assets/logo-inventario.png?v=1.10.0" alt="" width="42" height="42"></div><h1>Inventário</h1><p class="muted">Controle compartilhado de equipamentos</p>
+      <div class="brand-mark brand-mark-logo"><img class="app-logo" src="assets/logo-inventario.png?v=1.11.0" alt="" width="42" height="42"></div><h1>Inventário</h1><p class="muted">Controle compartilhado de equipamentos</p>
       <label>E-mail<input id="email" type="email" required autocomplete="username" placeholder="voce@empresa.com"></label>
       <label>Senha<input id="password" type="password" required autocomplete="current-password" placeholder="Sua senha"></label>
       <button class="primary full" type="submit">Entrar</button>
       <p id="loginMessage" class="message" aria-live="polite"></p>
       <small>Ainda não tem acesso? Peça ao administrador um link de convite.</small>
+      <details class="privacy-notice"><summary>Aviso de privacidade</summary><div data-privacy-notice></div></details>
     </form>
       <footer class="site-footer" aria-label="Propriedade e versão do sistema">
         <span>&copy; 2026 <strong>Fbiol</strong> · Todos os direitos reservados</span>
         <span class="site-footer-separator" aria-hidden="true">•</span>
-        <span>Versão 1.10.0</span>
+        <span>Versão 1.11.0</span>
       </footer>
   </div>
 
@@ -71,13 +72,35 @@
       <label>Telefone (opcional)<input id="registerPhone" type="tel" maxlength="30"></label>
       <label>E-mail *<input id="registerEmail" type="email" required autocomplete="email"></label>
       <label>Senha (mínimo 8 caracteres) *<input id="registerPassword" type="password" required minlength="8" autocomplete="new-password"></label>
+      <p class="muted small-note">Seu CPF identifica você no termo de responsabilidade dos equipamentos que retirar. Só administradores veem CPF e telefone.</p>
+      <details class="privacy-notice"><summary>Aviso de privacidade</summary><div data-privacy-notice></div></details>
       <button class="primary full" type="submit">Concluir cadastro</button>
       <p id="registerMessage" class="message" aria-live="polite"></p>
     </form>
   </div>
+  <div id="termsUseView" class="login-wrap hidden">
+    <form id="termsUseForm" class="login-card terms-use-card" novalidate aria-labelledby="termsUseTitle">
+      <h1 id="termsUseTitle">Termo de uso</h1>
+      <p class="muted">O Inventário guarda dados pessoais de quem retira equipamentos, como nome, CPF e telefone. Para usar o sistema, você se compromete a:</p>
+      <ul class="terms-use-list">
+        <li>usar os dados das pessoas só para controlar equipamentos, retiradas, devoluções e termos de responsabilidade;</li>
+        <li>não copiar, fotografar nem repassar CPF, telefone, termos ou relatórios para fora da Embrag e da ASBRAS;</li>
+        <li>manter sua senha em sigilo, não emprestar sua conta e sair do sistema em aparelhos de uso compartilhado;</li>
+        <li>avisar o administrador na hora se perder o celular, desconfiar de um acesso indevido ou enviar dados ao destino errado.</li>
+      </ul>
+      <p class="muted">As ações administrativas ficam registradas na auditoria. Este termo não substitui o termo de responsabilidade dos equipamentos.</p>
+      <details class="privacy-notice"><summary>Aviso de privacidade</summary><div data-privacy-notice></div></details>
+      <label class="check-line"><input id="termsUseAccept" type="checkbox"> Li e aceito o termo de uso</label>
+      <p id="termsUseMessage" class="message" aria-live="polite"></p>
+      <button class="primary full" type="submit">Aceitar e entrar</button>
+      <button id="termsUseLogout" class="secondary full" type="button">Sair</button>
+      <small>Versão do termo: <span id="termsUseVersion"></span></small>
+    </form>
+  </div>
+
   <div id="appView" class="app hidden">
     <aside class="sidebar">
-      <div class="brand"><div class="brand-mark brand-mark-logo"><img class="app-logo" src="assets/logo-inventario.png?v=1.10.0" alt="" width="42" height="42"></div><div><strong>Inventário</strong><small>Gestão de equipamentos</small></div></div>
+      <div class="brand"><div class="brand-mark brand-mark-logo"><img class="app-logo" src="assets/logo-inventario.png?v=1.11.0" alt="" width="42" height="42"></div><div><strong>Inventário</strong><small>Gestão de equipamentos</small></div></div>
       <nav id="mainNav" class="side-nav" aria-label="Principal">
         <div class="nav-group nav-primary">
           <p class="nav-label">Operação</p>
@@ -94,6 +117,7 @@
           <button class="nav-item hidden" type="button" data-page="archives"><svg class="i" aria-hidden="true" focusable="false"><use href="#i-archive"></use></svg><span>Arquivos anteriores</span></button>
           <button class="nav-item hidden" type="button" data-page="audit"><svg class="i" aria-hidden="true" focusable="false"><use href="#i-shield"></use></svg><span>Auditoria</span></button>
           <button class="nav-item" type="button" data-page="about"><svg class="i" aria-hidden="true" focusable="false"><use href="#i-info"></use></svg><span>Sobre o sistema</span></button>
+          <button class="nav-item" type="button" data-page="privacy"><svg class="i" aria-hidden="true" focusable="false"><use href="#i-shield"></use></svg><span>Privacidade</span></button>
         </div>
       </nav>
       <div class="sidebar-bottom user-card"><span id="userAvatar" class="avatar" aria-hidden="true"></span><div class="user-info"><span id="userEmail" class="user-email"></span><small id="userProfile" class="user-email"></small></div><button id="logoutBtn" class="logout-btn" type="button" aria-label="Sair" title="Sair"><svg class="i" aria-hidden="true" focusable="false"><use href="#i-logout"></use></svg></button></div>
@@ -108,7 +132,7 @@
       </header>
       <p id="globalMessage" class="message" aria-live="polite"></p>
       <section id="dashboardPage" class="page">
-        <div id="installCard" class="panel install-card hidden"><img src="assets/icone-192.png?v=1.10.0" alt="" width="44" height="44"><div class="install-text"><strong>Instale o Inventário</strong><small id="installText">Abra direto da área de trabalho ou da tela inicial do celular, em janela própria.</small></div><button id="installBtn" class="primary hidden" type="button">Instalar</button><button id="installClose" class="secondary install-close" type="button" aria-label="Não mostrar de novo">✕</button></div>
+        <div id="installCard" class="panel install-card hidden"><img src="assets/icone-192.png?v=1.11.0" alt="" width="44" height="44"><div class="install-text"><strong>Instale o Inventário</strong><small id="installText">Abra direto da área de trabalho ou da tela inicial do celular, em janela própria.</small></div><button id="installBtn" class="primary hidden" type="button">Instalar</button><button id="installClose" class="secondary install-close" type="button" aria-label="Não mostrar de novo">✕</button></div>
         <div class="stats">
           <article class="stat-card tone-total"><span><i class="dot" aria-hidden="true"></i>Total<span class="stat-long"> de equipamentos</span></span><strong id="statTotal">—</strong><div class="stat-bar" aria-hidden="true"><i style="width:100%"></i></div><small>Itens cadastrados no ciclo atual</small></article>
           <article class="stat-card tone-ok"><span><i class="dot" aria-hidden="true"></i>Disponíveis<em id="statAvailableShare" class="stat-share"></em></span><strong id="statAvailable">—</strong><div class="stat-bar" aria-hidden="true"><i id="statAvailableBar"></i></div><small>Prontos para retirada</small></article>
@@ -241,6 +265,12 @@
           </div>
         </div>
       </section>
+      <section id="privacyPage" class="page hidden">
+        <article class="panel about privacy-page">
+          <h2>Aviso de privacidade</h2>
+          <div data-privacy-notice></div>
+        </article>
+      </section>
       <section id="aboutPage" class="page hidden">
         <article class="panel about">
           <h2>1 Introdução</h2>
@@ -281,7 +311,9 @@
         <span class="site-footer-separator" aria-hidden="true">•</span>
         <button class="footer-link" type="button" data-page="about">Sobre o sistema</button>
         <span class="site-footer-separator" aria-hidden="true">•</span>
-        <span>Versão 1.10.0</span>
+        <button class="footer-link" type="button" data-page="privacy">Privacidade</button>
+        <span class="site-footer-separator" aria-hidden="true">•</span>
+        <span>Versão 1.11.0</span>
       </footer>
     </main>
   </div>
@@ -351,10 +383,21 @@
     <p id="importMessage" class="message" role="status" aria-live="polite"></p>
     <div class="dialog-actions"><button type="button" class="secondary" data-close="importDialog">Fechar</button><button id="confirmImportBtn" type="button" class="primary" disabled>Importar equipamentos</button></div>
   </div></dialog>
+  <template id="privacyNoticeTpl">
+    <p><strong>Quem é responsável:</strong> a Embrag e a ASBRAS, que usam o Inventário em conjunto para controlar os equipamentos da equipe. É um sistema de uso interno das duas empresas.</p>
+    <p><strong>Que dados guarda:</strong> nome, CPF, telefone (opcional), e-mail e perfil de quem tem acesso; as retiradas e devoluções (equipamento, data, local da ação e estado); o termo de responsabilidade de cada retirada, com nome e CPF; e o registro das ações administrativas (auditoria), sem CPF, telefone ou senha. A câmera usada para ler o QR Code funciona só no aparelho, sem gravar imagem.</p>
+    <p><strong>Para quê:</strong> saber quem está com cada equipamento, emitir o termo de responsabilidade, identificar devoluções atrasadas, apurar perdas e danos e manter a segurança do sistema.</p>
+    <p><strong>Base legal (LGPD):</strong> a relação de trabalho ou de prestação de serviço com as empresas (art. 7º, V); o exercício regular de direitos, para apurar perdas e danos (art. 7º, VI); e o legítimo interesse e a segurança, para a auditoria (art. 7º, IX).</p>
+    <p><strong>Quem acessa:</strong> CPF e telefone, só administradores; o termo de responsabilidade, só a própria pessoa e os administradores; o restante, a equipe autorizada, conforme o perfil. Nada é vendido nem compartilhado fora da Embrag e da ASBRAS.</p>
+    <p><strong>Onde ficam:</strong> num banco de dados protegido do Supabase, em servidores nos Estados Unidos (Oregon), com cópia de segurança diária criptografada. O site fica no GitHub e não guarda dados. Não usamos cookies de rastreamento, anúncios nem inteligência artificial.</p>
+    <p><strong>Por quanto tempo:</strong> os dados de acesso, até a pessoa deixar de usar o sistema; as retiradas, devoluções e termos de responsabilidade, por 5 anos depois da devolução, para apurar perdas e danos. Depois disso, são excluídos.</p>
+    <p><strong>Seus direitos:</strong> saber quais dados seus estão no sistema, receber uma cópia, pedir correção e, quando a lei permitir, a exclusão. Fale com o administrador do sistema; a resposta vem em até 15 dias.</p>
+    <p class="muted">Atualizado em 20/11/2026.</p>
+  </template>
   <script src="importar-planilha.js?v=1.5.5"></script>
   <script src="qr-etiquetas.js?v=1.4.0"></script>
   <script src="termos.js?v=1.4.0"></script>
-  <script src="exportacoes.js?v=1.10.0"></script>
-  <script src="app.js?v=1.10.0"></script>
+  <script src="exportacoes.js?v=1.11.0"></script>
+  <script src="app.js?v=1.11.0"></script>
   <script src="instalar.js?v=1.6.0"></script>
 </body></html>

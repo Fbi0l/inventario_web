@@ -1,5 +1,6 @@
 # Foto APROVADA da configuracao de seguranca do Supabase (scripts/auditoria-supabase.sh).
 # Gerada em 29/10/2026 a partir do projeto oficial, ja considerando ATUALIZACAO_1_5_2_AUDITORIA_LEITURA.sql e ATUALIZACAO_1_5_4_CONVITES_ADMIN_EXCLUIDO.sql.
+# Atualizada em 20/11/2026 com ATUALIZACAO_1_11_0_TERMO_USO.sql (funcao aceitar_termo_uso).
 # Se uma mudanca de seguranca for INTENCIONAL, atualize este arquivo no mesmo PR:
 #   bash scripts/auditoria-supabase.sh --gerar > docs/auditoria-supabase-esperado.txt
 # (e recoloque este cabecalho). Linhas iniciadas por # sao ignoradas.
@@ -14,6 +15,7 @@ chave-auth | importacoes_equipamentos.criado_por | on_delete=set_null
 chave-auth | movimentacoes.registrado_por | on_delete=set_null
 chave-auth | perfis_usuarios.usuario_id | on_delete=cascade
 chave-auth | termos_equipamentos.retirante_usuario_id | on_delete=set_null
+funcao | aceitar_termo_uso(p_versao text) | definer=true config=search_path="" executa=authenticated,service_role
 funcao | arquivar_inventario(p_nome text) | definer=true config=search_path="" executa=authenticated,service_role
 funcao | auditar_ciclo() | definer=false config=search_path="" executa=service_role
 funcao | auditar_edicao_direta() | definer=false config=search_path="" executa=service_role

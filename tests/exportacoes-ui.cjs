@@ -11,7 +11,7 @@ const libs={'pdf-lib@1.17.1/dist/pdf-lib.min.js':'node_modules/pdf-lib/dist/pdf-
  const errors=[],root=process.cwd();
  const stub=`window.testUser={id:'10000000-0000-0000-0000-000000000001',email:'admin@example.invalid'};
  window.supabase={createClient:()=>({storage:{from:()=>({download:async()=>({data:null})})},auth:{getSession:async()=>({data:{session:null}}),onAuthStateChange:()=>{},signOut:async()=>({})},functions:{invoke:async()=>({data:{users:[]}})},
-  from:()=>{const q={select:()=>q,is:()=>q,eq:()=>q,order:()=>q,limit:()=>q,range:async()=>({data:[]}),maybeSingle:async()=>({data:{perfil:'administrador'}}),then:r=>Promise.resolve({data:[]}).then(r)};return q;},
+  from:()=>{const q={select:()=>q,is:()=>q,eq:()=>q,order:()=>q,limit:()=>q,range:async()=>({data:[]}),maybeSingle:async()=>({data:{perfil:'administrador',termo_uso_versao:'2026-11-20'}}),then:r=>Promise.resolve({data:[]}).then(r)};return q;},
   rpc:async()=>({data:[]})})};`;
  const route=async route=>{
   const url=route.request().url();

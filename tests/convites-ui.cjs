@@ -15,7 +15,7 @@ const shots=process.env.AUDIT_SHOTS||'';
    if(body.action==='invite'){testInvites.unshift({id:'c0000000-0000-0000-0000-000000000003',criado_em:new Date().toISOString(),expira_em:new Date(Date.now()+172800000).toISOString(),criado_por:testUser.id});return{data:{token:'A'.repeat(43),id:'c0000000-0000-0000-0000-000000000003'}};}
    if(body.action==='revoke_invite'){testInvites=testInvites.filter(c=>c.id!==body.inviteId);return{data:{message:'ok'}};}
    return{data:{}};}},
-  from:()=>{const q={select:()=>q,is:()=>q,eq:()=>q,order:()=>q,limit:()=>q,range:async()=>({data:[]}),maybeSingle:async()=>({data:{perfil:'administrador'}}),then:r=>Promise.resolve({data:[]}).then(r)};return q;},
+  from:()=>{const q={select:()=>q,is:()=>q,eq:()=>q,order:()=>q,limit:()=>q,range:async()=>({data:[]}),maybeSingle:async()=>({data:{perfil:'administrador',termo_uso_versao:'2026-11-20'}}),then:r=>Promise.resolve({data:[]}).then(r)};return q;},
   rpc:async()=>({data:[]})})};`;
  const route=async route=>{
    const url=route.request().url();

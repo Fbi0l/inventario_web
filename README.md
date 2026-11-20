@@ -1,6 +1,17 @@
 # inventario_web
 Sistema de inventário patrimonial
 
+### Privacidade e termo de uso (1.11.0)
+
+LGPD: o sistema passa a dizer, para quem usa, quais dados guarda e por quê.
+
+- **Aviso de privacidade** (Embrag e ASBRAS como responsáveis): na tela de entrada, no **cadastro por convite** (onde o CPF é pedido, com uma linha dizendo para que serve), na tela do termo e na nova página **Privacidade** (menu e rodapé). O texto fica num só lugar: `#privacyNoticeTpl` no `index.html`.
+- **Termo de uso do sistema:** cada usuário aceita no primeiro acesso e de novo a cada versão (`TERMO_USO_VERSAO` no `app.js`). A versão e a data ficam em `perfis_usuarios`. Não substitui o termo de responsabilidade dos equipamentos.
+- **Documentos** em `docs/lgpd/`: registro das operações de tratamento (dados, finalidade, base legal, quem acessa, prazo de 5 anos após a devolução) e plano de resposta a incidentes.
+- Testes novos: `tests/termo-uso-db.cjs` e `tests/termo-uso-dom.cjs`. A foto aprovada da auditoria do Supabase inclui a função `aceitar_termo_uso`.
+
+**Ordem para publicar:** primeiro execute `ATUALIZACAO_1_11_0_TERMO_USO.sql` no SQL Editor; só depois publique o site. Sem o SQL, o site novo não encontra a coluna do termo e mostra "Acesso sem perfil definido".
+
 ### Visual das duas empresas (1.10.0)
 
 Cores e logo novas, a partir das marcas da Embrag e da ASBRAS:
