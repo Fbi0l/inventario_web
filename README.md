@@ -1,6 +1,12 @@
 # inventario_web
 Sistema de inventário patrimonial
 
+### Dependabot (20/11/2026)
+
+- `.github/dependabot.yml`: toda segunda-feira, o Dependabot confere versões novas (e correções de segurança) das bibliotecas de teste (npm) e das ações do GitHub e abre um pull request para revisão. Os testes do Check-up rodam em cada um antes de juntar. As bibliotecas que o site carrega do CDN (com SRI) continuam sendo atualizadas à mão, junto com o hash de integridade.
+- Os alertas e correções automáticas de segurança do Dependabot são ligados em *Settings → Code security* do repositório.
+- Já testado com o axe 4.14 (versão trazida pelo Dependabot): sem problemas de acessibilidade.
+
 ### Acessibilidade conferida a cada versão (1.11.1)
 
 - **Teste novo `tests/acessibilidade-ui.cjs`** (Playwright + axe, no job do navegador do Check-up): abre no Chromium, com Supabase simulado e dados fictícios, a entrada, o cadastro por convite, o termo de uso, as 9 páginas e as janelas de novo equipamento e de retirada, no computador e no celular. Falha com problema de acessibilidade sério ou crítico (WCAG 2.2 AA), erro de JavaScript ou rolagem lateral no celular. Os prints das telas ficam nos artefatos do workflow por 14 dias.
