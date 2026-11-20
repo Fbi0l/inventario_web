@@ -264,3 +264,15 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
 .login-card::before{content:"";position:absolute;left:0;right:0;top:0;height:6px;background:var(--faixa)}
 @media(min-width:681px){.nav-item:not(.active):hover{background:#1F2E45}.nav-item.active{background:rgba(115,176,143,.2);color:#BFE3CF;box-shadow:none}}
 @media(max-width:680px){.app .sidebar .nav-item.active{color:#386375}}
+/* Aviso de privacidade e termo de uso (1.11.0) */
+.privacy-notice{border-top:1px solid var(--line);padding-top:10px;font-size:13px;text-align:left}
+.privacy-notice summary{cursor:pointer;font-weight:600;color:var(--teal-ink,#1f5f6b);min-height:28px;display:flex;align-items:center}
+.privacy-notice summary:focus-visible{outline:2px solid currentColor;outline-offset:2px;border-radius:4px}
+.privacy-notice [data-privacy-notice]{display:grid;gap:8px;margin-top:8px;max-height:46vh;overflow:auto}
+.privacy-notice p,.privacy-page p{margin:0}
+.privacy-page [data-privacy-notice]{display:grid;gap:12px}
+.terms-use-card{width:min(560px,100%)}
+.terms-use-list{margin:0;padding-left:20px;display:grid;gap:6px;text-align:left}
+.login-card label.check-line{display:flex;flex-direction:row;align-items:flex-start;gap:8px;font-weight:500}
+.login-card label.check-line input{width:18px;height:18px;min-height:0;flex:none;margin-top:2px}
+.small-note{font-size:13px;margin:0}

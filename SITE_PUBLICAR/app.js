@@ -4,6 +4,10 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 const configured = /^https:\/\/[^/]+\.supabase\.co$/.test(SUPABASE_URL) && SUPABASE_ANON_KEY.length > 20 && !SUPABASE_ANON_KEY.includes('COLE_AQUI');
 const db = configured ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
 const $ = id => document.getElementById(id);
+/* Termo de uso do sistema (1.11.0). Mudou o texto em #termsUseView? Suba a data: todos aceitam de novo. */
+const TERMO_USO_VERSAO = '2026-11-20';
+/* Aviso de privacidade: texto único em #privacyNoticeTpl, copiado para entrada, cadastro, termo e página Privacidade. */
+function fillPrivacyNotices(){const tpl=$('privacyNoticeTpl');if(!tpl)return;document.querySelectorAll('[data-privacy-notice]').forEach(el=>{if(!el.childElementCount)el.append(tpl.content.cloneNode(true));});}
 const state = { equipmentStatus: '', equipment: [], movements: [], users: [], retirantes: [], archives: [], archiveEquipment: [], archiveMovements: [], selectedArchive: null, audit: [], invites: [], lastInviteId: null, page: 'dashboard', user: null, perfil: null, visibleTermIds: new Set() };
 const fields = ['tag','patrimonio','descricao','categoria','marca','modelo','numeroSerie','pertencimento','responsavel','localizacao','estado','situacao','valor','observacoes','codigoOrigem','dataAquisicao'];
 const dbField = {tag:'tag',patrimonio:'patrimonio',descricao:'descricao',categoria:'categoria',marca:'marca',modelo:'modelo',numeroSerie:'numero_serie',pertencimento:'pertencimento',responsavel:'responsavel',localizacao:'localizacao',estado:'estado',situacao:'situacao',valor:'valor',observacoes:'observacoes',codigoOrigem:'codigo_origem',dataAquisicao:'data_aquisicao'};
@@ -23,6 +27,7 @@ function showLogin(){
   const register=!!token && /^[a-zA-Z0-9_-]{43}$/.test(token);
   $('registerView').classList.toggle('hidden',!register);
   $('loginView').classList.toggle('hidden',register);
+  $('termsUseView').classList.add('hidden');
   $('appView').classList.add('hidden');
 }
 async function showApp(session){
@@ -35,18 +40,36 @@ async function showApp(session){
   $('registerView').classList.add('hidden');
   $('appView').classList.remove('hidden');
   applyPermissions();
-  const {data,error}=await db.from('perfis_usuarios').select('perfil').eq('usuario_id',session.user.id).maybeSingle();
+  const {data,error}=await db.from('perfis_usuarios').select('perfil,termo_uso_versao').eq('usuario_id',session.user.id).maybeSingle();
   if(state.user?.id!==session.user.id)return;
   if(error || !data?.perfil){
     message('globalMessage','Acesso sem perfil definido. Peça ao administrador para atribuir um perfil ou confira se a atualização SQL foi aplicada.');
     return;
   }
+  // Termo de uso: primeiro acesso ou versão nova → aceite antes de abrir o sistema.
+  if(data.termo_uso_versao!==TERMO_USO_VERSAO){showTermsUse(session);return;}
+  $('termsUseView').classList.add('hidden');
   state.perfil=data.perfil;
   $('userProfile').textContent=roleLabel(data.perfil);
   applyPermissions();
   await loadAll();
 }
 async function login(e){e.preventDefault(); if(!db){message('loginMessage','Configure a URL e a chave do Supabase no arquivo app.js.');return;} message('loginMessage','Entrando…',true); const {error}=await db.auth.signInWithPassword({email:$('email').value.trim(),password:$('password').value}); if(error)message('loginMessage',error.message); else message('loginMessage','',true);}
+function showTermsUse(session){
+  state.termsSession=session;
+  $('appView').classList.add('hidden');$('termsUseView').classList.remove('hidden');
+  $('termsUseVersion').textContent=TERMO_USO_VERSAO;$('termsUseAccept').checked=false;message('termsUseMessage','');
+}
+async function acceptTermsUse(e){
+  e.preventDefault();
+  if(!$('termsUseAccept').checked){message('termsUseMessage','Para usar o sistema, marque que leu e aceita o termo.');$('termsUseAccept').focus();return;}
+  const button=$('termsUseForm').querySelector('button[type="submit"]');button.disabled=true;message('termsUseMessage','Registrando…',true);
+  const {data,error}=await db.rpc('aceitar_termo_uso',{p_versao:TERMO_USO_VERSAO});
+  button.disabled=false;
+  if(error||data!==true){message('termsUseMessage','Não foi possível registrar o aceite'+(error?': '+error.message:'.')+' Tente de novo.');return;}
+  message('termsUseMessage','');const session=state.termsSession;state.termsSession=null;
+  if(session)await showApp(session);
+}
 async function logout(){if(db)await db.auth.signOut();state.user=null;state.perfil=null;showLogin();}
 async function fetchActiveEquipment(){
   const rows=[];
@@ -160,7 +183,7 @@ async function searchIssuedTerms(){
 function renderRecent(){const arr=state.movements.slice(0,8);$('recentBody').innerHTML=arr.length?arr.map(m=>`<tr><td data-label="Data/hora">${fmt(m.created_at||m.retirada_em)}</td><td data-label="Equipamento" class="cell-title"><strong>${esc(movementName(m))}</strong><small class="code">${esc(m.equipamentos?.tag||'')}</small></td><td data-label="Tipo" class="cell-status">${pill(m.tipo)}</td><td data-label="Responsável">${esc(m.responsavel||'—')}</td></tr>`).join(''):'<tr><td colspan="4" class="empty">Nenhuma movimentação registrada.</td></tr>';}
 function populateCategories(){const select=$('categoryFilter'),current=select.value,cats=[...new Set(state.equipment.map(x=>x.categoria).filter(Boolean))].sort();select.innerHTML='<option value="">Todas as categorias</option>'+cats.map(c=>`<option>${esc(c)}</option>`).join('');select.value=current;}
 function populateMovementEquipment(){const select=$('movementEquipment'),available=state.equipment.filter(x=>x.situacao==='Disponível');select.innerHTML='<option value="">Selecione…</option>'+available.map(x=>`<option value="${x.id}">${esc(x.tag||x.patrimonio||'Sem código')} — ${esc(x.descricao)}</option>`).join('');}
-function goto(page){if(['users','archives','audit'].includes(page)&&!canManageUsers()){denyAction();return;}state.page=page;document.querySelectorAll('.page').forEach(x=>x.classList.add('hidden'));$(`${page}Page`).classList.remove('hidden');document.querySelectorAll('.nav-item[data-page]').forEach(x=>{const on=x.dataset.page===page;x.classList.toggle('active',on);if(on)x.setAttribute('aria-current','page');else x.removeAttribute('aria-current');});setNavMore(false);$('pageTitle').textContent=({dashboard:'Painel geral',equipment:'Equipamentos',movements:'Retiradas e devoluções',reports:'Relatórios',users:'Usuários',archives:'Arquivos anteriores',audit:'Auditoria',about:'Sobre o Inventário'})[page];if(page==='reports')renderReport();if(page==='users')loadUsers();if(page==='archives')loadArchives();if(page==='audit')loadAudit();}
+function goto(page){if(['users','archives','audit'].includes(page)&&!canManageUsers()){denyAction();return;}state.page=page;document.querySelectorAll('.page').forEach(x=>x.classList.add('hidden'));$(`${page}Page`).classList.remove('hidden');document.querySelectorAll('.nav-item[data-page]').forEach(x=>{const on=x.dataset.page===page;x.classList.toggle('active',on);if(on)x.setAttribute('aria-current','page');else x.removeAttribute('aria-current');});setNavMore(false);$('pageTitle').textContent=({dashboard:'Painel geral',equipment:'Equipamentos',movements:'Retiradas e devoluções',reports:'Relatórios',users:'Usuários',archives:'Arquivos anteriores',audit:'Auditoria',privacy:'Privacidade',about:'Sobre o Inventário'})[page];if(page==='reports')renderReport();if(page==='users')loadUsers();if(page==='archives')loadArchives();if(page==='audit')loadAudit();}
 function openEquipment(item=null){if(!canManageEquipment()){denyAction();return;}$('equipmentForm').reset();$('equipmentId').value=item?.id||'';$('equipmentDialogTitle').textContent=item?'Editar equipamento':'Novo equipamento';fields.forEach(f=>{const el=$(f);if(el)el.value=item?.[dbField[f]]??'';});$('situacao').value=item?.situacao||'Disponível';$('estado').value=item?.estado||'Bom';$('equipmentDialog').showModal();}
 async function saveEquipment(e){e.preventDefault();if(!canManageEquipment()){denyAction();return;}const id=$('equipmentId').value;const payload={};fields.forEach(f=>{const el=$(f);let v=el.value.trim();payload[dbField[f]]=f==='valor'?(v===''?null:Number(v)):(v||null);});if(!payload.tag)payload.tag=`EQ-${Date.now().toString().slice(-8)}`;message('equipmentMessage','Salvando…',true);const res=id?await db.from('equipamentos').update(payload).eq('id',id).select().single():await db.from('equipamentos').insert({...payload,criado_por:state.user.id}).select().single();if(res.error){message('equipmentMessage',res.error.message);return;} $('equipmentDialog').close();await loadAll();}
 async function deleteEquipment(id){if(!canManageEquipment()){denyAction();return;}const item=state.equipment.find(x=>x.id===id);if(!item)return;if(!confirm(`Excluir “${item.descricao}”? Esta ação não pode ser desfeita.`))return;const {error}=await db.from('equipamentos').delete().eq('id',id);if(error){message('globalMessage',`Não foi possível excluir: ${error.message}`);return;}await loadAll();}
@@ -726,4 +749,7 @@ $('createUserForm').addEventListener('submit',createUser);$('createInvitationBtn
 if(!configured){message('loginMessage','Antes de entrar, configure a URL e a chave pública do Supabase no arquivo app.js.');}else{db.auth.getSession().then(({data})=>data.session?showApp(data.session):showLogin());db.auth.onAuthStateChange((_event,session)=>{if(session&&!state.user)showApp(session);else if(!session){state.user=null;state.perfil=null;showLogin();}});}
 
 $('borrowerForm').addEventListener('submit',saveBorrowerDetails);
+$('termsUseForm').addEventListener('submit',acceptTermsUse);
+$('termsUseLogout').addEventListener('click',logout);
+fillPrivacyNotices();
 document.addEventListener('click',e=>{const btn=e.target.closest('[data-term-id]');if(btn&&canViewTerms())openEquipmentTerm(btn.dataset.termId);});

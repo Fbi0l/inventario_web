@@ -13,7 +13,7 @@ const shots=process.env.AUDIT_SHOTS||'';
   {id:2,ocorrido_em:'2026-10-28T22:00:00Z',autor_email:null,acao:'arquivou',entidade:'ciclo',entidade_id:'c1',descricao:'Inventário de outubro',detalhes:{equipamentos:12,movimentacoes:30}},
   {id:1,ocorrido_em:'2026-10-28T21:00:00Z',autor_email:'admin@example.invalid',acao:'excluiu',entidade:'equipamento',entidade_id:'e9',descricao:'<img src=x onerror=window.xss=1>',detalhes:{registro:{}}}];
  window.supabase={createClient:()=>({storage:{from:()=>({download:async()=>({data:null})})},auth:{getSession:async()=>({data:{session:null}}),onAuthStateChange:()=>{},signOut:async()=>({})},functions:{invoke:async()=>({data:{users:[]}})},
-  from:table=>{const q={select:()=>q,is:()=>q,eq:()=>q,order:()=>q,limit:()=>q,range:async()=>({data:[]}),maybeSingle:async()=>({data:{perfil:'administrador'}}),then:r=>Promise.resolve({data:table==='auditoria'?testAuditRows:[]}).then(r)};return q;},
+  from:table=>{const q={select:()=>q,is:()=>q,eq:()=>q,order:()=>q,limit:()=>q,range:async()=>({data:[]}),maybeSingle:async()=>({data:{perfil:'administrador',termo_uso_versao:'2026-11-20'}}),then:r=>Promise.resolve({data:table==='auditoria'?testAuditRows:[]}).then(r)};return q;},
   rpc:async()=>({data:[]})})};`;
  const route=async route=>{
    const url=route.request().url();
