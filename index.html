@@ -5,16 +5,16 @@
   <!-- Seguranca (1.5.5): so scripts do proprio site e dos CDNs abaixo, cada um com integridade (SRI) conferida. -->
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net https://cdn.sheetjs.com; connect-src 'self' https://meqpwvdisjuoacepkljs.supabase.co wss://meqpwvdisjuoacepkljs.supabase.co; img-src 'self' data: blob:; media-src 'self' blob: mediastream:; style-src 'self' 'unsafe-inline'; font-src 'self' data:; frame-src 'self' blob:; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <title>Inventário | Controle de equipamentos</title>
-  <link rel="icon" type="image/png" href="assets/logo-inventario.png?v=1.11.0">
+  <link rel="icon" type="image/png" href="assets/logo-inventario.png?v=1.11.1">
   <!-- App instalavel (1.6.0): area de trabalho e tela inicial do celular. -->
   <link rel="manifest" href="manifest.webmanifest">
-  <link rel="apple-touch-icon" href="assets/apple-touch-icon.png?v=1.11.0">
+  <link rel="apple-touch-icon" href="assets/apple-touch-icon.png?v=1.11.1">
   <meta name="theme-color" content="#142033">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-title" content="Inventário">
   <meta name="application-name" content="Inventário">
-  <link rel="stylesheet" href="styles.css?v=1.11.0">
+  <link rel="stylesheet" href="styles.css?v=1.11.1">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0/dist/umd/supabase.js" integrity="sha384-TcHRA3zBbn+Lexh5n+Oil4guNPOS3rjNDpGRAN46u/s/mB2IZ50ceC6TYDU2yvgK" crossorigin="anonymous"></script>
   <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js" integrity="sha384-3zSEDfvllQohrq0PHL1fOXJuC/jSOO34H46t6UQfobFOmxE5BpjjaIJY5F2/bMnU" crossorigin="anonymous"></script>
   <script src="https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/html5-qrcode.min.js" integrity="sha384-c9d8RFSL+u3exBOJ4Yp3HUJXS4znl9f+z66d1y54ig+ea249SpqR+w1wyvXz/lk+" crossorigin="anonymous"></script>
@@ -49,7 +49,7 @@
   <a class="skip-link" href="#mainContent">Pular para o conteúdo</a>
   <div id="loginView" class="login-wrap">
     <form id="loginForm" class="login-card">
-      <div class="brand-mark brand-mark-logo"><img class="app-logo" src="assets/logo-inventario.png?v=1.11.0" alt="" width="42" height="42"></div><h1>Inventário</h1><p class="muted">Controle compartilhado de equipamentos</p>
+      <div class="brand-mark brand-mark-logo"><img class="app-logo" src="assets/logo-inventario.png?v=1.11.1" alt="" width="42" height="42"></div><h1>Inventário</h1><p class="muted">Controle compartilhado de equipamentos</p>
       <label>E-mail<input id="email" type="email" required autocomplete="username" placeholder="voce@empresa.com"></label>
       <label>Senha<input id="password" type="password" required autocomplete="current-password" placeholder="Sua senha"></label>
       <button class="primary full" type="submit">Entrar</button>
@@ -60,7 +60,7 @@
       <footer class="site-footer" aria-label="Propriedade e versão do sistema">
         <span>&copy; 2026 <strong>Fbiol</strong> · Todos os direitos reservados</span>
         <span class="site-footer-separator" aria-hidden="true">•</span>
-        <span>Versão 1.11.0</span>
+        <span>Versão 1.11.1</span>
       </footer>
   </div>
 
@@ -100,7 +100,7 @@
 
   <div id="appView" class="app hidden">
     <aside class="sidebar">
-      <div class="brand"><div class="brand-mark brand-mark-logo"><img class="app-logo" src="assets/logo-inventario.png?v=1.11.0" alt="" width="42" height="42"></div><div><strong>Inventário</strong><small>Gestão de equipamentos</small></div></div>
+      <div class="brand"><div class="brand-mark brand-mark-logo"><img class="app-logo" src="assets/logo-inventario.png?v=1.11.1" alt="" width="42" height="42"></div><div><strong>Inventário</strong><small>Gestão de equipamentos</small></div></div>
       <nav id="mainNav" class="side-nav" aria-label="Principal">
         <div class="nav-group nav-primary">
           <p class="nav-label">Operação</p>
@@ -132,7 +132,7 @@
       </header>
       <p id="globalMessage" class="message" aria-live="polite"></p>
       <section id="dashboardPage" class="page">
-        <div id="installCard" class="panel install-card hidden"><img src="assets/icone-192.png?v=1.11.0" alt="" width="44" height="44"><div class="install-text"><strong>Instale o Inventário</strong><small id="installText">Abra direto da área de trabalho ou da tela inicial do celular, em janela própria.</small></div><button id="installBtn" class="primary hidden" type="button">Instalar</button><button id="installClose" class="secondary install-close" type="button" aria-label="Não mostrar de novo">✕</button></div>
+        <div id="installCard" class="panel install-card hidden"><img src="assets/icone-192.png?v=1.11.1" alt="" width="44" height="44"><div class="install-text"><strong>Instale o Inventário</strong><small id="installText">Abra direto da área de trabalho ou da tela inicial do celular, em janela própria.</small></div><button id="installBtn" class="primary hidden" type="button">Instalar</button><button id="installClose" class="secondary install-close" type="button" aria-label="Não mostrar de novo">✕</button></div>
         <div class="stats">
           <article class="stat-card tone-total"><span><i class="dot" aria-hidden="true"></i>Total<span class="stat-long"> de equipamentos</span></span><strong id="statTotal">—</strong><div class="stat-bar" aria-hidden="true"><i style="width:100%"></i></div><small>Itens cadastrados no ciclo atual</small></article>
           <article class="stat-card tone-ok"><span><i class="dot" aria-hidden="true"></i>Disponíveis<em id="statAvailableShare" class="stat-share"></em></span><strong id="statAvailable">—</strong><div class="stat-bar" aria-hidden="true"><i id="statAvailableBar"></i></div><small>Prontos para retirada</small></article>
@@ -141,7 +141,7 @@
         </div>
         <div id="overdueCard" class="alert-card hidden" role="status"><svg class="i" aria-hidden="true" focusable="false"><use href="#i-clock"></use></svg><div class="alert-text"><strong id="overdueTitle"></strong><small id="overdueText"></small></div><button id="overdueBtn" class="secondary" type="button">Ver atrasadas</button></div>
         <div class="dash-grid">
-          <div class="panel dash-recent"><div class="panel-head"><div><h2>Movimentações recentes</h2><p class="muted">Últimas retiradas e devoluções registradas</p></div><button class="link-btn" type="button" data-goto="movements">Ver todas →</button></div><div class="table-wrap"><table class="card-table"><thead><tr><th>Data/hora</th><th>Equipamento</th><th>Tipo</th><th>Responsável</th></tr></thead><tbody id="recentBody"><tr><td colspan="4" class="empty">Carregando…</td></tr></tbody></table></div></div>
+          <div class="panel dash-recent"><div class="panel-head"><div><h2>Movimentações recentes</h2><p class="muted">Últimas retiradas e devoluções registradas</p></div><button class="link-btn" type="button" data-goto="movements">Ver todas →</button></div><div class="table-wrap" tabindex="0" role="region" aria-label="Tabela (role para o lado para ver tudo)"><table class="card-table"><thead><tr><th>Data/hora</th><th>Equipamento</th><th>Tipo</th><th>Responsável</th></tr></thead><tbody id="recentBody"><tr><td colspan="4" class="empty">Carregando…</td></tr></tbody></table></div></div>
           <div class="panel quick-actions"><h2>Ações rápidas</h2>
             <button id="qaMovementBtn" class="primary" type="button"><svg class="i" aria-hidden="true" focusable="false"><use href="#i-out"></use></svg><span>Registrar retirada</span></button>
             <button id="qaReturnBtn" class="secondary" type="button"><svg class="i" aria-hidden="true" focusable="false"><use href="#i-in"></use></svg><span>Registrar devolução</span></button>
@@ -160,13 +160,13 @@
             <button class="chip tone-off" type="button" data-status="Baixado" aria-pressed="false"><i class="dot" aria-hidden="true"></i>Baixado <b data-count="Baixado"></b></button>
           </div>
           <div class="filters filters-2"><label class="search-field"><svg class="i" aria-hidden="true" focusable="false"><use href="#i-search"></use></svg><input id="searchEquipment" type="search" aria-label="Pesquisar equipamentos" placeholder="Pesquisar por descrição, TAG, patrimônio…" autocomplete="off" spellcheck="false"></label><select id="categoryFilter" aria-label="Categoria"><option value="">Todas as categorias</option></select></div>
-          <div class="table-wrap"><table class="card-table"><thead><tr><th>TAG / Patrimônio</th><th>Equipamento</th><th>Categoria</th><th>Localização</th><th>Estado</th><th>Situação</th><th>Ações</th></tr></thead><tbody id="equipmentBody"><tr><td colspan="7" class="empty">Carregando…</td></tr></tbody></table></div>
+          <div class="table-wrap" tabindex="0" role="region" aria-label="Tabela (role para o lado para ver tudo)"><table class="card-table"><thead><tr><th>TAG / Patrimônio</th><th>Equipamento</th><th>Categoria</th><th>Localização</th><th>Estado</th><th>Situação</th><th>Ações</th></tr></thead><tbody id="equipmentBody"><tr><td colspan="7" class="empty">Carregando…</td></tr></tbody></table></div>
         </div>
       </section>
       <section id="movementsPage" class="page hidden">
         <div class="panel"><div class="panel-head"><div><h2>Retiradas e devoluções</h2><p class="muted">Registre cada retirada e finalize com a devolução do equipamento.</p></div><div class="actions"><button id="scanMovementBtn" class="secondary" type="button"><svg class="i" aria-hidden="true" focusable="false"><use href="#i-scan"></use></svg><span>Ler QR Code</span></button><button id="newMovementBtn" class="primary" type="button"><svg class="i" aria-hidden="true" focusable="false"><use href="#i-out"></use></svg><span>Registrar retirada</span></button></div></div>
           <div class="filters filters-2"><input id="searchMovement" type="search" autocomplete="off" aria-label="Pesquisar movimentações" placeholder="Pesquisar equipamento ou responsável…"><select id="movementFilter" aria-label="Tipo de movimentação"><option value="">Todas as movimentações</option><option value="Retirada">Retiradas</option><option value="Devolução">Devoluções</option><option value="open">Retiradas em aberto</option><option value="overdue">Devolução atrasada</option></select></div>
-          <div class="table-wrap"><table class="card-table"><thead><tr><th>Data/hora</th><th>Equipamento</th><th>Tipo</th><th>Responsável</th><th>Retirada</th><th>Devolução</th><th>Ação</th></tr></thead><tbody id="movementBody"><tr><td colspan="7" class="empty">Carregando…</td></tr></tbody></table></div>
+          <div class="table-wrap" tabindex="0" role="region" aria-label="Tabela (role para o lado para ver tudo)"><table class="card-table"><thead><tr><th>Data/hora</th><th>Equipamento</th><th>Tipo</th><th>Responsável</th><th>Retirada</th><th>Devolução</th><th>Ação</th></tr></thead><tbody id="movementBody"><tr><td colspan="7" class="empty">Carregando…</td></tr></tbody></table></div>
         </div>
         <div id="termsSearchPanel" class="panel">
           <div class="panel-head"><div><h2>Termos emitidos por dia</h2><p class="muted">Localize termos finalizados pela data efetiva da retirada ou devolução. A consulta inclui somente o ciclo atual.</p></div></div>
@@ -175,7 +175,7 @@
             <button id="searchTermsBtn" type="button" class="secondary">Buscar termos</button>
           </div>
           <p id="termsFilterMessage" class="message" aria-live="polite"></p>
-          <div class="table-wrap"><table><thead><tr><th>Data da ação</th><th>TAG</th><th>Equipamento</th><th>Responsável</th><th>PDF</th></tr></thead><tbody id="termsFilterBody"><tr><td colspan="5" class="empty">Selecione uma data para consultar os termos.</td></tr></tbody></table></div>
+          <div class="table-wrap" tabindex="0" role="region" aria-label="Tabela (role para o lado para ver tudo)"><table><thead><tr><th>Data da ação</th><th>TAG</th><th>Equipamento</th><th>Responsável</th><th>PDF</th></tr></thead><tbody id="termsFilterBody"><tr><td colspan="5" class="empty">Selecione uma data para consultar os termos.</td></tr></tbody></table></div>
         </div>
       </section>
       <section id="reportsPage" class="page hidden">
@@ -190,7 +190,7 @@
           </div>
           <p id="reportMessage" class="message" aria-live="polite"></p>
           <p id="reportSummary" class="muted report-summary">Carregando dados do relatório…</p>
-          <div class="table-wrap"><table><thead id="reportHead"></thead><tbody id="reportBody"><tr><td class="empty">Carregando…</td></tr></tbody></table></div>
+          <div class="table-wrap" tabindex="0" role="region" aria-label="Tabela (role para o lado para ver tudo)"><table><thead id="reportHead"></thead><tbody id="reportBody"><tr><td class="empty">Carregando…</td></tr></tbody></table></div>
         </div>
       </section>
       <section id="usersPage" class="page hidden">
@@ -207,7 +207,7 @@
             <p id="inviteMessage" class="message" aria-live="polite"></p>
             <h4>Convites pendentes</h4>
             <p class="muted">Links gerados que ainda não foram usados nem venceram. Cancele os que não serão mais usados: o link deixa de funcionar na hora.</p>
-            <div class="table-wrap"><table><thead><tr><th>Gerado em</th><th>Gerado por</th><th>Vence em</th><th>Ação</th></tr></thead><tbody id="invitesBody"><tr><td colspan="4" class="empty">Clique em Atualizar lista para carregar os convites.</td></tr></tbody></table></div>
+            <div class="table-wrap" tabindex="0" role="region" aria-label="Tabela (role para o lado para ver tudo)"><table><thead><tr><th>Gerado em</th><th>Gerado por</th><th>Vence em</th><th>Ação</th></tr></thead><tbody id="invitesBody"><tr><td colspan="4" class="empty">Clique em Atualizar lista para carregar os convites.</td></tr></tbody></table></div>
           </div>
           <div class="user-create-box">
             <h3>Novo usuário</h3>
@@ -223,7 +223,7 @@
             <p id="usersMessage" class="message" aria-live="polite"></p>
           </div>
           <div class="panel-head users-list-head"><div><h3>Usuários cadastrados</h3><p class="muted">A senha não é exibida pelo sistema; você pode definir uma nova.</p></div></div>
-          <div class="table-wrap"><table><thead><tr><th>E-mail</th><th>Nome</th><th>Acesso</th><th>Criado em</th><th>Último acesso</th><th>Ações</th></tr></thead><tbody id="usersBody"><tr><td colspan="6" class="empty">Clique em Atualizar lista para carregar os usuários.</td></tr></tbody></table></div>
+          <div class="table-wrap" tabindex="0" role="region" aria-label="Tabela (role para o lado para ver tudo)"><table><thead><tr><th>E-mail</th><th>Nome</th><th>Acesso</th><th>Criado em</th><th>Último acesso</th><th>Ações</th></tr></thead><tbody id="usersBody"><tr><td colspan="6" class="empty">Clique em Atualizar lista para carregar os usuários.</td></tr></tbody></table></div>
         </div>
       </section>
       <section id="auditPage" class="page hidden">
@@ -234,7 +234,7 @@
           </div>
           <div class="filters"><input id="searchAudit" type="search" aria-label="Pesquisar na auditoria" placeholder="Pesquisar por pessoa, ação ou item…"><select id="auditEntityFilter" aria-label="Tipo de registro"><option value="">Todos os tipos</option><option value="usuario">Usuários</option><option value="convite">Convites</option><option value="equipamento">Equipamentos</option><option value="movimentacao">Movimentações</option><option value="ciclo">Arquivamentos</option><option value="planilha">Importações</option></select></div>
           <p id="auditMessage" class="message" aria-live="polite"></p>
-          <div class="table-wrap"><table><thead><tr><th>Data/hora</th><th>Quem</th><th>Ação</th><th>Item</th><th>Detalhes</th></tr></thead><tbody id="auditBody"><tr><td colspan="5" class="empty">Nenhum registro carregado.</td></tr></tbody></table></div>
+          <div class="table-wrap" tabindex="0" role="region" aria-label="Tabela (role para o lado para ver tudo)"><table><thead><tr><th>Data/hora</th><th>Quem</th><th>Ação</th><th>Item</th><th>Detalhes</th></tr></thead><tbody id="auditBody"><tr><td colspan="5" class="empty">Nenhum registro carregado.</td></tr></tbody></table></div>
         </div>
       </section>
       <section id="archivesPage" class="page hidden">
@@ -250,7 +250,7 @@
           </div>
           <p id="archivesMessage" class="message" aria-live="polite"></p>
           <div class="panel-head"><div><h3>Arquivos anteriores</h3><p class="muted">Consulte, exporte, restaure ou exclua um período. A exclusão é permanente e preserva os dados do ciclo atual. A restauração exige listas atuais vazias.</p></div></div>
-          <div class="table-wrap"><table><thead><tr><th>Arquivo</th><th>Arquivado em</th><th>Equipamentos</th><th>Movimentações</th><th>Ações</th></tr></thead>
+          <div class="table-wrap" tabindex="0" role="region" aria-label="Tabela (role para o lado para ver tudo)"><table><thead><tr><th>Arquivo</th><th>Arquivado em</th><th>Equipamentos</th><th>Movimentações</th><th>Ações</th></tr></thead>
           <tbody id="archivesBody"><tr><td colspan="5" class="empty">Nenhum arquivo carregado.</td></tr></tbody></table></div>
           <div id="archiveDetails" class="archive-details hidden">
             <h3 id="archiveDetailsTitle">Detalhes do arquivo</h3>
@@ -259,9 +259,9 @@
               <div class="export-menu" data-export="arquivo-movimentacoes"><button id="exportArchiveMovementsBtn" class="secondary export-toggle" type="button" aria-haspopup="true" aria-expanded="false" aria-controls="exportArchiveMovementsBtnOptions"><svg class="i" aria-hidden="true" focusable="false"><use href="#i-download"></use></svg><span>Exportar movimentações</span></button><div id="exportArchiveMovementsBtnOptions" class="export-options" role="menu" aria-label="Formato do arquivo" hidden><button type="button" role="menuitem" data-format="pdf"><strong>PDF</strong><small>Documento para imprimir ou enviar</small></button><button type="button" role="menuitem" data-format="xlsx"><strong>Excel (.xlsx)</strong><small>Planilha formatada</small></button><button type="button" role="menuitem" data-format="csv"><strong>CSV</strong><small>Texto simples, para outros sistemas</small></button></div></div>
             </div>
             <h4>Equipamentos arquivados</h4>
-            <div class="table-wrap"><table><thead><tr><th>TAG</th><th>Patrimônio</th><th>Descrição</th><th>Situação</th></tr></thead><tbody id="archiveEquipmentBody"></tbody></table></div>
+            <div class="table-wrap" tabindex="0" role="region" aria-label="Tabela (role para o lado para ver tudo)"><table><thead><tr><th>TAG</th><th>Patrimônio</th><th>Descrição</th><th>Situação</th></tr></thead><tbody id="archiveEquipmentBody"></tbody></table></div>
             <h4>Retiradas e devoluções arquivadas</h4>
-            <div class="table-wrap"><table><thead><tr><th>Data</th><th>Equipamento</th><th>Tipo</th><th>Responsável</th><th>Devolução</th></tr></thead><tbody id="archiveMovementsBody"></tbody></table></div>
+            <div class="table-wrap" tabindex="0" role="region" aria-label="Tabela (role para o lado para ver tudo)"><table><thead><tr><th>Data</th><th>Equipamento</th><th>Tipo</th><th>Responsável</th><th>Devolução</th></tr></thead><tbody id="archiveMovementsBody"></tbody></table></div>
           </div>
         </div>
       </section>
@@ -313,7 +313,7 @@
         <span class="site-footer-separator" aria-hidden="true">•</span>
         <button class="footer-link" type="button" data-page="privacy">Privacidade</button>
         <span class="site-footer-separator" aria-hidden="true">•</span>
-        <span>Versão 1.11.0</span>
+        <span>Versão 1.11.1</span>
       </footer>
     </main>
   </div>
@@ -379,7 +379,7 @@
     <p class="muted">São aceitos até 2000 equipamentos e arquivos de até 10 MB. TAG e Descrição são obrigatórias. Patrimônio zero será tratado como não informado. Campos vazios de Estado e Situação serão Bom e Disponível. As macros do Excel não são executadas.</p>
     <p class="muted">Ao vincular itens Em uso, confira o retirante sugerido, o estado da planilha e informe a data real da retirada, local e avarias. Cadastre antes em Usuários os retirantes que faltarem.</p>
     <p id="importPreviewSummary" class="muted" aria-live="polite"></p>
-    <div class="table-wrap import-preview"><table><thead><tr><th>Linha</th><th>TAG</th><th>Patrimônio</th><th>Descrição</th><th>Estado</th><th>Situação após importar</th><th>Responsável / retirada</th><th>Conferência</th></tr></thead><tbody id="importPreviewBody"></tbody></table></div>
+    <div class="table-wrap import-preview" tabindex="0" role="region" aria-label="Tabela (role para o lado para ver tudo)"><table><thead><tr><th>Linha</th><th>TAG</th><th>Patrimônio</th><th>Descrição</th><th>Estado</th><th>Situação após importar</th><th>Responsável / retirada</th><th>Conferência</th></tr></thead><tbody id="importPreviewBody"></tbody></table></div>
     <p id="importMessage" class="message" role="status" aria-live="polite"></p>
     <div class="dialog-actions"><button type="button" class="secondary" data-close="importDialog">Fechar</button><button id="confirmImportBtn" type="button" class="primary" disabled>Importar equipamentos</button></div>
   </div></dialog>
@@ -397,7 +397,7 @@
   <script src="importar-planilha.js?v=1.5.5"></script>
   <script src="qr-etiquetas.js?v=1.4.0"></script>
   <script src="termos.js?v=1.4.0"></script>
-  <script src="exportacoes.js?v=1.11.0"></script>
-  <script src="app.js?v=1.11.0"></script>
+  <script src="exportacoes.js?v=1.11.1"></script>
+  <script src="app.js?v=1.11.1"></script>
   <script src="instalar.js?v=1.6.0"></script>
 </body></html>

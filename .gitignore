@@ -6,3 +6,4 @@ dist/
 build/
 supabase/.temp/
 *.log
+test-results/

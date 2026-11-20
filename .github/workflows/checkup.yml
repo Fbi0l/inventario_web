@@ -59,3 +59,11 @@ jobs:
         run: npx playwright install --with-deps chromium
       - name: Testar interface PDF no Chromium
         run: npm run test:navegador
+      - name: Guardar os prints das telas (acessibilidade)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: prints-navegador-${{ github.run_id }}
+          path: test-results/navegador/
+          retention-days: 14
+          if-no-files-found: ignore

@@ -276,3 +276,7 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
 .login-card label.check-line{display:flex;flex-direction:row;align-items:flex-start;gap:8px;font-weight:500}
 .login-card label.check-line input{width:18px;height:18px;min-height:0;flex:none;margin-top:2px}
 .small-note{font-size:13px;margin:0}
+
+/* Acessibilidade (1.11.1): links do rodapé com área de toque de pelo menos 24px (WCAG 2.5.8) */
+.site-footer .footer-link{display:inline-flex;align-items:center;min-height:24px;padding:0 4px}
+.table-wrap:focus-visible{outline:2px solid #1f5f6b;outline-offset:2px}
