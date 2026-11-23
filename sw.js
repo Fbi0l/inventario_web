@@ -3,11 +3,11 @@
    - NUNCA guarda nada do Supabase (login, equipamentos, movimentações, termos em PDF): esses pedidos passam direto.
    - Rede primeiro: com internet, sempre usa a versão publicada mais nova; a cópia só é usada sem conexão. */
 'use strict';
-const CACHE = 'inventario-app-v6';
+const CACHE = 'inventario-app-v7';
 const PERMITIDOS = [self.location.origin, 'https://cdn.jsdelivr.net', 'https://cdn.sheetjs.com'];
 
 self.addEventListener('install', ev => {
-  ev.waitUntil(caches.open(CACHE).then(c => c.addAll(['./', './manifest.webmanifest', './assets/icone-192.png'])).then(() => self.skipWaiting()));
+  ev.waitUntil(caches.open(CACHE).then(c => c.addAll(['./', './manifest.webmanifest', './assets/icone-192-v2.png'])).then(() => self.skipWaiting()));
 });
 
 self.addEventListener('activate', ev => {
