@@ -1,6 +1,13 @@
 # inventario_web
 Sistema de inventário patrimonial
 
+### Ícone novo no app instalado (1.11.2)
+
+- Os arquivos de ícone do app instalável ganharam nomes novos (`icone-192-v2.png`, `icone-512-v2.png`, `icone-maskable-512-v2.png`), com o mesmo desenho da 1.10.0. Com o mesmo nome de antes, o Chrome e o Edge não percebiam a troca e o atalho na área de trabalho continuava com o ícone antigo. Agora, na próxima vez que o app for aberto, o navegador nota o ícone novo e pode pedir para confirmar a troca.
+- Quem já instalou e quer o ícone novo na hora: desinstalar o app (menu ⋮ da janela do app → Desinstalar) e instalar de novo pelo site. Os dados ficam no Supabase e não se perdem. Se o atalho continuar antigo, reiniciar o computador renova o cache de ícones do Windows.
+
+Sem SQL nem função para republicar. O `sw.js` troca o nome do cache.
+
 ### Dependabot (20/11/2026)
 
 - `.github/dependabot.yml`: toda segunda-feira, o Dependabot confere versões novas (e correções de segurança) das bibliotecas de teste (npm) e das ações do GitHub e abre um pull request para revisão. Os testes do Check-up rodam em cada um antes de juntar. As bibliotecas que o site carrega do CDN (com SRI) continuam sendo atualizadas à mão, junto com o hash de integridade.
